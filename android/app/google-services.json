@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "760585093843",
+    "project_id": "chaatbar-e3f66",
+    "storage_bucket": "chaatbar-e3f66.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:760585093843:android:d740d1c5221afb25b9ca26",
+        "android_client_info": {
+          "package_name": "com.utell.chaatBar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5UcoXn0Rkr6crm3jALv4dz4Nyj-PXLPo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
