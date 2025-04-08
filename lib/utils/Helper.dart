@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:ChaatBar/model/response/rf_bite/vendorListResponse.dart';
+import '/model/response/vendorListResponse.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../model/response/rf_bite/profileResponse.dart';
+import '../model/response/profileResponse.dart';
 
 class Helper {
   static String valueSharedPreferences = '';
@@ -28,8 +28,11 @@ class Helper {
   static String countryList = 'CountryList';
   static String profileDetailPref = 'ProfileDetail';
   static const String prefSelectedLanguageCode = "SelectedLanguageCode";
+  static const String prefRedeemPoints = "RedeemPoints";
   static const String prefRecentDocument = "RecentDocument";
   static String appThemePref = 'appThemePref';
+  static String api_key = 'apikey';
+  static String order_count_key = 'OrderCountKey';
 
 // Write DATA
   static Future<bool> saveUserToken(token) async {
@@ -167,6 +170,17 @@ class Helper {
     String languageCode = _prefs.getString(prefSelectedLanguageCode) ?? "en";
     return _locale(languageCode);
   }
+// Read Data
+
+  static Future<bool> saveRedeemPoints(points) async {
+    SharedPreferences _prefs = await SharedPreferences.getInstance();
+    return await _prefs.setInt(prefRedeemPoints, points);
+  }
+
+  static Future<String> getRedeemPoints() async {
+    SharedPreferences _prefs = await SharedPreferences.getInstance();
+    return  _prefs.getString(prefRedeemPoints) ?? "0";
+  }
 
   static Future<bool> saveCountry(token) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -230,7 +244,46 @@ class Helper {
     return sharedPreferences.getString(appThemePref);
   }
 
+  static Future<bool> saveApiKey(token) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    return await sharedPreferences.setString(api_key, token);
+  }
+
+  // Read Data
+  static Future<String?> getApiKey() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    return sharedPreferences.getString(api_key);
+  }
+
+  static Future<bool> saveActiveOrderCounts(token) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    return await sharedPreferences.setInt(order_count_key, token);
+  }
+
+  // Read Data
+  static Future<int?> getActiveOrderCounts() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    return sharedPreferences.getInt(order_count_key) ?? 0;
+  }
+
+
   static Future<void> clearAllSharedPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    //await prefs.clear();
+    await saveVendorData(VendorData());
+    //await saveProfileDetails(ProfileResponse());
+    //await saveUserToken("");
+    await saveBiometric(false);
+    await saveUserAuthenticated(false);
+    //await saveUserDetails(null);
+    await saveCountry("");
+    await saveKycStatus("");
+    await saveActiveOrderCounts(0);
+    await setLocale("");
+    print('All shared preferences cleared');
+  }
+
+  static Future<void> clearAllSharedPreferencesForLogout() async {
     final prefs = await SharedPreferences.getInstance();
     //await prefs.clear();
     await saveVendorData(VendorData());
@@ -240,6 +293,7 @@ class Helper {
     await saveUserAuthenticated(false);
     //await saveUserDetails(null);
     await saveCountry("");
+    await saveActiveOrderCounts(0);
     await saveKycStatus("");
     await setLocale("");
     print('All shared preferences cleared');

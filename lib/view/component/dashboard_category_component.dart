@@ -1,86 +1,124 @@
 import 'package:flutter/material.dart';
 
-import '../../model/response/rf_bite/categoryListResponse.dart';
-import '../../model/response/rf_bite/vendorListResponse.dart';
-import '../../theme/AppColor.dart';
-import '../../utils/Util.dart';
-import 'circluar_profile_image.dart';
+import '../../model/response/categoryListResponse.dart';
+import '../../model/response/vendorListResponse.dart';
 
-class DashboardCategoryComponent extends StatelessWidget {
+class DashboardCategoryComponent extends StatefulWidget {
   final List<CategoryData?> categories;
-  final double screenWidth;
+  final double mediaWidth;
   final double screenHeight;
   final Color primaryColor;
   final bool isDarkMode;
+  final CategoryData? categoryData;
+  final Function(CategoryData?) onCategoryTap;
   final VendorData? vendorData;
 
   const DashboardCategoryComponent({
     Key? key,
     required this.categories,
-    required this.screenWidth,
+    required this.mediaWidth,
     required this.screenHeight,
     required this.primaryColor,
     required this.isDarkMode,
+    required this.categoryData,
+    required this.onCategoryTap,
     required this.vendorData,
   }) : super(key: key);
 
   @override
+  _DashboardCategoryComponentState createState() =>
+      _DashboardCategoryComponentState();
+}
+
+class _DashboardCategoryComponentState
+    extends State<DashboardCategoryComponent> {
+  CategoryData? selectedCategory; // Store the selected category
+
+  @override
+  void initState() {
+    super.initState();
+    selectedCategory =
+        widget.categoryData; // Initialize with the passed category
+  }
+
+
+  @override
+  void didUpdateWidget(covariant DashboardCategoryComponent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update selectedCategory when widget.categoryData changes
+    if (widget.categoryData?.id != oldWidget.categoryData?.id) {
+      setState(() {
+        selectedCategory = widget.categoryData;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    print("selectedCategory ${widget.categoryData?.categoryName}");
+    selectedCategory = selectedCategory ?? widget.categoryData;
     return ListView.builder(
-      itemCount: categories.length,
+      itemCount: widget.categories.length,
       scrollDirection: Axis.horizontal,
       itemBuilder: (context, index) {
-        var currentItem = categories[index];
-        var currentCategoryName = categories[index]?.categoryName;
-        var currentCategoryImage = categories[index]?.categoryImage;
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2.0),
-          child: GestureDetector(
-            onTap: () {
-              VendorData? data = vendorData;
-              data?.detailType = "menu";
-              data?.selectedCategoryId = currentItem?.id;
-              Navigator.pushNamed(context, "/MenuScreen", arguments: data);
-            },
-            child: Card(
-              margin: EdgeInsets.symmetric(horizontal: 3),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(100)),
-              elevation: 3,
-              shadowColor: isDarkMode ? AppColor.DARK_CARD_COLOR : Colors.white,
-              child: Container(
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    color:
-                        isDarkMode ? AppColor.DARK_CARD_COLOR : Colors.white),
-                width: 60,
-                padding: EdgeInsets.only(bottom: 8, top: 2, left: 2, right: 2),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    CircularProfileImage(
-                        size: 48,
-                        imageUrl: currentCategoryImage,
-                        name: "${currentCategoryName}",
-                        needTextLetter: true,
-                        placeholderImage: "",
-                        isDarkMode: isDarkMode),
-                    SizedBox(
-                      height: 8,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: Text(
-                        capitalizeFirstLetter("${currentCategoryName}"),
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 10,
+        var currentItem = widget.categories[index];
+        var currentCategoryName = currentItem?.categoryName;
+        var currentCategoryImage = currentItem?.categoryImage ?? "";
+        bool isSelected = selectedCategory?.id == currentItem?.id;
+
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              selectedCategory = currentItem; // Update currentItem
+            });
+            widget.onCategoryTap(currentItem);
+          },
+          child: AnimatedScale(
+            scale: 1.0,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            child: Column(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  margin: EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: isSelected ? widget.primaryColor : Colors.white,
+                    // Change color if selected
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Container(
+                        width: 55,
+                        height: 55,
+                        child: Image.network(
+                          currentCategoryImage,
+                          fit: BoxFit.cover,
                         ),
                       ),
-                    ),
-                  ],
+                      Container(
+                        width: widget.mediaWidth,
+                        height: 25,
+                        alignment: Alignment.center,
+                        child: Text(
+                          "$currentCategoryName",
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black54,
+                            fontSize: 11,
+                            overflow: TextOverflow.ellipsis,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         );

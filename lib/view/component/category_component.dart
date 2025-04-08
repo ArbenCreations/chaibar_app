@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../model/response/rf_bite/categoryListResponse.dart';
-import '../../theme/AppColor.dart';
+import '../../model/response/categoryListResponse.dart';
+import '../../theme/CustomAppColor.dart';
 import '../../utils/Util.dart';
-import 'circluar_profile_image.dart';
 
-class CategoryComponent extends StatelessWidget {
+class CategoryComponent extends StatefulWidget {
   final List<CategoryData?> categories;
-  final double screenWidth;
+  final double mediaWidth;
   final double screenHeight;
   final Color primaryColor;
   final bool isDarkMode;
@@ -17,7 +16,7 @@ class CategoryComponent extends StatelessWidget {
   const CategoryComponent({
     Key? key,
     required this.categories,
-    required this.screenWidth,
+    required this.mediaWidth,
     required this.screenHeight,
     required this.onTap,
     required this.primaryColor,
@@ -26,69 +25,65 @@ class CategoryComponent extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _CategoryComponentState createState() => _CategoryComponentState();
+}
+
+class _CategoryComponentState extends State<CategoryComponent> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.topCenter,
       child: ListView.builder(
-        itemCount: categories.length,
+        controller: _scrollController,
+        itemCount: widget.categories.length,
         scrollDirection: Axis.horizontal,
         itemBuilder: (context, index) {
-          var currentItem = categories[index];
-          var currentCategoryName = categories[index]?.categoryName;
+          var currentItem = widget.categories[index];
+          var currentCategoryName = widget.categories[index]?.categoryName;
           return GestureDetector(
             onTap: () {
-              onTap(index);
+              widget.onTap(index);
             },
-            child: Card(
-              margin: EdgeInsets.only(
-                  left: 3,
-                  bottom: selectedCategory == currentCategoryName ? 28 : 38,
-                  top: selectedCategory == currentCategoryName ? 0 : 12,
-                  right: 3),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(100)),
-              elevation: selectedCategory == currentCategoryName ? 16 : 2,
-              shadowColor: AppColor.PRIMARY,
-              child: Container(
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    color: selectedCategory == currentCategoryName
-                        ? primaryColor
-                        : isDarkMode?  AppColor.DARK_CARD_COLOR :Colors.white),
-                width: 60,
-                padding: EdgeInsets.only(bottom: 8, top: 2, left: 2, right: 2),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    CircularProfileImage(
-                      size: 55,
-                      imageUrl: currentItem?.categoryImage,
-                      name: "${currentCategoryName}",
-                      needTextLetter: true,
-                      placeholderImage: "",
-                      isDarkMode: isDarkMode
-                    ),
-                    Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: Text(
-                        capitalizeFirstLetter("${currentCategoryName}"),
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: selectedCategory == currentCategoryName
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 0),
+              margin: EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: Text(
+                      capitalizeFirstLetter("${currentCategoryName}"),
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: widget.selectedCategory == currentCategoryName
+                            ? 16
+                            : 13,
+                        color: widget.selectedCategory == currentCategoryName
+                            ? Colors.white
+                            : widget.isDarkMode
                                 ? Colors.white
-                                : isDarkMode? AppColor.WHITE : Colors.black,
-                            fontWeight: selectedCategory == currentCategoryName
+                                : Colors.white70,
+                        fontWeight:
+                            widget.selectedCategory == currentCategoryName
                                 ? FontWeight.bold
-                                : FontWeight.normal),
+                                : FontWeight.normal,
                       ),
                     ),
-                    SizedBox(
-                      height: selectedCategory == currentCategoryName ? 30 : 18,
-                    ),
-                  ],
-                ),
+                  ),
+                  widget.selectedCategory == currentCategoryName
+                      ? Container(
+                          height: 3,
+                          width: 20,
+                          color: CustomAppColor.PrimaryAccent,
+                        )
+                      : SizedBox()
+                ],
               ),
             ),
           );

@@ -1,13 +1,13 @@
+import 'package:ChaiBar/theme/CustomAppColor.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../model/response/rf_bite/productListResponse.dart';
-import '../../theme/AppColor.dart';
+import '../../model/response/productListResponse.dart';
 import '../../utils/Util.dart';
 
 class CartProductComponent extends StatelessWidget {
   final ProductData item;
-  final double screenWidth;
+  final double mediaWidth;
   final double itemTotalPrice;
   final double addOnTotalPrice;
   final bool isDarkMode;
@@ -20,7 +20,7 @@ class CartProductComponent extends StatelessWidget {
   const CartProductComponent({
     Key? key,
     required this.item,
-    required this.screenWidth,
+    required this.mediaWidth,
     required this.isDarkMode,
     required this.itemTotalPrice,
     required this.addOnTotalPrice,
@@ -33,108 +33,144 @@ class CartProductComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        padding: EdgeInsets.only(bottom: 12),
-        margin: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    return Dismissible(
+      key: Key(item.id.toString()),
+      // Ensure each item has a unique key
+      direction: DismissDirection.endToStart,
+      onDismissed: (direction) {
+        onRemoveTap(); // Call the remove function when swiped
+      },
+      background: Container(
+        alignment: Alignment.centerRight,
         decoration: BoxDecoration(
-            border: Border(
-                bottom: BorderSide(
-                    width: 0.1, color: Colors.black87))),
-        child: Center(
+          color: Colors.red,
+          borderRadius: BorderRadius.only(
+              topRight: Radius.circular(20), bottomRight: Radius.circular(20)),
+          boxShadow: [
+            BoxShadow(
+              color: Color.fromRGBO(0, 0, 0, 0.06),
+              // Shadow color
+              offset: Offset(0, 1),
+              // Adjust X and Yoffset to match Figma
+              blurRadius: 5,
+              // Adjust this for more/less blur
+              spreadRadius: 0.1, // Adjust spread if needed
+            ),
+          ],
+        ),
+        padding: EdgeInsets.symmetric(horizontal: 20),
+        margin: EdgeInsets.only(top: 5),
+        child: Icon(Icons.delete, color: Colors.white),
+      ),
+      child: Container(
+          width: mediaWidth,
+          alignment: Alignment.center,
+          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Color.fromRGBO(0, 0, 0, 0.08),
+                // Shadow color
+                offset: Offset(0, 2),
+                // Adjust X and Yoffset to match Figma
+                blurRadius: 10,
+                // Adjust this for more/less blur
+                spreadRadius: 0.2, // Adjust spread if needed
+              ),
+            ],
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               item.imageUrl == "" || item.imageUrl == null
                   ? Container(
-                decoration: BoxDecoration(
-                    borderRadius:
-                    BorderRadius.circular(12.5),
-                    color: primaryColor),
-                child: Image.asset(
-                  "assets/pizza_image.jpg",
-                  height: 75,
-                  width: 75,
-                  fit: BoxFit.fitWidth,
-                ),
-              )
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          color: primaryColor),
+                      child: Image.asset(
+                        "assets/app_logo.png",
+                        height: 65,
+                        width: 65,
+                        fit: BoxFit.fitWidth,
+                      ),
+                    )
                   : Container(
-                decoration: BoxDecoration(
-                  borderRadius:
-                  BorderRadius.circular(12.5),
-                  border: Border.all(
-                      color: Theme.of(context).cardColor,
-                      width: 0.3),
-                  color: Colors.white,
-                ),
-                child: ClipRRect(
-                  borderRadius:
-                  BorderRadius.circular(12.5),
-                  child: Image.network(
-                    "${item.imageUrl}",
-                    height: 75,
-                    width: 75,
-                    fit: BoxFit.cover,
-                    errorBuilder: (BuildContext context,
-                        Object exception,
-                        StackTrace? stackTrace) {
-                      return Container(
-                        child: Image.asset(
-                          "assets/pizza_image.jpg",
-                          height: 75,
-                          width: 75,
-                          fit: BoxFit.fitWidth,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                            color: Theme.of(context).cardColor, width: 0.3),
+                        color: Colors.white,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: Image.network(
+                          "${item.imageUrl}",
+                          height: 65,
+                          width: 65,
+                          fit: BoxFit.cover,
+                          errorBuilder: (BuildContext context,
+                              Object exception, StackTrace? stackTrace) {
+                            return Container(
+                              child: Image.asset(
+                                "assets/app_logo.png",
+                                height: 65,
+                                width: 65,
+                                fit: BoxFit.fitWidth,
+                              ),
+                            );
+                          },
+                          loadingBuilder: (BuildContext context, Widget child,
+                              ImageChunkEvent? loadingProgress) {
+                            if (loadingProgress == null) {
+                              return child;
+                            } else {
+                              return Shimmer.fromColors(
+                                baseColor: Colors.white38,
+                                highlightColor: Colors.grey,
+                                child: Container(
+                                  height: 65,
+                                  width: 65,
+                                  color: Colors.white,
+                                ),
+                              );
+                            }
+                          },
                         ),
-                      );
-                    },
-                    loadingBuilder: (BuildContext context,
-                        Widget child,
-                        ImageChunkEvent?
-                        loadingProgress) {
-                      if (loadingProgress == null) {
-                        return child;
-                      } else {
-                        return Shimmer.fromColors(
-                          baseColor: Colors.white38,
-                          highlightColor: Colors.grey,
-                          child: Container(
-                            height: 75,
-                            width: 75,
-                            color: Colors.white,
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ),
-              ),
+                      ),
+                    ),
               Padding(
-                padding:
-                const EdgeInsets.only( left: 12),
+                padding: const EdgeInsets.only(left: 14),
                 child: Container(
-                  width: screenWidth * 0.65,
+                  width: mediaWidth * 0.7,
                   child: Column(
                     children: [
                       Container(
-                        height: 80,
+                        //height: 90,
                         child: Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.max,
-                            crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                            mainAxisAlignment:
-                            MainAxisAlignment.spaceEvenly,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              item.isBuy1Get1 == true ?
-                              Text("Buy 1 GET 1",style: TextStyle(fontSize: 9,fontWeight: FontWeight.bold,color: Colors.red),):SizedBox(),
+                              item.isBuy1Get1 == true
+                                  ? Text(
+                                      "Buy 1 GET 1",
+                                      style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.red),
+                                    )
+                                  : SizedBox(),
                               Row(
                                 mainAxisSize: MainAxisSize.max,
                                 mainAxisAlignment:
-                                MainAxisAlignment
-                                    .spaceBetween,
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Container(
-                                    width: screenWidth*0.55,
+                                    width: mediaWidth * 0.5,
                                     child: Row(
                                       children: [
                                         Flexible(
@@ -143,90 +179,83 @@ class CartProductComponent extends StatelessWidget {
                                               "${item.title}",
                                             ),
                                             style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight:
-                                                FontWeight
-                                                    .w600),
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600),
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                         /* item?.productSizesList ==
                                                                 "[]" || item?.productSizesList?.isEmpty == true ? */
-                                        Text(
-                                            ' (\$${(item.price)})',
+                                        /*  Text(' (\$${(item.price)})',
                                             style: TextStyle(
                                                 fontSize: 10,
-                                                color: Colors
-                                                    .grey[
-                                                700]))
+                                                color: Colors.grey[700]))*/
                                         //: SizedBox(),
                                       ],
                                     ),
                                   ),
-                                  GestureDetector(
-                                      onTap: onRemoveTap,
-                                      child: Align(
-                                          alignment: Alignment.topRight,
-                                          child: Icon(
-                                            Icons.close,
-                                            color: primaryColor,
-                                            size: 18,
-                                          ))),
+                                  Spacer(),
+                                  Align(
+                                      alignment: Alignment.topRight,
+                                      child: Icon(
+                                        Icons.arrow_forward_ios,
+                                        color: Colors.black54,
+                                        size: 14,
+                                      )),
                                 ],
                               ),
                               Row(
                                 mainAxisSize: MainAxisSize.max,
                                 mainAxisAlignment:
-                                MainAxisAlignment
-                                    .spaceBetween,
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Column(
-                                    mainAxisSize:
-                                    MainAxisSize.max,
+                                    mainAxisSize: MainAxisSize.max,
                                     crossAxisAlignment:
-                                    CrossAxisAlignment
-                                        .start,
+                                        CrossAxisAlignment.start,
                                     mainAxisAlignment:
-                                    MainAxisAlignment
-                                        .spaceBetween,
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Container(
-                                          width: screenWidth * 0.44,
+                                          width: mediaWidth * 0.5,
                                           child: Text(
-                                            item.getAddOnList()?.isEmpty == true ?
-                                            capitalizeFirstLetter(
-                                                "${item.shortDescription}") :
-                                            addOns(item),
+                                            item.getAddOnList()?.isEmpty ==
+                                                    true
+                                                ? capitalizeFirstLetter(
+                                                    "${item.shortDescription}")
+                                                : addOns(item),
                                             style: TextStyle(
                                                 fontSize: 10,
-                                                color: Colors
-                                                    .grey[600]),
-                                            overflow:
-                                            TextOverflow
-                                                .ellipsis,
-                                            maxLines:item.getAddOnList()?.isEmpty == true ? 1: 2,
+                                                color: Colors.grey[700]),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: item
+                                                        .getAddOnList()
+                                                        ?.isEmpty ==
+                                                    true
+                                                ? 1
+                                                : 2,
                                           )),
                                       SizedBox(
                                         height: 5,
                                       ),
                                       Row(
-                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
                                         children: [
                                           Text(
-                                              '\$${itemTotalPrice}',
+                                              '\$${itemTotalPrice.toStringAsFixed(2)}',
                                               style: TextStyle(
                                                   fontSize: 14,
                                                   fontWeight:
-                                                  FontWeight
-                                                      .w600)),
-                                          item.getAddOnList()?.isEmpty == true ?
-                                              SizedBox():
-                                          Text(
-                                              '+\$${addOnTotalPrice}',
-                                              style: TextStyle(
-                                                  fontSize: 11,
-                                                  color: Colors
-                                                      .grey[600])),
+                                                      FontWeight.w600)),
+                                          item.getAddOnList()?.isEmpty == true
+                                              ? SizedBox()
+                                              : Text(
+                                                  '+\$${addOnTotalPrice.toStringAsFixed(2)}',
+                                                  style: TextStyle(
+                                                      fontSize: 12,
+                                                      color:
+                                                          Colors.grey[600])),
                                         ],
                                       ),
                                       SizedBox(
@@ -234,11 +263,10 @@ class CartProductComponent extends StatelessWidget {
                                       ),
                                     ],
                                   ),
+                                  Spacer(),
                                   Column(
-                                    mainAxisSize:
-                                    MainAxisSize.max,
-                                    mainAxisAlignment:
-                                    MainAxisAlignment.end,
+                                    mainAxisSize: MainAxisSize.max,
+                                    mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
                                       SizedBox(
                                         height: 15,
@@ -253,9 +281,10 @@ class CartProductComponent extends StatelessWidget {
                                             child: Icon(
                                               Icons
                                                   .remove_circle_outline_rounded,
-                                              size: 22,
-                                              color:
-                                              AppColor.SECONDARY,
+                                              size: 20,
+                                              color: item.quantity == 0
+                                                  ? Colors.grey
+                                                  : Colors.grey,
                                             ),
                                             onTap: onMinusTap,
                                           ),
@@ -265,22 +294,18 @@ class CartProductComponent extends StatelessWidget {
                                           Text(
                                             "${item.quantity.toString()}",
                                             style: TextStyle(
-                                                fontSize:
-                                                13,
-                                                fontWeight:
-                                                FontWeight
-                                                    .bold),
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold),
                                           ),
                                           SizedBox(
                                             width: 4,
                                           ),
                                           GestureDetector(
                                             child: Icon(
-                                              Icons
-                                                  .add_circle_outlined,
-                                              size: 22,
-                                              color:
-                                              AppColor.SECONDARY,
+                                              Icons.add_circle_outlined,
+                                              size: 20,
+                                              color: CustomAppColor
+                                                  .ButtonBackColor,
                                             ),
                                             onTap: onAddTap,
                                           ),
@@ -303,9 +328,18 @@ class CartProductComponent extends StatelessWidget {
                           ),
                         ),
                       ),
-                      /*productSize.isNotEmpty
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          )),
+    );
+  }
+
+  /*productSize.isNotEmpty
                                           ? Container(
-                                              width: screenWidth * 0.48,
+                                              width: mediaWidth * 0.48,
                                               child: Wrap(
                                                 spacing: 10,
                                                 runSpacing: 5,
@@ -321,7 +355,7 @@ class CartProductComponent extends StatelessWidget {
                                                               .quantity >
                                                           0
                                                       ? Container(
-                                                          width: screenWidth *
+                                                          width: mediaWidth *
                                                               0.48,
                                                           child: Row(
                                                             mainAxisAlignment:
@@ -334,7 +368,7 @@ class CartProductComponent extends StatelessWidget {
                                                                     constraints:
                                                                         BoxConstraints(
                                                                             maxWidth:
-                                                                                screenWidth * 0.173),
+                                                                                mediaWidth * 0.173),
                                                                     child: Text(
                                                                       capitalizeFirstLetter(
                                                                           '${productSize[index].size}: '),
@@ -448,32 +482,19 @@ class CartProductComponent extends StatelessWidget {
                                               ),
                                             )
                                           : SizedBox()*/
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ));
-  }
-
-  String addOns(ProductData item){
-    String text ="Add Ons: ";
-    item.getAddOnList().forEach((category){
-      if(category.addOnCategoryType == "multiple") {
+  String addOns(ProductData item) {
+    String text = "";
+    item.getAddOnList().forEach((category) {
+      if (category.addOnCategoryType == "multiple") {
         category.addOns?.forEach((addOn) {
-          text = text + capitalizeFirstLetter("+${addOn.name} ");
+          text = capitalizeFirstLetter("${addOn.name} ");
         });
-      }
-      else {
+      } else {
         category.addOns?.forEach((addOn) {
-            text = text + capitalizeFirstLetter("+${addOn.name} ");
-
+          text = capitalizeFirstLetter("${addOn.name} ");
         });
       }
     });
     return text;
   }
 }
-
-

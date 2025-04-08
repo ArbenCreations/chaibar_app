@@ -1,11 +1,10 @@
 import 'dart:io';
 
-import 'package:ChaatBar/utils/Helper.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../languageSection/Languages.dart';
+import '../language/Languages.dart';
 import '../view/component/toastMessage.dart';
 
 bool validatePassword(String password) {
@@ -92,6 +91,34 @@ String convertDateTimeFormat(String input) {
 
   DateTime parsedDate = DateTime.parse(localTime);
   String formattedDate = DateFormat('dd-MM-yyyy hh:mm a').format(parsedDate);
+
+  return formattedDate;
+}
+String convertTimeFormat(String input) {
+  if (input.isEmpty) {
+    return input;
+  }
+  String localTime = convertUtcDateToLocal(input);
+
+  DateTime parsedDate = DateTime.parse(localTime);
+  String formattedDate = DateFormat('hh:mm a').format(parsedDate);
+
+  return formattedDate;
+}
+
+String convertedDateTimeFormat(String input) {
+  if (input.isEmpty) {
+    return input;  // Return empty string if input is empty
+  }
+
+  // Parse the input as an ISO 8601 string
+  DateTime parsedDate = DateTime.parse(input);
+
+  // Convert the parsed UTC date to local time
+  DateTime localDate = parsedDate.toLocal();
+
+  // Format the local date in the desired format
+  String formattedDate = DateFormat('dd-MM-yyyy').format(localDate);
 
   return formattedDate;
 }
@@ -185,7 +212,7 @@ bool isBalanceMoreThanAmount(String balance, String amt, BuildContext context) {
   double intBalance = extractFloat(balance);
   double inrAmt = amt != null || amt != "" ? extractFloat(amt) : 0;
   if (intBalance <= inrAmt) {
-    ToastComponent.showToast(
+    CustomToast.showToast(
         context: context, message: 'You do not have enough balance.');
     return false;
   } else {
@@ -275,6 +302,51 @@ Future<String?> getDeviceId() async {
     return iosInfo.identifierForVendor; // This is the unique ID on iOS devices
   }
   return null;
+}
+
+
+/// Format date in 'dd-MM-yyyy' format
+String convertedDateMonthFormat(String input) {
+  if (input.isEmpty) return input;
+  try {
+    DateTime date = DateTime.parse(input);
+    return DateFormat("MMM,dd yyyy").format(date);  // Output in 29Jan2025 format
+  } catch (e) {
+    return 'Invalid date format';
+  }
+}
+
+bool hasMinLength(String value) {
+  return value.length >= 8;
+}
+
+bool hasUppercase(String value) {
+  return value.contains(RegExp(r'[A-Z]'));
+}
+
+bool hasDigit(String value) {
+  return value.contains(RegExp(r'\d'));
+}
+
+bool hasSpecialCharacter(String value) {
+  return value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+}
+
+
+Map<String, String> splitFullName(String? displayName) {
+  if (displayName == null || displayName.trim().isEmpty) {
+    return {'firstName': '', 'lastName': ''};
+  }
+
+  List<String> parts = displayName.trim().split(RegExp(r'\s+'));
+
+  if (parts.length == 1) {
+    return {'firstName': parts[0], 'lastName': ''};
+  } else {
+    String firstName = parts.first;
+    String lastName = parts.sublist(1).join(' '); // handles middle names too
+    return {'firstName': firstName, 'lastName': lastName};
+  }
 }
 
 

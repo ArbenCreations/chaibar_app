@@ -1,13 +1,14 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../model/response/rf_bite/productListResponse.dart';
-import '../../theme/AppColor.dart';
+import '../../model/response/productListResponse.dart';
+import '../../theme/CustomAppColor.dart';
 import '../../utils/Util.dart';
 
 class ProductComponent extends StatelessWidget {
   final ProductData item;
-  final double screenWidth;
+  final double mediaWidth;
   final bool isDarkMode;
   final double screenHeight;
   final Color primaryColor;
@@ -20,7 +21,7 @@ class ProductComponent extends StatelessWidget {
   const ProductComponent({
     Key? key,
     required this.item,
-    required this.screenWidth,
+    required this.mediaWidth,
     required this.isDarkMode,
     required this.screenHeight,
     required this.onAddTap,
@@ -38,20 +39,30 @@ class ProductComponent extends StatelessWidget {
         Navigator.pushNamed(context, "/ProductDetailScreen", arguments: item);
       },
       child: Container(
-        width: (screenWidth / 2) - 25,
-        margin: EdgeInsets.only(top: 3, bottom: 4),
+        width: (mediaWidth / 2) - 25,
+        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(15),
+        ),
         child: Column(
           children: [
-            item.imageUrl == "" || item.imageUrl == null
+            item.imageUrl == null || item.imageUrl == ""
                 ? Container(
                     decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.5),
-                        color: primaryColor),
-                    child: Image.asset(
-                      "assets/pizza_image.jpg",
-                      height: screenHeight * 0.165,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
+                      borderRadius: BorderRadius.circular(15),
+                      color: primaryColor,
+                    ),
+                    child: ClipRRect(
+                      // Ensures rounded corners apply to the image
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.asset(
+                        "assets/app_logo.png",
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit
+                            .cover, // Use BoxFit.cover to maintain aspect ratio and fill the container
+                      ),
                     ),
                   )
                 : Stack(
@@ -59,63 +70,126 @@ class ProductComponent extends StatelessWidget {
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12.5),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                               color: Theme.of(context).cardColor, width: 0.3),
                           color: isDarkMode
-                              ? AppColor.DARK_CARD_COLOR
+                              ? CustomAppColor.DarkCardColor
                               : Colors.white,
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12.5),
-                          child: Image.network(
-                            "${item.imageUrl}",
-                            height: screenHeight * 0.165,
+                          borderRadius: BorderRadius.circular(10),
+                          child: CachedNetworkImage(
+                            imageUrl: "${item.imageUrl ?? ""}",
+                            height: 120,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            errorBuilder: (BuildContext context,
-                                Object exception, StackTrace? stackTrace) {
-                              return Container(
-                                child: Image.asset(
-                                  "assets/pizza_image.jpg",
-                                  height: screenHeight * 0.165,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
-                              );
-                            },
-                            loadingBuilder: (BuildContext context, Widget child,
-                                ImageChunkEvent? loadingProgress) {
-                              if (loadingProgress == null) {
-                                return child;
-                              } else {
-                                return Shimmer.fromColors(
-                                  baseColor: Colors.white38,
-                                  highlightColor: Colors.grey,
-                                  child: Container(
-                                    height: screenHeight * 0.165,
-                                    width: double.infinity,
-                                    color: Colors.white,
-                                  ),
-                                );
-                              }
-                            },
+                            placeholder: (context, url) => Shimmer.fromColors(
+                              baseColor: Colors.white38,
+                              highlightColor: Colors.grey,
+                              child: Container(
+                                height: 120,
+                                width: double.infinity,
+                                color: Colors.white,
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              child: Image.asset(
+                                "assets/app_logo.png",
+                                height: 120,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
                         ),
                       ),
+                      item.featured == true
+                          ? Positioned(
+                              top: 6,
+                              left: 8,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(horizontal: 2),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(4),
+                                  color: Colors.green,
+                                ),
+                                child: Align(
+                                  alignment: Alignment.bottomRight,
+                                  child: item.quantity == 0
+                                      ? Text(
+                                          "Popular",
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.white),
+                                        )
+                                      : SizedBox(),
+                                ),
+                              ),
+                            )
+                          : SizedBox(),
                       Positioned(
-                        bottom: 0,
+                        bottom: 6,
+                        right: 8,
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 4),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(4),
+                                color: Colors.white,
+                              ),
+                              child: Align(
+                                alignment: Alignment.bottomRight,
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(Icons.thumb_up, size: 12),
+                                        SizedBox(width: 2),
+                                        Text("${item.upvote_percentage ?? 0}%",
+                                            style: TextStyle(fontSize: 9)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            /* Container(
+                              padding: EdgeInsets.symmetric(horizontal: 4),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(4),
+                                color: Colors.white,
+                              ),
+                              child: Align(
+                                alignment: Alignment.bottomRight,
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(Icons.thumb_down, size: 14),
+                                        SizedBox(width: 2),
+                                        Text("${item.downvote_percentage}%", style: TextStyle(fontSize: 12)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),*/
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        top: 0,
                         right: 0,
                         left: 0,
                         child: Container(
-                          /*
-                      width: double
-                          .infinity,
-                      height:
-                      screenHeight *
-                          0.165,*/
                           child: Align(
-                            alignment: Alignment.bottomCenter,
+                            alignment: Alignment.bottomRight,
                             child: item.quantity == 0
                                 ? GestureDetector(
                                     onTap: () {
@@ -123,25 +197,20 @@ class ProductComponent extends StatelessWidget {
                                     },
                                     child: Card(
                                       margin: EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 5),
+                                          horizontal: 0, vertical: 0),
                                       shape: RoundedRectangleBorder(
                                           borderRadius:
-                                              BorderRadius.circular(30)),
+                                              BorderRadius.circular(10)),
                                       color: isDarkMode
-                                          ? AppColor.DARK_CARD_COLOR
-                                          : Colors.white,
+                                          ? CustomAppColor.DarkCardColor
+                                          : CustomAppColor.PrimaryAccent,
                                       child: Container(
-                                        width: 32,
-                                        height: 32,
-                                        child: Center(
-                                          child: Text(
-                                            "+",
-                                            style: TextStyle(
-                                                fontSize: 23,
-                                                color: primaryColor),
-                                          ),
-                                        ),
-                                      ),
+                                          width: 32,
+                                          height: 32,
+                                          child: Icon(
+                                            Icons.add,
+                                            color: Colors.white,
+                                          )),
                                     ),
                                   )
                                 : SizedBox(),
@@ -149,15 +218,9 @@ class ProductComponent extends StatelessWidget {
                         ),
                       ),
                       Positioned(
-                        bottom: 0,
+                        top: 0,
                         right: 0,
                         child: Container(
-                          /*
-                      width: double
-                          .infinity,
-                      height:
-                      screenHeight *
-                          0.165,*/
                           child: Align(
                             alignment: Alignment.bottomCenter,
                             child: item.quantity == 0
@@ -171,7 +234,7 @@ class ProductComponent extends StatelessWidget {
                                           borderRadius:
                                               BorderRadius.circular(12),
                                           color: isDarkMode
-                                              ? AppColor.DARK_CARD_COLOR
+                                              ? CustomAppColor.DarkCardColor
                                               : Colors.white),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
@@ -213,58 +276,34 @@ class ProductComponent extends StatelessWidget {
                           ),
                         ),
                       ),
-                      showFavIcon ?
-                      Container(
-                          width: double.infinity,
-                          height: screenHeight * 0.165,
-                          child: Align(
-                            alignment: Alignment.topLeft,
-                            child: GestureDetector(
-                              onTap: () {
-                                onFavoriteTap();
-                              },
-                              child:item.favorite ?? true ? Container(
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(35),
-                                    color: AppColor.SECONDARY),
-                                padding: EdgeInsets.all(6),
-                                margin: EdgeInsets.all(4.5),
-                                child: Icon(
-                                  Icons.favorite,
-                                  size: 14,
-                                  color: Colors.white,
-                                ),
-                              ) : Padding(
-                                padding: const EdgeInsets.all(6.0),
-                                child: Icon(
-                                  Icons.favorite,
-                                  size: 22,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          )) : SizedBox(),
-                      item.isBuy1Get1 == true ?
-                      Container(
-                          width: double.infinity,
-                          height: screenHeight * 0.165,
-                          child: Align(
-                            alignment: Alignment.topRight,
-                            child:
-                            Container(
-                                margin: EdgeInsets.symmetric(horizontal: 6,vertical: 6),
-                                padding: EdgeInsets.symmetric(horizontal: 3,vertical: 3),
-                                decoration: BoxDecoration(
-                                    color: AppColor.PRIMARY,
-                                    borderRadius: BorderRadius.circular(5)
-                                ),
-                                child: Text("Buy 1 GET 1",style: TextStyle(fontSize: 9,fontWeight: FontWeight.bold,color: AppColor.WHITE),)),
-                          )):SizedBox()
+                      item.isBuy1Get1 == true
+                          ? Container(
+                              width: double.infinity,
+                              height: screenHeight * 0.165,
+                              child: Align(
+                                alignment: Alignment.topRight,
+                                child: Container(
+                                    margin: EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 6),
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 3, vertical: 3),
+                                    decoration: BoxDecoration(
+                                        color: CustomAppColor.Primary,
+                                        borderRadius: BorderRadius.circular(5)),
+                                    child: Text(
+                                      "Buy 1 GET 1",
+                                      style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white),
+                                    )),
+                              ))
+                          : SizedBox()
                     ],
                   ),
             //SizedBox(height: 2,),
             Container(
-              margin: EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              margin: EdgeInsets.symmetric(horizontal: 2, vertical: 5),
               width: double.infinity,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -275,47 +314,24 @@ class ProductComponent extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        width: screenWidth * 0.28,
+                        width: mediaWidth * 0.2,
                         child: Text(
                           capitalizeFirstLetter("${item.title}"),
+                          maxLines: 1,
                           style: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold),
+                              fontSize: 13, fontWeight: FontWeight.bold),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Container(
-                        width: screenWidth * 0.13,
-                        child: Text.rich(
-                          TextSpan(
-                            children: [
-                              WidgetSpan(
-                                child: Transform.translate(
-                                  offset: const Offset(0, -4),
-                                  // Moves the dollar sign slightly upward
-                                  child: Text(
-                                    "\$",
-                                    style: TextStyle(
-                                      fontSize: 9.5,
-                                      // Smaller font size for the dollar sign
-                                      color:
-                                          primaryColor, // Color of the dollar sign
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              TextSpan(
-                                text: "${item.price}",
-                                // Price value
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  // Regular font size for price
-                                  fontWeight: FontWeight.bold,
-                                  color: primaryColor, // Color for price
-                                ),
-                              ),
-                            ],
+                        //width: mediaWidth * 0.13,
+                        child: Text(
+                          "\$${item.price}",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
                       )
                     ],
@@ -348,7 +364,6 @@ class ProductComponent extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // SizedBox(height: 24,),
                 ],
               ),
             ),
@@ -357,6 +372,4 @@ class ProductComponent extends StatelessWidget {
       ),
     );
   }
-
-// Helper method to build the card
 }

@@ -15,7 +15,7 @@ class CustomerSignUp {
    String? lastName;
    String? phoneNumber;
    String? password;
-   String? deviceToken;
+   //String? deviceToken;
    String? email;
 
   CustomerSignUp({
@@ -23,7 +23,7 @@ class CustomerSignUp {
     required this.password,
     required this.firstName,
     required this.lastName,
-    required this.deviceToken,
+    //required this.deviceToken,
     required this.phoneNumber,
   });
 
@@ -33,7 +33,7 @@ class CustomerSignUp {
       'password': password,
       'first_name': firstName,
       'last_name': lastName,
-      'device_token': deviceToken,
+      //'device_token': deviceToken,
       'phone_number': phoneNumber,
     };
   }

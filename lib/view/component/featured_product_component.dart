@@ -1,13 +1,14 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../model/response/rf_bite/productListResponse.dart';
-import '../../theme/AppColor.dart';
+import '../../model/response/productListResponse.dart';
+import '../../theme/CustomAppColor.dart';
 import '../../utils/Util.dart';
 
 class FeaturedProductComponent extends StatelessWidget {
   final ProductData data;
-  final double screenWidth;
+  final double mediaWidth;
   final bool isDarkMode;
   final int index;
   final double screenHeight;
@@ -21,7 +22,7 @@ class FeaturedProductComponent extends StatelessWidget {
     required this.data,
     required this.index,
     required this.isDarkMode,
-    required this.screenWidth,
+    required this.mediaWidth,
     required this.screenHeight,
     required this.onAddTap,
     required this.onMinusTap,
@@ -32,269 +33,223 @@ class FeaturedProductComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(context, "/ProductDetailScreen", arguments: data);
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 2),
-        child: Card(
-          child: Container(
-            width: screenWidth * 0.6,
-            child: Column(
-              //crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Stack(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(12.5),
-                            topRight: Radius.circular(12.5)),
-                      ),
-                      child: data.imageUrl == "" || data.imageUrl == null
-                          ? Container(
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.only(
-                                      topLeft: Radius.circular(12.5),
-                                      topRight: Radius.circular(12.5)),
-                                  color: AppColor.PRIMARY),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(12.5),
-                                    topRight: Radius.circular(12.5)),
-                                child: Image.asset(
-                                  "assets/pizza_image.jpg",
-                                  height: screenHeight * 0.105,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            )
-                          : Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(12.5),
-                                    topRight: Radius.circular(12.5)),
-                                border: Border.all(
-                                    color: Theme.of(context).cardColor,
-                                    width: 0.3),
-                                color: isDarkMode
-                                    ? AppColor.DARK_CARD_COLOR
-                                    : Colors.white,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(12.5),
-                                    topRight: Radius.circular(12.5)),
-                                child: Image.network(
-                                  "${data.imageUrl}",
-                                  height: screenHeight * 0.105,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (BuildContext context,
-                                      Object exception,
-                                      StackTrace? stackTrace) {
-                                    return Container(
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(12.5),
-                                            topRight: Radius.circular(12.5)),
-                                        child: Image.asset(
-                                          "assets/pizza_image.jpg",
-                                          height: screenHeight * 0.11,
-                                          width: double.infinity,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  loadingBuilder: (BuildContext context,
-                                      Widget child,
-                                      ImageChunkEvent? loadingProgress) {
-                                    if (loadingProgress == null) {
-                                      return child;
-                                    } else {
-                                      return Shimmer.fromColors(
-                                        baseColor: Colors.white38,
-                                        highlightColor: Colors.grey,
-                                        child: Container(
-                                          height: screenHeight * 0.105,
-                                          width: double.infinity,
-                                          color: Colors.white,
-                                        ),
-                                      );
-                                    }
-                                  },
-                                ),
-                              ),
-                            ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        child: Align(
-                          alignment: Alignment.bottomRight,
-                          child: data.quantity == 0
-                              ? GestureDetector(
-                                  onTap: onPlusTap,
-                                  child: Card(
-                                    margin: EdgeInsets.symmetric(
-                                        horizontal: 5, vertical: 5),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(15)),
-                                    child: Container(
-                                      width: 30,
-                                      height: 30,
-                                      child: Center(
-                                        child: Text(
-                                          "+",
-                                          style: TextStyle(
-                                              fontSize: 22,
-                                              color: primaryColor),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : Card(
-                                  child: Container(
-                                    margin: EdgeInsets.all(6),
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 4, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        GestureDetector(
-                                          child: Icon(
-                                            Icons.remove,
-                                            size: 18,
-                                            color: primaryColor,
-                                          ),
-                                          onTap: onMinusTap,
-                                        ),
-                                        SizedBox(
-                                          width: 4,
-                                        ),
-                                        Text(
-                                          data.quantity.toString(),
-                                          style: TextStyle(fontSize: 12),
-                                        ),
-                                        SizedBox(
-                                          width: 4,
-                                        ),
-                                        GestureDetector(
-                                          child: Icon(
-                                            Icons.add,
-                                            size: 18,
-                                            color: primaryColor,
-                                          ),
-                                          onTap: onAddTap,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ),
-                    Container(
-                        width: double.infinity,
-                        height: screenHeight * 0.105,
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          child: Container(
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(4),
-                                  color: AppColor.SECONDARY),
-                              padding: EdgeInsets.all(3),
-                              margin: EdgeInsets.all(4.5),
-                              child: Text(
-                                "#$index most liked",
-                                style: TextStyle(fontSize: 9,color : Colors.white),
-                              )),
-                        ))
-                  ],
-                ),
-                Container(
-                  width: double.infinity,
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                        top: 4.0, bottom: 2, right: 8, left: 8),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              width: screenWidth * 0.38,
-                              child: Text(
-                                capitalizeFirstLetter("${data.title}"),
-                                style: TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.bold),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Text.rich(
-                              TextSpan(
-                                children: [
-                                  WidgetSpan(
-                                    child: Transform.translate(
-                                      offset: const Offset(0, -4),
-                                      // Moves the dollar sign slightly upward
-                                      child: Text(
-                                        "\$",
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          // Smaller font size for the dollar sign
-                                          color:
-                                              primaryColor, // Color of the dollar sign
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: "${data.price}",
-                                    // Price value
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      // Regular font size for price
-                                      fontWeight: FontWeight.bold,
-                                      color: primaryColor, // Color for price
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          ],
-                        ),
-                        SizedBox(
-                          height: 1,
-                        ),
-                        /*Container(
-                        width: double.infinity,
-                        child: Text(
-                          '${data.shortDescription}',
-                          style:
-                              TextStyle(fontSize: 10, color: Colors.grey[600]),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ),*/
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+      onTap: () =>
+          Navigator.pushNamed(context, "/ProductDetailScreen", arguments: data),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.6,
+        padding: const EdgeInsets.symmetric(vertical: 2.0), // Merged Padding
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          color: Colors.white, // Add a color to avoid unnecessary rebuilds
+        ),
+        clipBehavior: Clip.hardEdge, // Ensures content follows borderRadius
+        child: Column(
+          children: [
+            _buildImageSection(data, context),
+            _buildInfoSection(data),
+          ],
+        ),
+      )
+    );
+  }
+
+  Widget _buildImageSection(data, BuildContext context) {
+    return Stack(
+      children: [
+        Container(
+          width: mediaWidth,
+          height: 120,
+          margin: const EdgeInsets.only(bottom: 3),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
           ),
+          child: data.imageUrl == null || data.imageUrl.isEmpty
+              ? _placeholderImage()
+              : _networkImage(data.imageUrl ?? "", context),
+        ),
+        _buildQuantityButton(data),
+        data.featured == true
+            ? Positioned(
+          top: 6,
+          left: 8,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 2),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              color: Colors.green,
+            ),
+            child: Align(
+              alignment: Alignment.bottomRight,
+              child: Text(
+                "Popular",
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white),
+            ),)
+          ),
+        )
+            : SizedBox(),
+      ],
+    );
+  }
+
+  Widget _placeholderImage() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15),
+        color: CustomAppColor.Primary,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: Image.asset(
+          "assets/app_logo.png",
+          fit: BoxFit.cover,
         ),
       ),
+    );
+  }
+
+  Widget _networkImage(String? imageUrl, BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        border: Border.all(color: Theme.of(context).cardColor, width: 0.3),
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        child: CachedNetworkImage(
+          imageUrl: imageUrl ?? "",
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Shimmer.fromColors(
+            baseColor: Colors.white38,
+            highlightColor: Colors.grey,
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.12,
+              width: double.infinity,
+              color: Colors.white,
+            ),
+          ),
+          errorWidget: (context, url, error) => _placeholderImage(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoSection(data) {
+    return Container(
+      width: mediaWidth,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  capitalizeFirstLetter(data.title),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+              ),
+            /*  Row(
+                children: const [
+                  Icon(Icons.thumb_up, size: 14),
+                  SizedBox(width: 2),
+                  Text("10%", style: TextStyle(fontSize: 10)),
+                ],
+              ),*/
+            ],
+          ),
+          const SizedBox(height: 3), // Added spacing
+          Text(
+            "Get your food from Chai bar, we are happy to serve you",
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Colors.black54,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            "\$${data.price.toStringAsFixed(2)}",
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuantityButton(data) {
+    return Align(
+      alignment: Alignment.bottomRight,
+      child: data.quantity == 0
+          ? GestureDetector(
+              onTap: onPlusTap,
+              child: Container(
+                width: 35,
+                height: 35,
+                margin: const EdgeInsets.only(right: 0, top: 0),
+                decoration: BoxDecoration(
+                  color: CustomAppColor.PrimaryAccent,
+                  borderRadius: const BorderRadius.all(Radius.circular(10)),
+                ),
+                child: const Center(
+                  child: Icon(Icons.add, size: 24, color: Colors.white),
+                ),
+              ),
+            )
+          : IntrinsicWidth(
+            child: Container(
+                margin: EdgeInsets.only(top: 4, right: 4),
+                decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.all(Radius.circular(20))),
+                child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Row(
+                      children: [
+                        /*Text(
+                                                'Quantity: ', style: TextStyle(fontSize: 12),),*/
+                        GestureDetector(
+                          child: Icon(
+                            Icons.remove_circle_outline_rounded,
+                            size: 24,
+                            color:
+                                data.quantity == 0 ? Colors.grey : Colors.black54,
+                          ),
+                          onTap: onMinusTap,
+                        ),
+                        SizedBox(
+                          width: 4,
+                        ),
+                        Text(
+                          "${data.quantity.toString()}",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(
+                          width: 4,
+                        ),
+                        GestureDetector(
+                          child: Icon(
+                            Icons.add_circle_outlined,
+                            size: 24,
+                            color: CustomAppColor.PrimaryAccent,
+                          ),
+                          onTap: onAddTap,
+                        ),
+                      ],
+                    )),
+              ),
+          ),
     );
   }
 

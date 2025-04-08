@@ -1,13 +1,10 @@
-import 'package:ChaatBar/utils/Helper.dart';
-import 'package:ChaatBar/view/screens/ChaatBar/bottom_nav.dart';
+import '/utils/Helper.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_broadcasts/flutter_broadcasts.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-import '../../main.dart';
 import '../response/notificationOtpResponse.dart';
 
 GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -21,11 +18,6 @@ class PushNotificationService {
     FirebaseMessaging.onMessageOpenedApp.listen(
       (RemoteMessage message) {
         print("PushNotificationService:: ${message.toString()}");
-    /*    sendBroadcast(
-          BroadcastMessage(
-            name: "de.kevlatus.flutter_broadcasts_example.demo_action",
-          ),
-        );*/
         _handleMessage(message.data);
       },
     );
@@ -40,13 +32,12 @@ class PushNotificationService {
       if (defaultTargetPlatform == TargetPlatform.iOS ||
           defaultTargetPlatform == TargetPlatform.android) {
         if (navigatorKey.currentState?.context != null) {
-
           _showNotification(message);
           return; // Do not show the notification
         }
       }
-
     });
+    await requestPermission();
     enableIOSNotifications();
     await getToken();
     await registerNotificationListeners();
@@ -100,38 +91,52 @@ class PushNotificationService {
     );
   }
 
+  Future<void> requestPermission() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('User granted permission');
+    } else {
+      print('User declined or has not accepted permission');
+    }
+  }
+
   AndroidNotificationChannel androidNotificationChannel =
       const AndroidNotificationChannel(
-        'high_importance_channel',
-        'High Importance Notifications',
-        description: 'This channel is used for important notifications.',
-        importance: Importance.max,
-        playSound: true
-      );
+          'high_importance_channel', 'High Importance Notifications',
+          description: 'This channel is used for important notifications.',
+          importance: Importance.max,
+          playSound: true);
 
   Future<void> _showNotification(RemoteMessage? message) async {
     final notification = message?.notification;
     final android = message?.notification?.android;
 
-
     if (notification != null && android != null) {
       final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
       await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
+              AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(androidNotificationChannel);
       flutterLocalNotificationsPlugin.show(
         notification.hashCode,
         notification?.body,
-        "by The ChaatBar",
+        "by The chaiBar",
         NotificationDetails(
           android: AndroidNotificationDetails(
             androidNotificationChannel.id,
             androidNotificationChannel.name,
             channelDescription: androidNotificationChannel.description,
             icon: "notification",
-            importance: Importance.max, // Matches channel importance
-            priority: Priority.high, // Ensures heads-up notification
+            importance: Importance.max,
+            // Matches channel importance
+            priority: Priority.high,
+            // Ensures heads-up notification
             playSound: true,
           ),
         ),
@@ -143,7 +148,6 @@ class PushNotificationService {
   void _handleMessage(Map<String, dynamic> data) {
     final notificationResponse = NotificationOtpResponse.fromJson(data);
     print("_handleMessage :: ${notificationResponse.otp}");
-
   }
 
   void _handleNotificationClick(String? payload) {
@@ -152,7 +156,6 @@ class PushNotificationService {
       // Create a NotificationOtpResponse object from parsed data
       final notificationResponse = NotificationOtpResponse.fromJson(data);
       print("_handleNotificationClick :: ${notificationResponse.otp}");
-
     }
   }
 

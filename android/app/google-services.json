@@ -1,26 +1,123 @@
 {
   "project_info": {
-    "project_number": "760585093843",
-    "project_id": "chaatbar-e3f66",
-    "storage_bucket": "chaatbar-e3f66.firebasestorage.app"
+    "project_number": "480424457130",
+    "project_id": "chaibar-isek",
+    "storage_bucket": "chaibar-isek.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:760585093843:android:d740d1c5221afb25b9ca26",
+        "mobilesdk_app_id": "1:480424457130:android:6bd17943139627b6f871d3",
         "android_client_info": {
-          "package_name": "com.utell.chaatBar"
+          "package_name": "com.chaibar"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "480424457130-ro1q94snihlclt4dr2pdi9marub35se5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.chaibar",
+            "certificate_hash": "bdcda9e6c1f105b0cf14a2197c3bd86ac55285e2"
+          }
+        },
+        {
+          "client_id": "480424457130-5ol3ohhb0aacvq0c0jqdm2s2kf0ofts9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyC5UcoXn0Rkr6crm3jALv4dz4Nyj-PXLPo"
+          "current_key": "AIzaSyDhOyi9SCOV1Nhd_7cCe9CS5ItJ_ojdEFs"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "480424457130-5ol3ohhb0aacvq0c0jqdm2s2kf0ofts9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "480424457130-0gk5b5oprn61shreajov4c3ut3rgu8q4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.chaibar"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:480424457130:android:6594fd03be9ad319f871d3",
+        "android_client_info": {
+          "package_name": "com.chaibar.restaurant"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "480424457130-5ol3ohhb0aacvq0c0jqdm2s2kf0ofts9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhOyi9SCOV1Nhd_7cCe9CS5ItJ_ojdEFs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "480424457130-5ol3ohhb0aacvq0c0jqdm2s2kf0ofts9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "480424457130-0gk5b5oprn61shreajov4c3ut3rgu8q4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.chaibar"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:480424457130:android:68ebc549216fb8e0f871d3",
+        "android_client_info": {
+          "package_name": "com.thechaibar"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "480424457130-5ol3ohhb0aacvq0c0jqdm2s2kf0ofts9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhOyi9SCOV1Nhd_7cCe9CS5ItJ_ojdEFs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "480424457130-5ol3ohhb0aacvq0c0jqdm2s2kf0ofts9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "480424457130-0gk5b5oprn61shreajov4c3ut3rgu8q4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.chaibar"
+              }
+            }
+          ]
         }
       }
     }

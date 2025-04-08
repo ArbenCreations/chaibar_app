@@ -1,4 +1,4 @@
-import 'package:ChaatBar/theme/AppColor.dart';
+import '/theme/CustomAppColor.dart';
 import 'package:flutter/material.dart';
 
 class CustomNumberKeyboard extends StatelessWidget {
@@ -61,7 +61,7 @@ class CustomNumberKeyboard extends StatelessWidget {
                   )),
               _buildKey('0', isDarkMode),
               Container(
-                decoration: BoxDecoration(shape: BoxShape.circle, color: AppColor.PRIMARY ),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: CustomAppColor.Primary ),
                 child: IconButton(
                     onPressed: () {
                       _onKeyPressed("submit");
@@ -84,11 +84,11 @@ class CustomNumberKeyboard extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: () => _onKeyPressed(value),
       child: Container(
-        width: 90,
+        width: 80,
         margin: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
         padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
         decoration: BoxDecoration(
-          color:  AppColor.PRIMARY ,
+          color:  CustomAppColor.Primary ,
           borderRadius: BorderRadius.all(Radius.circular(10))
         ),
         child: Padding(
@@ -98,7 +98,7 @@ class CustomNumberKeyboard extends StatelessWidget {
               value,
               style: TextStyle(
                 fontSize: 18.0,
-                color: AppColor.WHITE ,
+                color: Colors.white ,
                 fontWeight: FontWeight.w600,
               ),
             ),

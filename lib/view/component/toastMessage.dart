@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:toastification/toastification.dart';
 
-class ToastComponent {
+class CustomToast {
   static void showToast({
     required BuildContext context,
     required String? message,
@@ -14,11 +14,11 @@ class ToastComponent {
       Fluttertoast.showToast(
         msg: "${message}",
         toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.TOP,
+        gravity: ToastGravity.SNACKBAR,
         timeInSecForIosWeb: 2, /*
       backgroundColor: Colors.black,
       textColor: Colors.white,*/
-        fontSize: 16.0,
+        fontSize: 11.0,
       );
     }
     }
