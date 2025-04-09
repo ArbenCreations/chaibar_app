@@ -1070,7 +1070,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                               ),
                                             )
                                           : SizedBox(),
-                                     /* ElevatedButton(
+                                      /* ElevatedButton(
                                         child: Text('Call payment'),
                                         onPressed: () => makePayment(),
                                       ),*/
@@ -1089,11 +1089,8 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                         onTap: () {
                                                           email ==
                                                                   "guest@isekaitech.com"
-                                                              ? CustomToast.showToast(
-                                                                  context:
-                                                                      context,
-                                                                  message:
-                                                                      "Please create account to proceed.")
+                                                              ? showGuestUserAlert(
+                                                                  context)
                                                               :
                                                               //CustomToast.showToast(context: context, message: "ApiKey 8e422a10-2d70-abda-35cc-8ed49cc03884");
                                                               //_addRedeemPointsData();
@@ -1102,7 +1099,20 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                                         "/OrderSuccessfulScreen"
                                                                       );*/
                                                               //_getApiAccessKey();
-                                                          _createOrder(GetApiAccessKeyResponse(active: true, apiAccessKey: "apiAccessKey", createdTime: 244242424, modifiedTime: 24242424, developerAppUuid: "24242424", merchantUuid: "24242424", message: "message"));
+                                                              _createOrder(GetApiAccessKeyResponse(
+                                                                  active: true,
+                                                                  apiAccessKey:
+                                                                      "apiAccessKey",
+                                                                  createdTime:
+                                                                      244242424,
+                                                                  modifiedTime:
+                                                                      24242424,
+                                                                  developerAppUuid:
+                                                                      "24242424",
+                                                                  merchantUuid:
+                                                                      "24242424",
+                                                                  message:
+                                                                      "message"));
                                                           //_createOrder(null);
                                                           //_fetchStoreStatus(true);
                                                         },
@@ -2432,15 +2442,18 @@ class _MyCartScreenState extends State<MyCartScreen> {
     try {
       // initiate payment
       applePaymentData = await ApplePayFlutter.makePayment(
-        countryCode: "CA", // Canada country code
-        currencyCode: "CAD", // Canadian Dollar
+        countryCode: "CA",
+        // Canada country code
+        currencyCode: "CAD",
+        // Canadian Dollar
         paymentNetworks: [
           PaymentNetwork.visa,
           PaymentNetwork.mastercard,
           PaymentNetwork.amex,
           // Remove mada, as it's not supported in Canada
         ],
-        merchantIdentifier: "merchant.com.chaibar", // Make sure this merchant ID is registered for Canada
+        merchantIdentifier: "merchant.com.chaibar",
+        // Make sure this merchant ID is registered for Canada
         paymentItems: paymentItems,
         customerEmail: "demo.user@business.com",
         customerName: "Demo User",
@@ -2451,5 +2464,41 @@ class _MyCartScreenState extends State<MyCartScreen> {
     } on PlatformException {
       print('Failed payment');
     }
+  }
+
+  void showGuestUserAlert(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Guest Account"),
+          content: const Text(
+            "You're currently using a guest account. Please create an account to place your order.",
+          ),
+          actions: [
+            TextButton(
+              child: const Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+              },
+            ),
+            ElevatedButton(
+              child: const Text("Create Account"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+                Helper.clearAllSharedPreferences();
+                database.favoritesDao.clearAllFavoritesProduct();
+                database.cartDao.clearAllCartProduct();
+                database.categoryDao.clearAllCategories();
+                database.productDao.clearAllProducts();
+                database.cartDao.clearAllCartProduct();
+                Navigator.pushNamed(
+                    context, '/RegisterScreen'); // Change route as needed
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }

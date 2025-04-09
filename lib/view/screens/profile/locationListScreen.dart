@@ -97,7 +97,7 @@ class _LocationListScreenState extends State<LocationListScreen> {
               Navigator.pop(context);
             },
             child: Icon(Icons.arrow_back, color: Colors.white,)),
-        title: Text("Store Locations", style: TextStyle(color: Colors.white),),
+        title: Text("Our Locations", style: TextStyle(color: Colors.white),),
       ),
       body: SafeArea(
         child: Container(

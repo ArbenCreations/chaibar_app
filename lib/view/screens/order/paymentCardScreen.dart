@@ -301,11 +301,11 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
                             }, //_onValidate,
                             child: _buildValidateButton(mediaWidth),
                           ),
-                          ApplePayButton(
+                        /*  ApplePayButton(
                             onPressed: () {
                               makePayment(); // your payment logic
                             },
-                          ),
+                          ),*/
                         ],
                       ),
                     ),

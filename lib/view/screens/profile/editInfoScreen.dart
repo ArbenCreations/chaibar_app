@@ -86,7 +86,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
         firstName = profileDetails?.firstName;
         lastName = profileDetails?.lastName;
         email = profileDetails?.email;
-        phone = profileDetails?.phoneNumber ??" ";
+        phone = profileDetails?.phoneNumber ?? " ";
         userId = "${profileDetails?.id}";
         _nameController.text = "${firstName}";
         _lastNameController.text = "${lastName}";
@@ -301,7 +301,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
       useSafeArea: true,
       builder: (BuildContext context) {
         bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-        TextEditingController phoneController = TextEditingController();
+        TextEditingController passwordController = TextEditingController();
         bool passwordVisible = false;
         bool isLoading = false;
 
@@ -314,7 +314,8 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                 style: TextStyle(fontSize: 12),
               ),
               content: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 5),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12.0, horizontal: 5),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,7 +342,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                               style: TextStyle(fontSize: 11.0),
                               obscureText: !passwordVisible,
                               obscuringCharacter: "*",
-                              controller: phoneController,
+                              controller: passwordController,
                               keyboardType: TextInputType.visiblePassword,
                               textInputAction: TextInputAction.done,
                               decoration: InputDecoration(
@@ -349,11 +350,13 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                                 contentPadding: EdgeInsets.symmetric(
                                     vertical: 16.0, horizontal: 16.0),
                                 hintText: Languages.of(context)!.labelPassword,
-                                hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
+                                hintStyle:
+                                    TextStyle(fontSize: 13, color: Colors.grey),
                                 icon: Icon(
                                   Icons.email,
                                   size: 16,
-                                  color: isDarkMode ? Colors.white : Colors.black,
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
                                 ),
                                 suffixIcon: GestureDetector(
                                   child: Icon(
@@ -392,7 +395,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                     hideKeyBoard();
                     bool isConnected = await _connectivityService.isConnected();
 
-                    if (phoneController.text.isEmpty) {
+                    if (passwordController.text.isEmpty) {
                       CustomToast.showToast(
                           context: context, message: "Please enter password");
                     } else {
@@ -405,22 +408,26 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                         });
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(Languages.of(context)!.labelNoInternetConnection),
+                            content: Text(Languages.of(context)!
+                                .labelNoInternetConnection),
                             duration: maxDuration,
                           ),
                         );
                       } else {
                         DeleteProfileRequest request = DeleteProfileRequest(
                           email: _emailController.text,
-                          password: phoneController.text,
+                          password: passwordController.text,
                         );
 
                         await Future.delayed(Duration(milliseconds: 2));
                         await Provider.of<MainViewModel>(context, listen: false)
-                            .deleteProfile("/api/v1/app/customers/verify_and_destroy", request);
+                            .deleteProfile(
+                                "/api/v1/app/customers/verify_and_destroy",
+                                request);
 
                         ApiResponse apiResponse =
-                            Provider.of<MainViewModel>(context, listen: false).response;
+                            Provider.of<MainViewModel>(context, listen: false)
+                                .response;
                         deleteProfileResponse(context, apiResponse);
 
                         setState(() => isLoading = false);
@@ -435,7 +442,6 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
       },
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -549,6 +555,8 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                               _emailController,
                               false),
                         ),
+                        email !=
+                            "guest@isekaitech.com" ?
                         ConstrainedBox(
                           constraints: BoxConstraints(
                             maxWidth: mediaWidth * 0.9,
@@ -562,12 +570,14 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                               Icons.call,
                               _phoneController,
                               false),
-                        ),
+                        ): SizedBox(),
                       ],
                     ),
                     SizedBox(
                       height: 20,
                     ),
+                    email !=
+                        "guest@isekaitech.com" ?
                     Align(
                       alignment: Alignment.bottomCenter,
                       child: Container(
@@ -589,7 +599,9 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                           ),
                         ),
                       ),
-                    ),
+                    ) : SizedBox(),
+                    email !=
+                        "guest@isekaitech.com" ?
                     Align(
                       alignment: Alignment.bottomCenter,
                       child: Container(
@@ -611,7 +623,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                           ),
                         ),
                       ),
-                    ),
+                    ): SizedBox(),
                   ],
                 ),
               ],

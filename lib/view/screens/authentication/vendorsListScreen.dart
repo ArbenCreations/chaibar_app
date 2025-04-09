@@ -89,6 +89,7 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
           backgroundColor: Colors.white,
           body: Container(
             height: screenHeight,
+            width: mediaWidth,
             decoration: BoxDecoration(
                 image: DecorationImage(
                     image: AssetImage("assets/chai_back.jpg"),

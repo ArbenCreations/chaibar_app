@@ -116,7 +116,7 @@ class _WelcomeScreenState extends State<GetStartedScreen> {
                           Center(
                             child: MaterialButton(
                               minWidth: mediaWidth * 0.55,
-                              color: CustomAppColor.Primary,
+                              color: Colors.white,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8)),
                               height: 48,
@@ -127,7 +127,7 @@ class _WelcomeScreenState extends State<GetStartedScreen> {
                               child: Text(
                                 "Sign Up",
                                 style: TextStyle(
-                                    fontSize: 14, color: Colors.white),
+                                    fontSize: 14, color: CustomAppColor.Primary,),
                               ),
                             ),
                           ),
