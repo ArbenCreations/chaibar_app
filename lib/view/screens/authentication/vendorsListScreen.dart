@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '/language/Languages.dart';
-import '/model/response/locationListResponse.dart';
 import '/utils/Helper.dart';
 import '/utils/Util.dart';
 import '../../../model/response/vendorListResponse.dart';
@@ -34,7 +33,6 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
   bool isDarkMode = false;
   final ConnectivityService _connectivityService = ConnectivityService();
   static const maxDuration = Duration(seconds: 2);
-  List<LocationData> locationList = [];
   List<VendorData> vendorList = [];
   String selectedLocality = "";
   VendorData selectedLocalityData = VendorData();
@@ -43,11 +41,23 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
   String? selectedItem;
   List<String> items = List<String>.generate(10, (index) => "Item $index");
   var currentSelectedItem = VendorData();
+  TextEditingController searchController = TextEditingController();
+  List<VendorData> filteredVendorList = [];
 
   @override
   void initState() {
     super.initState();
     _fetchData();
+    searchController.addListener(_filterVendors);
+  }
+
+  void _filterVendors() {
+    final query = searchController.text.toLowerCase();
+    setState(() {
+      filteredVendorList = vendorList.where((vendor) {
+        return vendor.localityName?.toLowerCase().contains(query) ?? false;
+      }).toList();
+    });
   }
 
   @override
@@ -77,445 +87,141 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
         },
         child: Scaffold(
           backgroundColor: Colors.white,
-          body: SafeArea(
-            child: Container(
-              height: screenHeight,
-              decoration: BoxDecoration(
-                  image: DecorationImage(
-                      image: AssetImage("assets/vendorListBack.png"),
-                      fit: BoxFit.cover)),
-              child: Stack(
+          body: Container(
+            height: screenHeight,
+            decoration: BoxDecoration(
+                image: DecorationImage(
+                    image: AssetImage("assets/chai_back.jpg"),
+                    opacity: 0.7,
+                    fit: BoxFit.cover)),
+            child: SafeArea(
+              child: Column(
                 children: [
-                  Align(
-                      alignment: Alignment.topCenter,
-                      child: IntrinsicWidth(
-                        child: Container(
+                  /*SafeArea(
+                    child: Align(
+                        alignment: Alignment.topCenter,
+                        child: IntrinsicWidth(
+                          child: Container(
                             //width: mediaWidth * 0.5,
-                            margin: EdgeInsets.only(top: 50),
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 40, vertical: 10),
-                            decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8)),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Icon(Icons.location_on),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                Text(
-                                  "Select Store",
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            )),
-                      )),
-                  /*vendorList.length == 0 ?
-                  Center(
-                    child: Image.asset(
-                      "assets/search.gif",
-                      height: 200,
-                      width: 200,
-                      fit: BoxFit.fill,
-                    ),
-                  ): SizedBox(),*/
+                              margin: EdgeInsets.only(top: 30),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 40, vertical: 5),
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8)),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.location_on),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Text(
+                                    "Select Location",
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              )),
+                        )),
+                  ),*/
                   Container(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        /*    Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 16.0, vertical: 18.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  final now = DateTime.now();
-                                  const maxDuration = Duration(seconds: 2);
-                                  final isWarning = lastBackPressed == null ||
-                                      now.difference(lastBackPressed!) >
-                                          maxDuration;
+                        vendorList.isNotEmpty
+                            ? Column(
+                                children: [
+                                  // 🔍 Add the search bar
+                                  Container(
+                                    width: mediaWidth * 0.85,
+                                    height: 45,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(20.0),
+                                    ),
+                                    child: TextField(
+                                      controller: searchController,
+                                      decoration: InputDecoration(
+                                        hintText: "Search location...",
+                                        prefixIcon: Icon(Icons.location_on,
+                                            color: CustomAppColor.Primary),
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(20.0),
+                                            borderSide: BorderSide(
+                                                color: Colors.white,
+                                                width: 0.1)),
+                                      ),
+                                    ),
+                                  ),
 
-                                  if (isWarning) {
-                                    lastBackPressed = DateTime.now();
-                                    CustomToast.showToast(
-                                        message: "Press back again to exit",
-                                        context: context);
-                                  } else {
-                                    SystemNavigator.pop();
-                                  }
-                                },
-                                child: Icon(
-                                  Icons.arrow_back_ios,
-                                  color: Colors.black,
-                                  size: 24,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),*/
-                        vendorList.length > 0
-                            ? Align(
-                                alignment: Alignment.center,
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.vertical,
-                                  child: Column(
-                                    children: vendorList.map((item) {
-                                      return GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            selectedLocality =
-                                                selectedLocality.isEmpty
-                                                    ? "${item.localityName}"
-                                                    : "";
-                                            selectedLocalityData = item;
-                                          });
+                                  // 📝 Filtered list display
+                                  SizedBox(height: 20),
+                                  Align(
+                                    alignment: Alignment.center,
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.vertical,
+                                      child: Column(
+                                        children:
+                                            filteredVendorList.map((item) {
+                                          return GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                selectedLocality =
+                                                    selectedLocality.isEmpty
+                                                        ? "${item.localityName}"
+                                                        : "";
+                                                selectedLocalityData = item;
+                                              });
 
-                                          if (selectedLocality.isNotEmpty &&
+                                              if (selectedLocality.isNotEmpty &&
+                                                      selectedLocalityData
+                                                              .status
+                                                              ?.contains(
+                                                                  "online") ==
+                                                          true ||
                                                   selectedLocalityData.status
                                                           ?.contains(
-                                                              "online") ==
-                                                      true ||
-                                              selectedLocalityData.status
+                                                              "offline") ==
+                                                      true) {
+                                                Helper.saveVendorData(
+                                                    selectedLocalityData);
+                                                Helper.saveApiKey(
+                                                    selectedLocalityData
+                                                        .paymentSetting
+                                                        ?.apiKey);
+                                                Navigator.pushReplacementNamed(
+                                                    context,
+                                                    "/BottomNavigation",
+                                                    arguments: 1);
+                                              } else if (selectedLocalityData
+                                                      .status
                                                       ?.contains("offline") ==
                                                   true) {
-                                            Helper.saveVendorData(
-                                                selectedLocalityData);
-                                            Helper.saveApiKey(
-                                                selectedLocalityData
-                                                    .paymentSetting?.apiKey);
-                                            Navigator.pushReplacementNamed(
-                                                context, "/BottomNavigation",
-                                                arguments: 1);
-                                          } else if (selectedLocalityData.status
-                                                  ?.contains("offline") ==
-                                              true) {
-                                            CustomToast.showToast(
-                                                context: context,
-                                                message:
-                                                    "This store is closed at the moment.");
-                                          } else {
-                                            CustomToast.showToast(
-                                                context: context,
-                                                message: "Select location.");
-                                          }
-                                        },
-                                        child: _buildVendorCard(
-                                            item), // Your vendor card widget
-                                      );
-                                    }).toList(),
+                                                CustomToast.showToast(
+                                                    context: context,
+                                                    message:
+                                                        "This store is closed at the moment.");
+                                              } else {
+                                                CustomToast.showToast(
+                                                    context: context,
+                                                    message:
+                                                        "Select location.");
+                                              }
+                                            },
+                                            child: _buildVendorCard(item),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                ],
                               )
                             : ShimmerList(),
                         SizedBox(
                           height: 50,
                         )
-                        /*    currentSelectedItem.localityName != null
-                            ? Column(
-                                children: [
-                                  Text(
-                                    "Selected Location",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    "Please click here to enter the Restaurant",
-                                    style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.normal,
-                                        color: Colors.grey),
-                                  ),
-                                  SizedBox(height: 10),
-                                  GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        selectedLocality = selectedLocality
-                                                .isEmpty
-                                            ? "${currentSelectedItem.localityName}"
-                                            : "";
-                                        selectedLocalityData =
-                                            currentSelectedItem;
-                                      });
-
-                                      if (selectedLocality.isNotEmpty &&
-                                          selectedLocalityData.status
-                                                  ?.contains("online") ==
-                                              true) {
-                                        Helper.saveVendorData(
-                                            selectedLocalityData);
-                                        Helper.saveApiKey(selectedLocalityData
-                                            .paymentSetting?.apiKey);
-                                        Navigator.pushReplacementNamed(
-                                            context, "/BottomNavigation");
-                                      } else {
-                                        CustomToast.showToast(
-                                            context: context,
-                                            message: selectedLocalityData
-                                                        .status
-                                                        ?.contains(
-                                                            "online") ==
-                                                    true
-                                                ? "This store is closed at the moment."
-                                                : "Select location.");
-                                      }
-                                    },
-                                    child: Container(
-                                        margin: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.vertical(top: Radius.circular(20),
-                                          bottom: Radius.circular(0)),
-                                          color: Colors.white,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.grey.withOpacity(0.2),
-                                              spreadRadius: 2,
-                                              blurRadius: 5,
-                                              offset: Offset(0, 3),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Stack(
-                                          children: [
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(20),
-                                              child: Image.network(
-                                                "${currentSelectedItem.storeImage}",
-                                                width: double.infinity,
-                                                height: 240,
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
-                                            Positioned(
-                                              top: 10,
-                                              left: 10,
-                                              child: Container(
-                                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                decoration: BoxDecoration(
-                                                  color: "${currentSelectedItem.status}" == "online" ? Colors.green : Colors.red,
-                                                  borderRadius: BorderRadius.circular(5),
-                                                ),
-                                                child: Text(
-                                                  capitalizeFirstLetter("${currentSelectedItem.status}"),
-                                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
-                                                ),
-                                              ),
-                                            ),
-                                            Positioned(
-                                              bottom: 0,
-                                              left: 0,
-                                              right: 0,
-                                              child: Container(
-                                                padding: EdgeInsets.all(12),
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-                                                  color: Colors.white,
-                                                ),
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      "${currentSelectedItem.businessName}",
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight: FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                    SizedBox(height: 4),
-                                                    Text(
-                                                      "${currentSelectedItem.description}",
-                                                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                                                    ),
-                                                    SizedBox(height: 4),
-                                                    Row(
-                                                      children: [
-                                                        Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
-                                                        SizedBox(width: 4),
-                                                        Text(
-                                                          "${currentSelectedItem.localityName}",
-                                                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),)
-                                  ),
-                                ],
-                              )
-                            : SizedBox(),*/
-                        /* Column(
-                          children: vendorList.map((item) {
-                            return GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  selectedLocality = selectedLocality.isEmpty
-                                      ? "${item.localityName}"
-                                      : "";
-                                  selectedLocalityData = item;
-                                });
-
-                                if (selectedLocality.isNotEmpty &&
-                                    selectedLocalityData.status
-                                            ?.contains("online") ==
-                                        true) {
-                                  Helper.saveVendorData(selectedLocalityData);
-                                  Helper.saveApiKey(
-                                      selectedLocalityData.paymentSetting?.apiKey);
-                                  Navigator.pushReplacementNamed(
-                                      context, "/BottomNavigation");
-                                } else {
-                                  CustomToast.showToast(
-                                      context: context,
-                                      message: selectedLocalityData.status
-                                                  ?.contains("online") ==
-                                              true
-                                          ? "This store is closed at the moment."
-                                          : "Select location.");
-                                }
-                              },
-                              child: Container(
-                                margin: EdgeInsets.symmetric(vertical: 5),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(30),
-                                  color: Colors.white,
-                                ),
-                                child: Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(30),
-                                      child: item.storeImage!.isNotEmpty
-                                          ? Image.network(
-                                              item.storeImage ?? placeholderImage,
-                                              fit: BoxFit.cover,
-                                              width: mediaWidth * 0.85,
-                                              height: screenHeight * 0.17,
-                                            )
-                                          : Image.asset(
-                                              "assets/vendorLoc.png",
-                                              fit: BoxFit.fitWidth,
-                                              height: screenHeight * 0.25,
-                                            ),
-                                    ),
-                                    Container(
-                                      height: screenHeight * 0.17,
-                                      width: mediaWidth * 0.85,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(30),
-                                        gradient: LinearGradient(
-                                          begin: Alignment.centerLeft,
-                                          end: Alignment.centerRight,
-                                          colors: (item.localityName ==
-                                                  selectedLocality)
-                                              ? [
-                                                  CustomAppColor.Primary,
-                                                  CustomAppColor.Primary
-                                                      .withOpacity(0.4)
-                                                ]
-                                              : [
-                                                  Colors.black54,
-                                                  Colors.black54,
-                                                  Colors.black54
-                                                ],
-                                        ),
-                                      ),
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 4, vertical: 2),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 12.0),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.spaceEvenly,
-                                              children: [
-                                                Container(
-                                                  width: 200,
-                                                  child: Text(
-                                                    capitalizeFirstLetter(
-                                                        "${item.businessName}"),
-                                                    style: TextStyle(
-                                                      fontSize: 18,
-                                                      color: Colors.white,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Text(
-                                                  capitalizeFirstLetter(
-                                                      "${item.description}"),
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Align(
-                                            alignment: Alignment.bottomRight,
-                                            child: Container(
-                                              margin: EdgeInsets.only(
-                                                  bottom: 10, right: 10),
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(30),
-                                                color: item.status
-                                                            ?.contains("online") ==
-                                                        true
-                                                    ? Colors.green
-                                                    : Colors.red,
-                                              ),
-                                              padding: EdgeInsets.symmetric(
-                                                  vertical: 2, horizontal: 5),
-                                              child: Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.store_mall_directory,
-                                                    color: Colors.white,
-                                                    size: 16,
-                                                  ),
-                                                  SizedBox(width: 4),
-                                                  Text(
-                                                    item.status?.contains(
-                                                                "online") ==
-                                                            true
-                                                        ? "Open"
-                                                        : "Closed",
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 11,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),*/
                       ],
                     ),
                   ),
@@ -528,11 +234,11 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
 
   // Separate Widgets for readability
 
-  /// Vendor Card
+  /* /// Vendor Card
   Widget _buildVendorCard(item) {
     return Center(
       child: Container(
-        width: mediaWidth / 1.5,
+        width: mediaWidth * 0.8,
         margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
@@ -543,8 +249,8 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
             Stack(
               children: [
                 Container(
-                  height: screenHeight * 0.12,
-                  width: mediaWidth * 0.85,
+                  height: screenHeight * 0.1,
+                  width: mediaWidth * 0.9,
                   decoration: BoxDecoration(
                     borderRadius:
                         BorderRadius.vertical(top: Radius.circular(20)),
@@ -615,15 +321,18 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
                           children: [
                             Icon(
                               Icons.location_on,
-                              size: 14,
+                              size: 16,
                             ),
                             SizedBox(
-                              width: 3,
+                              width: 2,
                             ),
                             Text(
                               capitalizeFirstLetter("${item.localityName}"),
-                              style:
-                                  TextStyle(fontSize: 12, color: Colors.black),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
@@ -641,6 +350,115 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
         ),
       ),
     );
+  }*/
+
+  /// Vendor Card
+  Widget _buildVendorCard(item) {
+    return Center(
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: 5),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: Colors.white,
+        ),
+        child: Stack(
+          children: [
+            Container(
+              // height: screenHeight * 0.17,
+              width: mediaWidth * 0.85,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Store Image
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: SizedBox(
+                      height: 55,
+                      width: 55,
+                      child: item.storeImage?.isNotEmpty == true
+                          ? Image.network(
+                              item.storeImage!,
+                              fit: BoxFit.cover,
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return const Center(
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2));
+                              },
+                              errorBuilder: (_, __, ___) =>
+                                  Container(color: Colors.black54),
+                            )
+                          : Image.asset("assets/vendorLoc.png",
+                              fit: BoxFit.cover),
+                    ),
+                  ),
+
+                  // Business Name & Description
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Text(
+                            capitalizeFirstLetter(item.businessName ?? "N/A"),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.location_on,
+                                size: 16,
+                              ),
+                              SizedBox(
+                                width: 2,
+                              ),
+                              Text(
+                                capitalizeFirstLetter("${item.localityName}"),
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            capitalizeFirstLetter(item.description ?? ""),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.black),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Status Badge
+                  _buildStatusBadge(
+                    item.status?.contains("online") == true ? "Open" : "Close",
+                    item.status?.contains("online") == true
+                        ? Colors.brown
+                        : Colors.red,
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
   }
 
   /// Status Badge Widget
@@ -651,16 +469,14 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
         child: Container(
           margin: EdgeInsets.only(top: 10, left: 10),
           decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(5), color: color),
-          padding: EdgeInsets.symmetric(vertical: 2, horizontal: 5),
+              borderRadius: BorderRadius.circular(20), color: color),
+          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
           child: Row(
             children: [
-              Icon(Icons.store_mall_directory, color: Colors.white, size: 16),
-              SizedBox(width: 4),
               Text(status,
                   style: TextStyle(
                       color: Colors.white,
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold)),
             ],
           ),
@@ -726,6 +542,7 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
         //selectedItem = "${countryListResponse?.countries?[0].flagImageUrl}";
         setState(() {
           vendorList = vendorListResponse!.vendors!;
+          filteredVendorList = vendorList;
           currentSelectedItem = vendorList[0];
         });
 

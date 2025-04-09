@@ -1,4 +1,5 @@
 import 'package:ChaiBar/view/screens/authentication/forgotPassword/forgotPasswordScreen.dart';
+import 'package:ChaiBar/view/screens/authentication/getStartedScreen.dart';
 import 'package:ChaiBar/view/screens/authentication/signup.dart';
 import 'package:ChaiBar/view/screens/authentication/vendorsListScreen.dart';
 import 'package:ChaiBar/view/screens/profile/locationListScreen.dart';
@@ -339,6 +340,9 @@ class _MyAppState extends State<MyApp> {
             },
             '/LocationListScreen': (context) {
               return LocationListScreen();
+            },
+            '/GetStartedScreen': (context) {
+              return GetStartedScreen();
             },
           }),
     );

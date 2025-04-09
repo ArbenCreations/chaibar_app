@@ -1,3 +1,4 @@
+import 'package:apple_pay_flutter/apple_pay_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_credit_card/flutter_credit_card.dart';
@@ -22,6 +23,7 @@ import '../../../theme/CustomAppColor.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
 import '../../../utils/apis/api_response.dart';
+import '../../component/ApplePayButton.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/session_expired_dialog.dart';
 import '../../component/toastMessage.dart';
@@ -210,21 +212,22 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 65,
-        systemOverlayStyle: SystemUiOverlayStyle(
-            statusBarIconBrightness: Brightness.light
-        ),
+        systemOverlayStyle:
+            SystemUiOverlayStyle(statusBarIconBrightness: Brightness.light),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
-              bottomRight: Radius.circular(30),
-              bottomLeft: Radius.circular(30),
-            )
-        ),
+          bottomRight: Radius.circular(30),
+          bottomLeft: Radius.circular(30),
+        )),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back,color : Colors.white),
+          icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => _onBackPressed(context),
         ),
         title: Text("Card Details",
-            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w600, color: Colors.white)),
+            style: TextStyle(
+                fontSize: 18.0,
+                fontWeight: FontWeight.w600,
+                color: Colors.white)),
       ),
       body: Stack(
         children: [
@@ -298,6 +301,11 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
                             }, //_onValidate,
                             child: _buildValidateButton(mediaWidth),
                           ),
+                          ApplePayButton(
+                            onPressed: () {
+                              makePayment(); // your payment logic
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -310,6 +318,50 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> makePayment() async {
+    dynamic applePaymentData;
+    List<PaymentItem> paymentItems = [
+      PaymentItem(
+          label: 'Label',
+          amount: double.parse("${widget.orderData?.order?.totalAmount}"),
+          shippingcharge: 0.0)
+    ];
+
+    try {
+      applePaymentData = await ApplePayFlutter.makePayment(
+        countryCode: "CA",
+        currencyCode: "CAD",
+        paymentNetworks: [
+          PaymentNetwork.visa,
+          PaymentNetwork.mastercard,
+          PaymentNetwork.amex,
+        ],
+        merchantIdentifier: "merchant.com.chaibar",
+        paymentItems: paymentItems,
+        customerEmail: "demo.user@business.com",
+        customerName: "Demo User",
+        companyName: "Concerto Soft",
+      );
+
+      print("Payment response: ${applePaymentData.toString()}");
+
+      // ✅ Check if payment was successful
+      if (applePaymentData != null && applePaymentData["status"] == "success") {
+        final paymentId =
+            applePaymentData["id"]; // Adjust key based on actual response
+        final paymentStatus = applePaymentData["status"];
+        _hitSuccessCallBack(paymentId, paymentStatus);
+      } else {
+        print("Payment was not successful or cancelled.");
+        CustomToast.showToast(
+            context: context,
+            message: "Something went worng. Please try with card payment.");
+      }
+    } on PlatformException catch (e) {
+      print('Failed payment: ${e.message}');
+    }
   }
 
   void _onBackPressed(BuildContext context) async {
@@ -467,13 +519,15 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
         expMonth: expiryMonth,
         expYear: "20$expiryYear",
         cvv: cvvCode,
-        brand: cardHolderName,
+        //brand: cardHolderName,
       );
 
       CardRequest cardRequest = CardRequest(card: cardDetails);
       //await Provider.of<MainViewModel>(context, listen: false).getApiToken("https://token-sandbox.dev.clover.com/v1/tokens", apiKey.toString(), cardRequest);
       await Provider.of<MainViewModel>(context, listen: false).getApiToken(
-          "https://token.clover.com/v1/tokens", apiKey.toString(), cardRequest);
+          "https://token.clover.com/v1/tokens",
+          "12e4e3acdf0f20655aab1ddfd4adf912",
+          cardRequest);
       ApiResponse apiResponse =
           Provider.of<MainViewModel>(context, listen: false).response;
       getApiTokenResponse(context, apiResponse);
@@ -535,12 +589,13 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
           //amount: convertToCents("${widget.orderData?.order?.payableAmount}"),
           amount: 5,
           currency: "usd",
-          source: "$source");
+          source: "$source",
+          description: "Test charge from Flutter");
       await Provider.of<MainViewModel>(context, listen: false)
           //.getFinalPaymentApi("https://scl-sandbox.dev.clover.com/v1/charges", "f2240939-d0fa-ccfd-88ff-2f14e160dc6a", transactionRequest);
           // await Provider.of<MainViewModel>(context, listen: false).getFinalPaymentApi("https://scl.clover.com/v1/charges", "$apiKey", transactionRequest);
-          .getFinalPaymentApi("https://scl.clover.com/v1/charges", "$apiKey",
-              transactionRequest);
+          .getFinalPaymentApi("https://scl.clover.com/v1/charges",
+              "6f943c05-9a54-1d08-f870-d8eeebe8cb40", transactionRequest);
       ApiResponse apiResponse =
           Provider.of<MainViewModel>(context, listen: false).response;
       getFinalPaymentApiResponse(context, apiResponse);
@@ -726,8 +781,8 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
       AddRewardPointsRequest request = AddRewardPointsRequest(
           amountSpent:
               double.parse("${widget.orderData?.order?.payableAmount}"),
-      orderId: int.parse("${widget.orderData?.order?.id}"),
-      couponCode: "${widget.orderData?.order?.couponCode}");
+          orderId: int.parse("${widget.orderData?.order?.id}"),
+          couponCode: "${widget.orderData?.order?.couponCode}");
 
       await Provider.of<MainViewModel>(context, listen: false)
           .addRewardPointsDetails("api/v1/app/rewards/add_points", request);
@@ -752,12 +807,15 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
         print("rwrwr ${response?.totalPoints}");
-        Navigator.pushNamed(context, "/OrderSuccessfulScreen",
+        Navigator.pushNamed(
+          context,
+          "/OrderSuccessfulScreen",
           arguments: {
             "data": successCallbackResponse,
             'orderData': widget.orderData,
             'pointsEarned': "${response?.pointsEarned}"
-          },);
+          },
+        );
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
         ScaffoldMessenger.of(context)

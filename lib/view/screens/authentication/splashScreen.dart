@@ -76,7 +76,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   void _navigation() {
     if (token == null || token?.isEmpty == true) {
-      Navigator.pushReplacementNamed(context, "/SignInScreen");
+      Navigator.pushReplacementNamed(context, "/GetStartedScreen");
     } else {
       if (vendorId != null && vendorId != 0) {
         Navigator.pushReplacementNamed(context, "/BottomNavigation", arguments: 1);

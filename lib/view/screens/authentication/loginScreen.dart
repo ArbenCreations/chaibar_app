@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:provider/provider.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '/model/request/signInRequest.dart';
 import '/model/response/signInResponse.dart';
@@ -150,18 +149,13 @@ class _SigninScreenState extends State<SigninScreen> {
                                         Platform.isIOS
                                             ? SizedBox(
                                                 width: mediaWidth * 0.55,
-                                                child: SignInWithAppleButton(
-                                                  style:
-                                                      SignInWithAppleButtonStyle
-                                                          .black,
-                                                  //iconAlignment: IconAlignment.center,
-                                                  onPressed: () async {
+                                                child: GestureDetector(
+                                                  onTap: () async {
                                                     User? user = await context
                                                         .read<
                                                             AuthenticationProvider>()
                                                         .signInWithApple();
                                                     if (user != null) {
-                                                      // Check if we have all required info
                                                       bool isEmailRelay =
                                                           user.email?.endsWith(
                                                                   "@privaterelay.appleid.com") ??
@@ -177,40 +171,103 @@ class _SigninScreenState extends State<SigninScreen> {
                                                           "Apple sign-in failed or was canceled.");
                                                     }
                                                   },
+                                                  child: Container(
+                                                    height: 50,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        Icon(Icons.apple,
+                                                            color:
+                                                                Colors.white),
+                                                        SizedBox(width: 10),
+                                                        Text(
+                                                          'Sign in with Apple',
+                                                          style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 14,
+                                                            // <- Change text size here
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
                                                 ),
                                               )
                                             : SizedBox(),
-                                        //_appleButton(),
-                                        Container(
-                                          margin: EdgeInsets.only(top: 10),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.end,
-                                            children: [
-                                              Text(
-                                                "Not Registered? ",
+                                        GestureDetector(
+                                          onTap: () async {
+                                            setState(() {
+                                              isLoading = true;
+                                            });
+                                            SignInRequest request =
+                                                SignInRequest(
+                                                    customer: CustomerSignIn(
+                                              deviceToken: "${deviceToken}",
+                                              email: "guest@isekaitech.com",
+                                              password: "Isekai@123",
+                                            ));
+
+                                            bool isConnected =
+                                                await _connectivityService
+                                                    .isConnected();
+                                            if (!isConnected) {
+                                              setState(() {
+                                                isLoading = false;
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                        '${Languages.of(context)?.labelNoInternetConnection}'),
+                                                    duration: maxDuration,
+                                                  ),
+                                                );
+                                              });
+                                            } else {
+                                              await Provider.of<MainViewModel>(
+                                                      context,
+                                                      listen: false)
+                                                  .signInWithPass(
+                                                      "/api/v1/app/customers/sign_in",
+                                                      request);
+
+                                              ApiResponse apiResponse =
+                                                  Provider.of<MainViewModel>(
+                                                          context,
+                                                          listen: false)
+                                                      .response;
+                                              getSignInResponse(
+                                                  context, apiResponse);
+                                            }
+                                          },
+                                          child: Container(
+                                            width: mediaWidth * 0.55,
+                                            height: 50,
+                                            margin: EdgeInsets.only(top: 5),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black,
+                                              // Change this to match your theme
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                "Continue as guest user",
                                                 style: TextStyle(
-                                                  fontSize: 13,
-                                                  color: Colors.black54,
-                                                ),
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white),
                                               ),
-                                              GestureDetector(
-                                                onTap: () {
-                                                  Navigator.pushNamed(context,
-                                                      '/RegisterScreen');
-                                                },
-                                                child: Text(
-                                                  "${Languages.of(context)?.labelSignup}",
-                                                  style: TextStyle(
-                                                      fontSize: 14,
-                                                      color: Colors.black,
-                                                      fontWeight:
-                                                          FontWeight.w600),
-                                                ),
-                                              ),
-                                            ],
+                                            ),
                                           ),
                                         ),
                                         SizedBox(height: 70),
@@ -227,56 +284,28 @@ class _SigninScreenState extends State<SigninScreen> {
                     Align(
                       alignment: Alignment.bottomCenter,
                       child: Container(
-                        margin: EdgeInsets.only(top: 10, bottom: 14),
+                        margin: EdgeInsets.only(bottom: 30),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
+                            Text(
+                              "Not Registered? ",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.black54,
+                              ),
+                            ),
                             GestureDetector(
-                              onTap: () async {
-                                setState(() {
-                                  isLoading = true;
-                                });
-                                SignInRequest request = SignInRequest(
-                                    customer: CustomerSignIn(
-                                  deviceToken: "${deviceToken}",
-                                  email: "guest@isekaitech.com",
-                                  password: "Isekai@123",
-                                ));
-
-                                bool isConnected =
-                                    await _connectivityService.isConnected();
-                                if (!isConnected) {
-                                  setState(() {
-                                    isLoading = false;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                            '${Languages.of(context)?.labelNoInternetConnection}'),
-                                        duration: maxDuration,
-                                      ),
-                                    );
-                                  });
-                                } else {
-                                  await Provider.of<MainViewModel>(context,
-                                          listen: false)
-                                      .signInWithPass(
-                                          "/api/v1/app/customers/sign_in",
-                                          request);
-
-                                  ApiResponse apiResponse =
-                                      Provider.of<MainViewModel>(context,
-                                              listen: false)
-                                          .response;
-                                  getSignInResponse(context, apiResponse);
-                                }
+                              onTap: () {
+                                Navigator.pushNamed(context, '/RegisterScreen');
                               },
                               child: Text(
-                                "Continue as guest user ",
+                                "${Languages.of(context)?.labelSignup}",
                                 style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.black54,
-                                ),
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w600),
                               ),
                             ),
                           ],
@@ -646,49 +675,32 @@ class _SigninScreenState extends State<SigninScreen> {
       child: Container(
         height: 50,
         width: mediaWidth * 0.55,
-        margin: EdgeInsets.symmetric(vertical: 5),
+        margin: EdgeInsets.symmetric(
+          vertical: 5,
+        ),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
+          color: CustomAppColor.PrimaryAccent,
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Expanded(
-              flex: 1,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: CustomAppColor.PrimaryAccent,
-                  border: Border(
-                      right: BorderSide(width: 0.4, color: Colors.white),
-                      top: BorderSide.none),
-                  borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(5),
-                      topLeft: Radius.circular(5)),
-                ),
-                alignment: Alignment.center,
-                child: Image.asset(
-                  "assets/google_logo.png",
-                  width: 22,
-                  fit: BoxFit.fill,
-                ),
-              ),
+            Image.asset(
+              "assets/google_logo.png",
+              width: 22,
+              fit: BoxFit.fill,
+              color: Colors.white,
             ),
-            Expanded(
-              flex: 5,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: CustomAppColor.PrimaryAccent,
-                  borderRadius: BorderRadius.only(
-                      bottomRight: Radius.circular(5),
-                      topRight: Radius.circular(5)),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                    isLogin ? 'Log in with Google' : 'Sign up with Google',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400)),
-              ),
+            Container(
+              margin: EdgeInsets.only(left: 8.0),
+              alignment: Alignment.center,
+              child: Text(
+                  isLogin ? 'Sign in with Google' : 'Sign up with Google',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -697,7 +709,8 @@ class _SigninScreenState extends State<SigninScreen> {
   }
 
   Future<Widget> getSignInResponse(
-      BuildContext context, ApiResponse apiResponse) async {
+      BuildContext context, ApiResponse apiResponse) async
+  {
     SignInResponse? mediaList = apiResponse.data as SignInResponse?;
     setState(() {
       isLoading = false;
@@ -1068,7 +1081,6 @@ class _SigninScreenState extends State<SigninScreen> {
   }
 }
 
-
 class SignUpForm extends StatefulWidget {
   final User? user;
 
@@ -1139,12 +1151,12 @@ class _SignUpFormState extends State<SignUpForm> {
     String cleanPhone = maskFormatter.getUnmaskedText();
     SignUpRequest request = SignUpRequest(
         customer: CustomerSignUp(
-          password: password,
-          email: "${user?.email}",
-          firstName: firstName,
-          lastName: lastName,
-          phoneNumber: cleanPhone,
-        ));
+      password: password,
+      email: "${user?.email}",
+      firstName: firstName,
+      lastName: lastName,
+      phoneNumber: cleanPhone,
+    ));
 
     await Provider.of<MainViewModel>(context, listen: false).signUpData(
         "api/v1/app/temp_customers/initiate_temp_customer", request);
@@ -1156,7 +1168,7 @@ class _SignUpFormState extends State<SignUpForm> {
   Future<Widget> getSignUpResponse(BuildContext context,
       ApiResponse apiResponse, SignUpRequest request) async {
     SignUpInitializeResponse? signUpResponse =
-    apiResponse.data as SignUpInitializeResponse?;
+        apiResponse.data as SignUpInitializeResponse?;
     String? message = apiResponse.message.toString();
     setState(() {
       isLoading = false;
@@ -1174,7 +1186,7 @@ class _SignUpFormState extends State<SignUpForm> {
       case Status.ERROR:
         if (message.contains("Invalid Request")) {
           message =
-          "Something went wrong, Please signup normally for the time being";
+              "Something went wrong, Please signup normally for the time being";
         } else if (message.contains("401")) {
         } else if (apiResponse.status == 500) {
           CustomToast.showToast(
@@ -1292,19 +1304,19 @@ class _SignUpFormState extends State<SignUpForm> {
           isLoading
               ? Center(child: CircularProgressIndicator())
               : ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(50),
-              ),
-              minimumSize: Size(double.infinity, 50),
-            ),
-            onPressed: _handleSubmit,
-            child: Text(
-              "Sign Up",
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    minimumSize: Size(double.infinity, 50),
+                  ),
+                  onPressed: _handleSubmit,
+                  child: Text(
+                    "Sign Up",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
         ],
       ),
     );

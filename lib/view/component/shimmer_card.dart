@@ -8,7 +8,7 @@ class ShimmerCard extends StatelessWidget {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: mediaWidth,
-      height: 80,
+      height: 190,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         //controller: _scrollController,

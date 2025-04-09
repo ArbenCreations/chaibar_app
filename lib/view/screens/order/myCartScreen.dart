@@ -1070,10 +1070,10 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                               ),
                                             )
                                           : SizedBox(),
-                                      ElevatedButton(
+                                     /* ElevatedButton(
                                         child: Text('Call payment'),
                                         onPressed: () => makePayment(),
-                                      ),
+                                      ),*/
                                       cartList.length > 0
                                           ? Align(
                                               alignment: Alignment.bottomCenter,
@@ -1101,7 +1101,8 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                                         context,
                                                                         "/OrderSuccessfulScreen"
                                                                       );*/
-                                                              _getApiAccessKey();
+                                                              //_getApiAccessKey();
+                                                          _createOrder(GetApiAccessKeyResponse(active: true, apiAccessKey: "apiAccessKey", createdTime: 244242424, modifiedTime: 24242424, developerAppUuid: "24242424", merchantUuid: "24242424", message: "message"));
                                                           //_createOrder(null);
                                                           //_fetchStoreStatus(true);
                                                         },
@@ -2431,21 +2432,20 @@ class _MyCartScreenState extends State<MyCartScreen> {
     try {
       // initiate payment
       applePaymentData = await ApplePayFlutter.makePayment(
-        countryCode: "US",
-        currencyCode: "SAR",
+        countryCode: "CA", // Canada country code
+        currencyCode: "CAD", // Canadian Dollar
         paymentNetworks: [
           PaymentNetwork.visa,
           PaymentNetwork.mastercard,
           PaymentNetwork.amex,
-          PaymentNetwork.mada
+          // Remove mada, as it's not supported in Canada
         ],
-        merchantIdentifier: "merchant.com.chaibar",
+        merchantIdentifier: "merchant.com.chaibar", // Make sure this merchant ID is registered for Canada
         paymentItems: paymentItems,
         customerEmail: "demo.user@business.com",
         customerName: "Demo User",
         companyName: "Concerto Soft",
       );
-
       // This logs the Apple Pay response data
       print(applePaymentData.toString());
     } on PlatformException {
