@@ -7,7 +7,7 @@ import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 
 import '../../../language/Languages.dart';
-import '../../utils/apis/api_response.dart';
+import '../../utils/apiHandling/api_response.dart';
 import '../../../model/request/editProfileRequest.dart';
 import '../../../model/response/profileResponse.dart';
 import '../../../model/response/signInResponse.dart';
@@ -15,7 +15,8 @@ import '../../../theme/CustomAppColor.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
 import '../../model/viewModel/mainViewModel.dart';
-import '../../utils/apis/api_response.dart';
+import '../../utils/apiHandling/api_response.dart';
+import 'CustomAlert.dart';
 import 'custom_button_component.dart';
 import 'session_expired_dialog.dart';
 import 'toastMessage.dart';
@@ -120,7 +121,7 @@ Future<void> getSignInResponse(
 // Return an empty container as you'll navigate away
     case Status.ERROR:
       print("message : ${apiResponse.message}");
-      CustomToast.showToast(context: context, message: apiResponse.message);
+      CustomAlert.showToast(context: context, message: apiResponse.message);
       return;
     case Status.INITIAL:
       return;

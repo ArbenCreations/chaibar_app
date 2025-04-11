@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:ChaiBar/model/request/deleteProfileRequest.dart';
 
+import '../../utils/apiHandling/api_response.dart';
 import '../request/addRewardPointsRequest.dart';
 import '../request/getRewardPointsRequest.dart';
 import '../request/itemReviewRequest.dart';
@@ -36,7 +37,6 @@ import '/model/response/signUpVerifyResponse.dart';
 import '/model/response/vendorSearchResponse.dart';
 import 'package:flutter/cupertino.dart';
 
-import '../../utils/apis/api_response.dart';
 import '../request/CardDetailRequest.dart';
 import '../request/CreateOrderRequest.dart';
 import '../request/createOtpChangePass.dart';

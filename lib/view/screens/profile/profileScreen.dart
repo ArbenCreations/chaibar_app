@@ -2,7 +2,7 @@ import 'package:ChaiBar/model/db/ChaiBarDB.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import '../../component/CustomAlert.dart';
 import '../../../language/Languages.dart';
 import '../../../model/request/editProfileRequest.dart';
 import '../../../model/response/couponListResponse.dart';
@@ -12,7 +12,7 @@ import '../../../model/viewModel/mainViewModel.dart';
 import '../../../theme/CustomAppColor.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
-import '../../../utils/apis/api_response.dart';
+import '../../../utils/apiHandling/api_response.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/session_expired_dialog.dart';
 import '../../component/toastMessage.dart';
@@ -425,7 +425,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         print("${mediaList?.completedOrders}");
         if (editProfile) {
           Navigator.pop(context);
-          CustomToast.showToast(
+          CustomAlert.showToast(
               context: context, message: "${apiResponse.message}");
         }
 

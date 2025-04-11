@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../component/CustomAlert.dart';
 import '/model/db/dataBaseDao.dart';
 import '/model/response/dashboardDataResponse.dart';
 import '/model/response/productDataDB.dart';
@@ -30,7 +31,7 @@ import '../../../../model/response/vendorListResponse.dart';
 import '../../../../theme/CustomAppColor.dart';
 import '../../../../utils/Util.dart';
 import '../../../model/viewModel/mainViewModel.dart';
-import '../../../utils/apis/api_response.dart';
+import '../../../utils/apiHandling/api_response.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/my_navigator_observer.dart';
 import '../../component/promotion_offers_widget.dart';
@@ -1110,7 +1111,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 "${Languages.of(context)?.labelInvalidAccessToken}")) {
           SessionExpiredDialog.showDialogBox(context: context);
         } else {
-          CustomToast.showToast(context: context, message: apiResponse.message);
+          CustomAlert.showToast(context: context, message: apiResponse.message);
         }
         return Center(
             //child: Text('Please try again later!!!'),
@@ -1283,7 +1284,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               if (data.vendorId != item.vendorId) {
                 cartDataDao.clearAllCartProduct();
                 cartDataDao.insertCartProduct(item);
-                CustomToast.showToast(
+                CustomAlert.showToast(
                     context: context,
                     message:
                         "Removed items from cart and added latest item because you can only order from one restaurant at once.");

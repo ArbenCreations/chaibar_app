@@ -83,7 +83,7 @@ class _OrderSuccessfulScreenState extends State<OrderSuccessfulScreen>
   @override
   void dispose() {
     _timer?.cancel();
-    _controller.dispose();
+    //_controller.dispose();
     super.dispose();
   }
 

@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../component/CustomAlert.dart';
 import '/language/Languages.dart';
 import '/utils/Helper.dart';
 import '/utils/Util.dart';
 import '../../../model/response/vendorListResponse.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../theme/CustomAppColor.dart';
-import '../../../utils/apis/api_response.dart';
+import '../../../utils/apiHandling/api_response.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/toastMessage.dart';
 
@@ -79,7 +80,7 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
 
           if (isWarning) {
             lastBackPressed = DateTime.now();
-            CustomToast.showToast(
+            CustomAlert.showToast(
                 message: "Press back again to exit", context: context);
           } else {
             SystemNavigator.pop();
@@ -192,6 +193,10 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
                                                     selectedLocalityData
                                                         .paymentSetting
                                                         ?.apiKey);
+                                                Helper.saveAppId(
+                                                    selectedLocalityData
+                                                        .paymentSetting
+                                                        ?.appId);
                                                 Navigator.pushReplacementNamed(
                                                     context,
                                                     "/BottomNavigation",
@@ -200,12 +205,12 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
                                                       .status
                                                       ?.contains("offline") ==
                                                   true) {
-                                                CustomToast.showToast(
+                                                CustomAlert.showToast(
                                                     context: context,
                                                     message:
                                                         "This store is closed at the moment.");
                                               } else {
-                                                CustomToast.showToast(
+                                                CustomAlert.showToast(
                                                     context: context,
                                                     message:
                                                         "Select location.");

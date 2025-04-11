@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+import '../../utils/apiHandling/app_exception.dart';
 import '/model/services/baseService.dart';
 import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
 import 'package:path/path.dart';
 import '../../utils/Helper.dart';
-import '../../utils/apis/app_exception.dart';
 
 class ChaiBarCustomerService extends BaseService {
   String? _token;

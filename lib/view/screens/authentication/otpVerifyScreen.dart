@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_timer_countdown/flutter_timer_countdown.dart';
 import 'package:provider/provider.dart';
-
+import '../../component/CustomAlert.dart';
 import '/model/request/otpVerifyRequest.dart';
 import '/model/response/signUpVerifyResponse.dart';
 import '../../../../language/Languages.dart';
 import '../../../../theme/CustomAppColor.dart';
 import '../../../model/viewModel/mainViewModel.dart';
-import '../../../utils/apis/api_response.dart';
+import '../../../utils/apiHandling/api_response.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/customNumberKeyboard.dart';
 import '../../component/toastMessage.dart';
@@ -113,7 +113,7 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
         print("OtpVerify ${signUpVerifyResponse?.token}");
         //Helper.saveProfileDetails(data);
 
-        //CustomToast.showToast(context: context, message: message);
+        //CustomAlert.showToast(context: context, message: message);
         //String token = "${signUpVerifyResponse?.token}";
         // Save the token
         //bool isSaved = await Helper.saveUserToken(token);
@@ -124,14 +124,14 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
         //String? retrievedToken = await Helper.getUserToken();
         //print('Retrieved Token: $retrievedToken');
 
-        CustomToast.showToast(
+        CustomAlert.showToast(
             context: context,
             message: "Signup completed. Please Login to continue.");
 
         Navigator.pushReplacementNamed(context, "/SignInScreen", arguments: "");
         return Container();
       case Status.ERROR:
-        CustomToast.showToast(context: context, message: message);
+        CustomAlert.showToast(context: context, message: message);
         return Center(
           child: Text('Please try again later!!!'),
         );
@@ -153,11 +153,11 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
         //Call Toast
-        CustomToast.showToast(context: context, message: message);
+        CustomAlert.showToast(context: context, message: message);
         // Navigate to the new screen after receiving the response
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
-        CustomToast.showToast(context: context, message: apiResponse.message);
+        CustomAlert.showToast(context: context, message: apiResponse.message);
         return Center(
           child: Text('Please try again later!!!'),
         );

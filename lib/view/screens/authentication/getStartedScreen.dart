@@ -9,7 +9,8 @@ import '../../../model/response/profileResponse.dart';
 import '../../../model/response/signInResponse.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../utils/Helper.dart';
-import '../../../utils/apis/api_response.dart';
+import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomAlert.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/toastMessage.dart';
 
@@ -244,7 +245,7 @@ class _WelcomeScreenState extends State<GetStartedScreen> {
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
         print("message : ${apiResponse.message}");
-        CustomToast.showToast(context: context, message: apiResponse.message);
+        CustomAlert.showToast(context: context, message: apiResponse.message);
         return Center();
       case Status.INITIAL:
       default:

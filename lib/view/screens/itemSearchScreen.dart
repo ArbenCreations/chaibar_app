@@ -11,7 +11,7 @@ import '/view/component/product_component.dart';
 import '../../model/response/vendorListResponse.dart';
 import '../../model/viewModel/mainViewModel.dart';
 import '../../utils/Helper.dart';
-import '../../utils/apis/api_response.dart';
+import '../../utils/apiHandling/api_response.dart';
 import '../component/connectivity_service.dart';
 
 class ItemSearchScreen extends SearchDelegate {

@@ -27,12 +27,13 @@ import '../../../model/response/productDataDB.dart';
 import '../../../model/response/storeStatusResponse.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../utils/Helper.dart';
-import '../../../utils/apis/api_response.dart';
+import '../../../utils/apiHandling/api_response.dart';
 import '../../component/DashedLine.dart';
 import '../../component/ShimmerList.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/session_expired_dialog.dart';
 import '../../component/toastMessage.dart';
+import '../../component/CustomAlert.dart';
 
 class MyCartScreen extends StatefulWidget {
   MyCartScreen();
@@ -501,7 +502,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                               }
                                             else
                                               {
-                                                CustomToast.showToast(
+                                                CustomAlert.showToast(
                                                     context: context,
                                                     message:
                                                         "Please Enter Promo Code",
@@ -769,7 +770,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                         onTap: () {
                                           couponsList.length > 0
                                               ? showCouponBottomSheet(context)
-                                              : CustomToast.showToast(
+                                              : CustomAlert.showToast(
                                                   context: context,
                                                   message:
                                                       "No available coupons");
@@ -843,7 +844,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                           rewardPoints! > 99 &&
                                                   redeemAmount == 0
                                               ? _fetchRedeemPointsData()
-                                              : CustomToast.showToast(
+                                              : CustomAlert.showToast(
                                                   context: context,
                                                   message:
                                                       "Min. 100 points required to redeem points.");
@@ -1092,7 +1093,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                               ? showGuestUserAlert(
                                                                   context)
                                                               :
-                                                              //CustomToast.showToast(context: context, message: "ApiKey 8e422a10-2d70-abda-35cc-8ed49cc03884");
+                                                              //CustomAlert.showToast(context: context, message: "ApiKey 8e422a10-2d70-abda-35cc-8ed49cc03884");
                                                               //_addRedeemPointsData();
                                                               /*                      Navigator.pushNamed(
                                                                         context,
@@ -1634,7 +1635,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
         } else {
           print(
               'Condition failed: Total Price: $totalPrice, Min Cart Amt: ${couponDetailsResponse?.minCartAmt}');
-          CustomToast.showToast(
+          CustomAlert.showToast(
               context: context,
               message:
                   "Min cart amount should be ${couponDetailsResponse?.minCartAmt}",
@@ -1741,7 +1742,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
           // Calculate the new grand total first
           double newGrandTotal = grandTotal - redeemedAmount;
           if (newGrandTotal < 0) {
-            CustomToast.showToast(
+            CustomAlert.showToast(
                 context: context,
                 message: "Insufficient total amount to redeem points.");
           } else {
@@ -1749,7 +1750,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
             redeemAmount = double.parse("${response?.discountAmount}");
             rewardPoints -= pointsToRedeem;
             grandTotal = grandTotal - redeemAmount;
-            CustomToast.showToast(
+            CustomAlert.showToast(
                 context: context, message: "Points Redeemed Successfully");
           }
         });
@@ -1810,7 +1811,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
         setState(() {
           if (storeStatusResponse?.storeStatus == "offline") {
             isStoreOnline = false;
-            CustomToast.showToast(
+            CustomAlert.showToast(
                 context: context, message: "Store is Closed!");
           } else if (storeStatusResponse?.storeStatus == "online") {
             isStoreOnline = true;
@@ -2086,7 +2087,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
       case Status.ERROR:
         print(
             "message : ${apiResponse.message?.contains("FormatException") == true ? "Something went wrong" : "${apiResponse.message}"}");
-        CustomToast.showToast(
+        CustomAlert.showToast(
             context: context,
             message:
                 "${apiResponse.message?.contains("FormatException") == true ? "Something went wrong, Please contact admin." : "${apiResponse.message}"}");

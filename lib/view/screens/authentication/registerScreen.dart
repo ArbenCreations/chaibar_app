@@ -3,7 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-
+import '../../component/CustomAlert.dart';
+import '../../../utils/apiHandling/api_response.dart';
 import '/model/request/signUpRequest.dart';
 import '/model/response/signUpInitializeResponse.dart';
 import '/utils/Util.dart';
@@ -11,7 +12,6 @@ import '../../../../language/Languages.dart';
 import '../../../../theme/CustomAppColor.dart';
 import '../../../../utils/Helper.dart';
 import '../../../model/viewModel/mainViewModel.dart';
-import '../../../utils/apis/api_response.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/custom_button_component.dart';
 import '../../component/googleSignIN.dart';
@@ -904,9 +904,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               "Something went wrong, Please signup normally for the time being";
         } else if (message.contains("401")) {
         }else if (apiResponse.status == 500) {
-          CustomToast.showToast(context: context, message: "Something went wrong!");
+          CustomAlert.showToast(context: context, message: "Something went wrong!");
         } else {
-          CustomToast.showToast(context: context, message: "message");
+          CustomAlert.showToast(context: context, message: "message");
         }
         return Center(
           child: Text('Try again later..'),

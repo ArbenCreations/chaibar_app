@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../language/Languages.dart';
+import '../view/component/CustomAlert.dart';
 import '../view/component/toastMessage.dart';
 
 bool validatePassword(String password) {
@@ -212,7 +213,7 @@ bool isBalanceMoreThanAmount(String balance, String amt, BuildContext context) {
   double intBalance = extractFloat(balance);
   double inrAmt = amt != null || amt != "" ? extractFloat(amt) : 0;
   if (intBalance <= inrAmt) {
-    CustomToast.showToast(
+    CustomAlert.showToast(
         context: context, message: 'You do not have enough balance.');
     return false;
   } else {

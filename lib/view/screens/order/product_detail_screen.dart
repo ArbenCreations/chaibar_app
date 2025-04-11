@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../component/CustomAlert.dart';
 import '/model/db/dataBaseDao.dart';
 import '/model/response/productDataDB.dart';
 import '/model/response/productListResponse.dart';
@@ -24,7 +25,7 @@ import '../../../model/response/markFavoriteResponse.dart';
 import '../../../model/response/vendorListResponse.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../theme/CustomAppColor.dart';
-import '../../../utils/apis/api_response.dart';
+import '../../../utils/apiHandling/api_response.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/session_expired_dialog.dart';
 import '../../component/view_cart_container.dart';
@@ -1756,7 +1757,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               if (data.vendorId != item.vendorId) {
                 cartDataDao.clearAllCartProduct();
                 cartDataDao.insertCartProduct(item);
-                CustomToast.showToast(
+                CustomAlert.showToast(
                     context: context,
                     message:
                         "Removed items from cart and added latest item because you can only order from one restaurant at once.");
@@ -2153,7 +2154,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             isVoteDown = true;
           });
         }
-        CustomToast.showToast(
+        CustomAlert.showToast(
             context: context, message: "${response?.message}");
         //Navigator.pop(context);
         return Container(); // Return an empty container as you'll navigate away
@@ -2163,7 +2164,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 "${Languages.of(context)?.labelInvalidAccessToken}")) {
           SessionExpiredDialog.showDialogBox(context: context);
         } else {
-          CustomToast.showToast(context: context, message: apiResponse.message);
+          CustomAlert.showToast(context: context, message: apiResponse.message);
         }
         return Center(
           child: Text('Please try again later!!!'),

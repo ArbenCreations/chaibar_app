@@ -10,7 +10,7 @@ import '../../../model/response/vendorSearchResponse.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
-import '../../../utils/apis/api_response.dart';
+import '../../../utils/apiHandling/api_response.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/product_component.dart';
 

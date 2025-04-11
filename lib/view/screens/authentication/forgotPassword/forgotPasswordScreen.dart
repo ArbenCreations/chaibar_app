@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-
 import '/utils/Util.dart';
 import '/view/component/toastMessage.dart';
+import '/view/component/CustomAlert.dart';
 import '/view/screens/authentication/loginScreen.dart';
 import '../../../../language/Languages.dart';
 import '../../../../model/request/createOtpChangePass.dart';
@@ -11,7 +11,7 @@ import '../../../../model/response/createOtpChangePassResponse.dart';
 import '../../../../model/viewModel/mainViewModel.dart';
 import '../../../../theme/CustomAppColor.dart';
 import '../../../../utils/Helper.dart';
-import '../../../../utils/apis/api_response.dart';
+import '../../../../utils/apiHandling/api_response.dart';
 import '../../../component/connectivity_service.dart';
 import '../../../component/session_expired_dialog.dart';
 
@@ -71,8 +71,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Future<Widget> generateOtpResponse(
-      BuildContext context, ApiResponse apiResponse) async
-  {
+      BuildContext context, ApiResponse apiResponse) async {
     CreateOtpChangePassResponse? mediaList =
         apiResponse.data as CreateOtpChangePassResponse?;
     setState(() {
@@ -83,7 +82,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
         String data = "${mediaList?.email}";
-        CustomToast.showToast(context: context, message: apiResponse.message);
+        CustomAlert.showToast(context: context, message: apiResponse.message);
 
         Navigator.pushNamed(context, "/OtpForgotPassScreen", arguments: data);
 
@@ -98,7 +97,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 "${Languages.of(context)?.labelInvalidAccessToken}")) {
           SessionExpiredDialog.showDialogBox(context: context);
         } else {
-          CustomToast.showToast(context: context, message: apiResponse.message);
+          CustomAlert.showToast(context: context, message: apiResponse.message);
         }
         return Center(
           child: Text('Please try again later!!!'),
@@ -123,7 +122,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       case Status.COMPLETED:
         print("rwrwr ");
         //Navigator.pushNamed(context, '/ProfileScreen');
-        CustomToast.showToast(context: context, message: apiResponse.message);
+        CustomAlert.showToast(context: context, message: apiResponse.message);
         Helper.clearAllSharedPreferences();
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => SigninScreen()),
@@ -160,16 +159,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       appBar: AppBar(
         leading: GestureDetector(
             onTap: () => Navigator.pop(context),
-            child: Icon(Icons.arrow_back, color: Colors.white,)),
-        systemOverlayStyle: SystemUiOverlayStyle(
-            statusBarIconBrightness: Brightness.light
-        ),
+            child: Icon(
+              Icons.arrow_back,
+              color: Colors.white,
+            )),
+        systemOverlayStyle:
+            SystemUiOverlayStyle(statusBarIconBrightness: Brightness.light),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
-              bottomRight: Radius.circular(30),
-              bottomLeft: Radius.circular(30),
-            )
-        ),
+          bottomRight: Radius.circular(30),
+          bottomLeft: Radius.circular(30),
+        )),
         title: Text(
           "Forgot Password?",
           style: TextStyle(
@@ -183,16 +183,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         height: screenHeight,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage("assets/signUpBack.png"),
-            fit: BoxFit.cover
-          )
-        ),
+            image: DecorationImage(
+                image: AssetImage("assets/signUpBack.png"), fit: BoxFit.cover)),
         child: SingleChildScrollView(
           child: Stack(
             children: [
               _buildForgotPasswordWidget(),
-              if (isLoading) _buildLoadingIndicator(),
+              isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : SizedBox(),
             ],
           ),
         ),
@@ -215,7 +216,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center, // Align items from top
             children: [
-            /*  Image.asset(
+              /*  Image.asset(
                 "assets/burger.jpg",
                 width: mediaWidth,
                 height: 250,

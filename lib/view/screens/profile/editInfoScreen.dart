@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-
+import '../../component/CustomAlert.dart';
 import '../../../language/Languages.dart';
 import '../../../model/db/ChaiBarDB.dart';
 import '../../../model/request/editProfileRequest.dart';
@@ -17,7 +17,7 @@ import '../../../model/response/profileResponse.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
-import '../../../utils/apis/api_response.dart';
+import '../../../utils/apiHandling/api_response.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/custom_button_component.dart';
 import '../../component/session_expired_dialog.dart';
@@ -37,6 +37,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
   String documentNumber = "";
   String? firstName = "";
   String? lastName = "";
+  String? password = "";
   String? email = "";
   String? dob = "";
   String? phone = "";
@@ -95,6 +96,11 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
         isDataLoading = false;
       });
     });
+
+    Helper.getPassword().then((userPassword) {
+      password = userPassword;
+      print("Password: ${password}");
+    });
   }
 
   Future<Widget> getProfileResponse(
@@ -108,7 +114,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
       case Status.LOADING:
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
-        CustomToast.showToast(
+        CustomAlert.showToast(
             context: context, message: "${mediaList?.message}");
         hideKeyBoard();
         Navigator.pushReplacementNamed(context, "/BottomNavigation",
@@ -162,7 +168,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
       case Status.LOADING:
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
-        CustomToast.showToast(
+        CustomAlert.showToast(
             context: context, message: "${mediaList?.message}");
 
         hideKeyBoard();
@@ -186,7 +192,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                 "${Languages.of(context)?.labelInvalidAccessToken}")) {
           SessionExpiredDialog.showDialogBox(context: context);
         } else {
-          CustomToast.showToast(context: context, message: apiResponse.message);
+          CustomAlert.showToast(context: context, message: apiResponse.message);
         }
         print(apiResponse.message);
         return Center(
@@ -396,7 +402,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                     bool isConnected = await _connectivityService.isConnected();
 
                     if (passwordController.text.isEmpty) {
-                      CustomToast.showToast(
+                      CustomAlert.showToast(
                           context: context, message: "Please enter password");
                     } else {
                       setState(() => isLoading = true);
@@ -432,6 +438,95 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
 
                         setState(() => isLoading = false);
                       }
+                    }
+                  },
+                )
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showModalConfirmation(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      useSafeArea: true,
+      builder: (BuildContext context) {
+        bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+        bool isLoading = false;
+
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              insetPadding: EdgeInsets.symmetric(horizontal: 10),
+              title: Text(
+                "Are you sure you want to delete your account?",
+                style: TextStyle(fontSize: 12),
+              ),
+              content: Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12.0, horizontal: 5),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Email : ${_emailController.text}",
+                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                    SizedBox(height: 8),
+                    if (isLoading)
+                      Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  ],
+                ),
+              ),
+              actionsAlignment: MainAxisAlignment.center,
+              actions: <Widget>[
+                CustomButtonComponent(
+                  text: "Delete",
+                  mediaWidth: MediaQuery.of(context).size.width * 0.6,
+                  textColor: Colors.white,
+                  buttonColor: Colors.red,
+                  isDarkMode: isDarkMode,
+                  verticalPadding: 10,
+                  onTap: () async {
+                    hideKeyBoard();
+                    bool isConnected = await _connectivityService.isConnected();
+                    setState(() => isLoading = true);
+
+                    if (!isConnected) {
+                      setState(() {
+                        isLoading = false;
+                        isInternetConnected = false;
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                              Languages.of(context)!.labelNoInternetConnection),
+                          duration: maxDuration,
+                        ),
+                      );
+                    } else {
+                      DeleteProfileRequest request = DeleteProfileRequest(
+                        email: _emailController.text,
+                        password: password,
+                      );
+
+                      await Future.delayed(Duration(milliseconds: 2));
+                      await Provider.of<MainViewModel>(context, listen: false)
+                          .deleteProfile(
+                              "/api/v1/app/customers/verify_and_destroy",
+                              request);
+
+                      ApiResponse apiResponse =
+                          Provider.of<MainViewModel>(context, listen: false)
+                              .response;
+                      deleteProfileResponse(context, apiResponse);
+
+                      setState(() => isLoading = false);
                     }
                   },
                 )
@@ -555,75 +650,75 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                               _emailController,
                               false),
                         ),
-                        email !=
-                            "guest@isekaitech.com" ?
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: mediaWidth * 0.9,
-                            minWidth: mediaWidth * 0.9,
-                          ),
-                          child: editableDetailBox(
-                              Languages.of(context)!.labelPhoneNumber,
-                              "${email}",
-                              12,
-                              11,
-                              Icons.call,
-                              _phoneController,
-                              false),
-                        ): SizedBox(),
+                        email != "guest@isekaitech.com"
+                            ? ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: mediaWidth * 0.9,
+                                  minWidth: mediaWidth * 0.9,
+                                ),
+                                child: editableDetailBox(
+                                    Languages.of(context)!.labelPhoneNumber,
+                                    "${email}",
+                                    12,
+                                    11,
+                                    Icons.call,
+                                    _phoneController,
+                                    false),
+                              )
+                            : SizedBox(),
                       ],
                     ),
                     SizedBox(
                       height: 20,
                     ),
-                    email !=
-                        "guest@isekaitech.com" ?
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        width: mediaWidth * 0.45,
-                        child: TextButton(
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(
-                                Theme.of(context).cardColor),
-                          ),
-                          onPressed: () async {
-                            _saveChanges();
-                          },
-                          child: Text(
-                            Languages.of(context)!.labelSubmit,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                    email != "guest@isekaitech.com"
+                        ? Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Container(
+                              width: mediaWidth * 0.45,
+                              child: TextButton(
+                                style: ButtonStyle(
+                                  backgroundColor: WidgetStateProperty.all(
+                                      Theme.of(context).cardColor),
+                                ),
+                                onPressed: () async {
+                                  _saveChanges();
+                                },
+                                child: Text(
+                                  Languages.of(context)!.labelSubmit,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                    ) : SizedBox(),
-                    email !=
-                        "guest@isekaitech.com" ?
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        width: mediaWidth * 0.45,
-                        child: TextButton(
-                          style: ButtonStyle(
-                            backgroundColor:
-                                WidgetStateProperty.all(Colors.red),
-                          ),
-                          onPressed: () async {
-                            _deleteAccount();
-                          },
-                          child: Text(
-                            Languages.of(context)!.labelDeleteAccount,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                          )
+                        : SizedBox(),
+                    email != "guest@isekaitech.com"
+                        ? Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Container(
+                              width: mediaWidth * 0.45,
+                              child: TextButton(
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      WidgetStateProperty.all(Colors.red),
+                                ),
+                                onPressed: () async {
+                                  _deleteAccount();
+                                },
+                                child: Text(
+                                  Languages.of(context)!.labelDeleteAccount,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                    ): SizedBox(),
+                          )
+                        : SizedBox(),
                   ],
                 ),
               ],
@@ -684,8 +779,11 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
 
   Future<void> _deleteAccount() async {
     hideKeyBoard();
-    //_showLogOutDialog();
-    _showModal(context);
+    if (password == "applesign1" || password == "googlesign1") {
+      _showModalConfirmation(context);
+    } else {
+      _showModal(context);
+    }
   }
 
   Widget buildBirthdateSection() {

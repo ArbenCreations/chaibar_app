@@ -32,6 +32,7 @@ class Helper {
   static const String prefRecentDocument = "RecentDocument";
   static String appThemePref = 'appThemePref';
   static String api_key = 'apikey';
+  static String app_id = 'appId';
   static String order_count_key = 'OrderCountKey';
 
 // Write DATA
@@ -254,6 +255,19 @@ class Helper {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     return sharedPreferences.getString(api_key);
   }
+
+  static Future<bool> saveAppId(token) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    return await sharedPreferences.setString(app_id, token);
+  }
+
+  // Read Data
+  static Future<String?> getAppId() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    return sharedPreferences.getString(app_id);
+  }
+
+
 
   static Future<bool> saveActiveOrderCounts(token) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();

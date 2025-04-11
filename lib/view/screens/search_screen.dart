@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../utils/apis/api_response.dart';
+import '../../utils/apiHandling/api_response.dart';
 import '../../model/response/vendorListResponse.dart';
 import '../../model/viewModel/mainViewModel.dart';
 import '../component/connectivity_service.dart';

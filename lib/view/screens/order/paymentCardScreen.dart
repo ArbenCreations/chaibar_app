@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:apple_pay_flutter/apple_pay_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_credit_card/flutter_credit_card.dart';
 import 'package:provider/provider.dart';
 
+import '../../component/CustomAlert.dart';
 import '/model/request/successCallbackRequest.dart';
 import '../../../language/Languages.dart';
 import '../../../model/db/ChaiBarDB.dart';
@@ -22,7 +25,7 @@ import '../../../model/viewModel/mainViewModel.dart';
 import '../../../theme/CustomAppColor.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
-import '../../../utils/apis/api_response.dart';
+import '../../../utils/apiHandling/api_response.dart';
 import '../../component/ApplePayButton.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/session_expired_dialog.dart';
@@ -71,6 +74,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
   bool isKeypadVisible = true;
   String responseMessage = '';
   String apiKey = "";
+  String appId = "";
   bool phoneNumberValid = false;
   int? customerId = 0;
   late ChaiBarDB database;
@@ -93,8 +97,14 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
     initializeDatabase();
     Helper.getApiKey().then((data) {
       setState(() {
-        apiKey = "12c12489-fc5f-253d-af89-270d4b68b87e"; //"${data ?? ""}";
+        apiKey = "${data ?? ""}";
         print("apiKey:$apiKey");
+      });
+    });
+    Helper.getAppId().then((data) {
+      setState(() {
+        appId = "${data ?? ""}";
+        print("appId:$appId");
       });
     });
 
@@ -180,7 +190,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
       case Status.COMPLETED:
         print("rwrwr ");
         //Navigator.pushNamed(context, '/ProfileScreen');
-        CustomToast.showToast(context: context, message: apiResponse.message);
+        CustomAlert.showToast(context: context, message: apiResponse.message);
 
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
@@ -189,7 +199,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
                 "${Languages.of(context)?.labelInvalidAccessToken}")) {
           SessionExpiredDialog.showDialogBox(context: context);
         } else {
-          CustomToast.showToast(context: context, message: apiResponse.message);
+          CustomAlert.showToast(context: context, message: apiResponse.message);
         }
         return Center(
             //child: Text('Please try again later!!!'),
@@ -301,11 +311,13 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
                             }, //_onValidate,
                             child: _buildValidateButton(mediaWidth),
                           ),
-                        /*  ApplePayButton(
-                            onPressed: () {
-                              makePayment(); // your payment logic
-                            },
-                          ),*/
+                          Platform.isIOS
+                              ? ApplePayButton(
+                                  onPressed: () {
+                                    makePayment(); // your payment logic
+                                  },
+                                )
+                              : SizedBox(),
                         ],
                       ),
                     ),
@@ -331,8 +343,8 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
 
     try {
       applePaymentData = await ApplePayFlutter.makePayment(
-        countryCode: "CA",
-        currencyCode: "CAD",
+        countryCode: "US",
+        currencyCode: "USD",
         paymentNetworks: [
           PaymentNetwork.visa,
           PaymentNetwork.mastercard,
@@ -340,24 +352,24 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
         ],
         merchantIdentifier: "merchant.com.chaibar",
         paymentItems: paymentItems,
-        customerEmail: "demo.user@business.com",
-        customerName: "Demo User",
+        customerEmail: "${widget.orderData?.order?.customerEmail}",
+        customerName: "${widget.orderData?.order?.customerName}",
         companyName: "Concerto Soft",
       );
 
       print("Payment response: ${applePaymentData.toString()}");
 
-      // ✅ Check if payment was successful
-      if (applePaymentData != null && applePaymentData["status"] == "success") {
-        final paymentId =
-            applePaymentData["id"]; // Adjust key based on actual response
-        final paymentStatus = applePaymentData["status"];
-        _hitSuccessCallBack(paymentId, paymentStatus);
+      if (applePaymentData != null && applePaymentData["ok"] == true) {
+        final paymentId = applePaymentData["transactionIdentifier"];
+        final paymentType = applePaymentData["paymentType"];
+
+        _hitSuccessCallBack(paymentId, paymentType);
       } else {
         print("Payment was not successful or cancelled.");
-        CustomToast.showToast(
-            context: context,
-            message: "Something went worng. Please try with card payment.");
+        CustomAlert.showToast(
+          context: context,
+          message: "Something went wrong. Please try with card payment.",
+        );
       }
     } on PlatformException catch (e) {
       print('Failed payment: ${e.message}');
@@ -525,9 +537,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
       CardRequest cardRequest = CardRequest(card: cardDetails);
       //await Provider.of<MainViewModel>(context, listen: false).getApiToken("https://token-sandbox.dev.clover.com/v1/tokens", apiKey.toString(), cardRequest);
       await Provider.of<MainViewModel>(context, listen: false).getApiToken(
-          "https://token.clover.com/v1/tokens",
-          "12e4e3acdf0f20655aab1ddfd4adf912",
-          cardRequest);
+          "https://token.clover.com/v1/tokens", "$appId", cardRequest);
       ApiResponse apiResponse =
           Provider.of<MainViewModel>(context, listen: false).response;
       getApiTokenResponse(context, apiResponse);
@@ -556,7 +566,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
         print("message : ${apiResponse.message}");
-        CustomToast.showToast(context: context, message: apiResponse.message);
+        CustomAlert.showToast(context: context, message: apiResponse.message);
         return Center();
       case Status.INITIAL:
       default:
@@ -594,8 +604,8 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
       await Provider.of<MainViewModel>(context, listen: false)
           //.getFinalPaymentApi("https://scl-sandbox.dev.clover.com/v1/charges", "f2240939-d0fa-ccfd-88ff-2f14e160dc6a", transactionRequest);
           // await Provider.of<MainViewModel>(context, listen: false).getFinalPaymentApi("https://scl.clover.com/v1/charges", "$apiKey", transactionRequest);
-          .getFinalPaymentApi("https://scl.clover.com/v1/charges",
-              "6f943c05-9a54-1d08-f870-d8eeebe8cb40", transactionRequest);
+          .getFinalPaymentApi("https://scl.clover.com/v1/charges", "$apiKey",
+              transactionRequest);
       ApiResponse apiResponse =
           Provider.of<MainViewModel>(context, listen: false).response;
       getFinalPaymentApiResponse(context, apiResponse);
@@ -624,7 +634,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
         print("message : ${apiResponse.message}");
-        CustomToast.showToast(context: context, message: apiResponse.message);
+        CustomAlert.showToast(context: context, message: apiResponse.message);
         return Center();
       case Status.INITIAL:
       default:
@@ -690,7 +700,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
         print("message : ${apiResponse.message}");
-        CustomToast.showToast(context: context, message: apiResponse.message);
+        CustomAlert.showToast(context: context, message: apiResponse.message);
         return Center();
       case Status.INITIAL:
       default:

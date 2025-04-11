@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 
+import '../../component/CustomAlert.dart';
 import '/model/request/verifyOtpChangePass.dart';
 import '/model/response/signUpInitializeResponse.dart';
 import '/theme/CustomAppColor.dart';
@@ -12,7 +13,7 @@ import 'package:provider/provider.dart';
 import '../../../../language/Languages.dart';
 import '../../../../utils/Helper.dart';
 import '../../../model/viewModel/mainViewModel.dart';
-import '../../../utils/apis/api_response.dart';
+import '../../../utils/apiHandling/api_response.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/session_expired_dialog.dart';
 
@@ -88,7 +89,7 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
       case Status.COMPLETED:
         print("rwrwr ");
         //Navigator.pushNamed(context, '/ProfileScreen');
-        CustomToast.showToast(
+        CustomAlert.showToast(
             context: context, message: apiResponse.message);
         Helper.clearAllSharedPreferences();
         Navigator.of(context).pushAndRemoveUntil(
@@ -100,8 +101,11 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
       case Status.ERROR:
         if (nonCapitalizeString("${apiResponse.message}") == nonCapitalizeString("${Languages.of(context)?.labelInvalidAccessToken}")){
           SessionExpiredDialog.showDialogBox(context: context);}
-        else{
-          CustomToast.showToast(
+        else if (apiResponse.message?.contains("401") == true) {
+          CustomAlert.showToast(
+              context: context, message: "Invalid OTP, please try again !");
+        }else{
+          CustomAlert.showToast(
               context: context, message: apiResponse.message);
         }
         return Center(

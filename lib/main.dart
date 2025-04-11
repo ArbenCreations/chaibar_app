@@ -1,3 +1,4 @@
+import 'package:ChaiBar/view/component/CustomAlert.dart';
 import 'package:ChaiBar/view/screens/authentication/forgotPassword/forgotPasswordScreen.dart';
 import 'package:ChaiBar/view/screens/authentication/getStartedScreen.dart';
 import 'package:ChaiBar/view/screens/authentication/signup.dart';
@@ -49,6 +50,7 @@ import 'view/screens/order/product_detail_screen.dart';
 import 'view/screens/profile/editInfoScreen.dart';
 import 'view/screens/profile/editProfileScreen.dart';
 import 'view/screens/profile/profileScreen.dart';
+
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -126,6 +128,10 @@ void main() async {
       ),*/
     MyApp(initialMessage: null),
   );
+  // Clear all notifications when app is resumed or opened
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    FlutterLocalNotificationsPlugin().cancelAll();
+  });
 }
 
 class MyApp extends StatefulWidget {
@@ -167,7 +173,7 @@ class _MyAppState extends State<MyApp> {
 
   void setupNotificationHandlers(BuildContext context) {
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      CustomToast.showToast(context: context, message: "$message");
+      CustomAlert.showToast(context: context, message: "$message");
       // Navigate to the ProfileScreen when the notification is clicked
       final notificationResponse =
           NotificationOtpResponse.fromJson(message.data);

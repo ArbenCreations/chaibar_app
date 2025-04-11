@@ -11,7 +11,7 @@ import '/utils/Util.dart';
 import '../../../model/response/vendorListResponse.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../theme/CustomAppColor.dart';
-import '../../../utils/apis/api_response.dart';
+import '../../../utils/apiHandling/api_response.dart';
 import '../../component/BezierContainer.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/toastMessage.dart';
@@ -281,7 +281,7 @@ class _LocationListScreenState extends State<LocationListScreen> {
         setState(() {
           vendorList = vendorListResponse!.vendors!;
         });
-        //CustomToast.showToast(context: context, message: "$token");
+        //CustomAlert.showToast(context: context, message: "$token");
         return Container();
       case Status.ERROR:
         return Center(

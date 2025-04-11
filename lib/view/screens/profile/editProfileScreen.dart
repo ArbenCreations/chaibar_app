@@ -7,9 +7,9 @@ import '/model/response/couponListResponse.dart';
 import '/view/component/toastMessage.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import '../../component/CustomAlert.dart';
 import '../../../language/Languages.dart';
-import '../../../utils/apis/api_response.dart';
+import '../../../utils/apiHandling/api_response.dart';
 import '../../../model/response/profileResponse.dart';
 import '../../../theme/CustomAppColor.dart';
 import '../../../utils/Helper.dart';
@@ -282,7 +282,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         print("${mediaList?.completedOrders}");
         if (editProfile) {
           Navigator.of(context).pushReplacementNamed("/BottomNavigation", arguments: 1);
-          CustomToast.showToast(
+          CustomAlert.showToast(
               context: context, message: "${apiResponse.message}");
         }
 

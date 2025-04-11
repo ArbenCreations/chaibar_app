@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../component/CustomAlert.dart';
 import '/model/db/ChaiBarDB.dart';
 import '../../../language/Languages.dart';
 import '../../../model/request/itemReviewRequest.dart';
@@ -10,7 +11,7 @@ import '../../../model/response/itemReviewResponse.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../theme/CustomAppColor.dart';
 import '../../../utils/Util.dart';
-import '../../../utils/apis/api_response.dart';
+import '../../../utils/apiHandling/api_response.dart';
 import '../../component/session_expired_dialog.dart';
 import '../../component/toastMessage.dart';
 
@@ -319,10 +320,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                   child: Column(
                                     children: [
                                       _buildDetailCard('Subtotal: ',
-                                          order.totalAmount, false),
+                                          "${double.parse("${order.payableAmount}").toStringAsFixed(2)}", false),
                                       "${order.discountAmount}" != "0"
                                           ? _buildDetailCard('Discount ',
-                                              order.discountAmount, false)
+                                              "${double.parse("${order.discountAmount}").toStringAsFixed(2)}", false)
                                           : SizedBox(),
                                       order.gst != 0
                                           ? _buildDetailCard(
@@ -346,7 +347,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                           "${order.pointsRedeemed}", false),
                                       _buildDetailCard(
                                           'Order Total: ',
-                                          "${double.parse("${order.payableAmount}").toStringAsFixed(2)}",
+                                          "${double.parse("${order.totalAmount}").toStringAsFixed(2)}",
                                           true),
                                       _buildDetailCard('Transaction Id: ',
                                           order.transactionId, true),
@@ -458,7 +459,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               Text(
-                "x ${item.product?.quantity} ",
+                "x ${item.quantity} ",
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],
@@ -542,7 +543,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             isVoteDown = true;
           });
         }
-        CustomToast.showToast(
+        CustomAlert.showToast(
             context: context, message: "${response?.message}");
         //Navigator.pop(context);
         return Container(); // Return an empty container as you'll navigate away
@@ -552,7 +553,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 "${Languages.of(context)?.labelInvalidAccessToken}")) {
           SessionExpiredDialog.showDialogBox(context: context);
         } else {
-          CustomToast.showToast(context: context, message: apiResponse.message);
+          CustomAlert.showToast(context: context, message: apiResponse.message);
         }
         return Center(
           child: Text('Please try again later!!!'),
