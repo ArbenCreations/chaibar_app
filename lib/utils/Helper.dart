@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:ChaiBar/model/response/StoreSettingResponse.dart';
+
 import '/model/response/vendorListResponse.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/cupertino.dart';
@@ -11,6 +13,7 @@ import '../model/response/profileResponse.dart';
 class Helper {
   static String valueSharedPreferences = '';
   static String vendorDetailPref = 'VendorDetail';
+  static String storeSettingDetailPref = 'StoreSettingDetail';
   static String vendor_theme = 'vendorTheme';
   static String pref_token = 'token';
   static String pref_device_token = 'device_token';
@@ -76,6 +79,25 @@ class Helper {
     }
     final Map<String, dynamic> VendorDetailMap = jsonDecode(VendorDetailJson);
     return VendorData.fromPref(VendorDetailMap);
+  }
+
+  static Future<bool> saveStoreSettingData(_SettingDetail) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    final String StoreDetailJson = jsonEncode(_SettingDetail.toJson());
+    return await sharedPreferences.setString(
+        storeSettingDetailPref, StoreDetailJson);
+  }
+
+  static Future<StoreSettingResponse?> getStoreSettingDetails() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    final String? StoreDetailJson =
+    sharedPreferences.getString(storeSettingDetailPref);
+
+    if (StoreDetailJson == null) {
+      return null;
+    }
+    final Map<String, dynamic> VendorDetailMap = jsonDecode(StoreDetailJson);
+    return StoreSettingResponse.fromPref(VendorDetailMap);
   }
 
   static Future<bool> saveVendorTheme(token) async {

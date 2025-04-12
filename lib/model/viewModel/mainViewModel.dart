@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:ChaiBar/model/request/deleteProfileRequest.dart';
+import 'package:ChaiBar/model/response/StoreSettingResponse.dart';
 
 import '../../utils/apiHandling/api_response.dart';
 import '../request/addRewardPointsRequest.dart';
@@ -311,6 +312,28 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.completed(vendorListResponse);
       } else {
         _apiResponse = ApiResponse.error(vendorListResponse.message);
+      }
+    } catch (e) {
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      print(" catch ${e}");
+    }
+    notifyListeners();
+  }
+
+  Future<void> fetchStoreSettingData(String value) async {
+    _apiResponse = ApiResponse.loading('Loading');
+    notifyListeners();
+    try {
+      StoreSettingResponse storeSettingResponse =
+          await MainRepository().fetchStoreSettingData(value);
+      print("Yess" + storeSettingResponse.message.toString());
+
+      //_apiResponse = ApiResponse.completed(countryListResponse);
+      if (storeSettingResponse.status == 200 ||
+          storeSettingResponse.status == 201) {
+        _apiResponse = ApiResponse.completed(storeSettingResponse);
+      } else {
+        _apiResponse = ApiResponse.error(storeSettingResponse.message);
       }
     } catch (e) {
       _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());

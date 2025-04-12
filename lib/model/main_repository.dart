@@ -2,6 +2,7 @@ import 'package:ChaiBar/model/request/addRewardPointsRequest.dart';
 import 'package:ChaiBar/model/request/deleteProfileRequest.dart';
 import 'package:ChaiBar/model/request/getRewardPointsRequest.dart';
 import 'package:ChaiBar/model/request/itemReviewRequest.dart';
+import 'package:ChaiBar/model/response/StoreSettingResponse.dart';
 import 'package:ChaiBar/model/response/addRewardPointsResponse.dart';
 import 'package:ChaiBar/model/response/getRewardPointsResponse.dart';
 import 'package:ChaiBar/model/response/getViewRewardPointsResponse.dart';
@@ -169,6 +170,15 @@ class MainRepository {
     final jsonData = response;
     print(jsonData);
     VendorListResponse mediaList = VendorListResponse.fromJson(jsonData);
+    return mediaList;
+  }
+
+  Future<StoreSettingResponse> fetchStoreSettingData(String value) async {
+    dynamic response = await _baseService.getResponse(value);
+    print(value);
+    final jsonData = response;
+    print(jsonData);
+    StoreSettingResponse mediaList = StoreSettingResponse.fromJson(jsonData);
     return mediaList;
   }
 

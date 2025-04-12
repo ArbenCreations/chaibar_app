@@ -351,5 +351,11 @@ Map<String, String> splitFullName(String? displayName) {
 }
 
 
+String safeUrl(String? url) {
+  return (url == null || url.trim().isEmpty) ? "https://thechaibar.ca/" : url;
+}
+
+
+
 
 

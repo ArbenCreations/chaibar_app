@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../model/response/successCallbackResponse.dart';
 import '../../../model/response/createOrderResponse.dart';
 import '../../../utils/Helper.dart';
+import '../../../utils/Util.dart';
 
 class OrderSuccessfulScreen extends StatefulWidget {
   final SuccessCallbackResponse? data;
@@ -35,7 +36,7 @@ class _OrderSuccessfulScreenState extends State<OrderSuccessfulScreen>
       TextEditingController();
   late AnimationController _controller;
   Timer? _timer;
-  Uri _url = Uri.parse('');
+  Uri _url = Uri.parse('https://thechaibar.ca/');
 
   @override
   void initState() {
@@ -44,7 +45,7 @@ class _OrderSuccessfulScreenState extends State<OrderSuccessfulScreen>
     Helper.getVendorDetails().then((onValue) {
       setState(() {
         print("domainUrl${onValue?.domainUrl}");
-        _url = Uri.parse("${onValue?.domainUrl ?? "https://thechaibar.ca/"}");
+        _url = Uri.parse(safeUrl(onValue?.domainUrl));
         //setThemeColor();
       });
     });
@@ -152,7 +153,9 @@ class _OrderSuccessfulScreenState extends State<OrderSuccessfulScreen>
                               decoration: BoxDecoration(
                                   color: Colors.green.shade100,
                                   border: Border.all(
-                                      width: 0.1, color: Colors.green.shade100,),
+                                    width: 0.1,
+                                    color: Colors.green.shade100,
+                                  ),
                                   borderRadius: BorderRadius.circular(8)),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -162,7 +165,9 @@ class _OrderSuccessfulScreenState extends State<OrderSuccessfulScreen>
                                     color: Colors.green,
                                     size: 18,
                                   ),
-                                  SizedBox(width: 6,),
+                                  SizedBox(
+                                    width: 6,
+                                  ),
                                   Text(
                                     "You have earned ${widget.pointsEarned} reward points",
                                     style: TextStyle(
@@ -213,7 +218,8 @@ class _OrderSuccessfulScreenState extends State<OrderSuccessfulScreen>
                     Spacer(),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, "/BottomNavigation", arguments: 0);
+                        Navigator.pushNamed(context, "/BottomNavigation",
+                            arguments: 0);
                       },
                       child: Container(
                         width: mediaWidth * 0.5,
@@ -238,7 +244,8 @@ class _OrderSuccessfulScreenState extends State<OrderSuccessfulScreen>
                     ),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, "/BottomNavigation", arguments: 1);
+                        Navigator.pushNamed(context, "/BottomNavigation",
+                            arguments: 1);
                       },
                       child: Container(
                         width: mediaWidth * 0.68,

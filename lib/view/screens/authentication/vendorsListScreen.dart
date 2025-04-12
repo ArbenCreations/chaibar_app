@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-import '../../component/CustomAlert.dart';
 import '/language/Languages.dart';
 import '/utils/Helper.dart';
 import '/utils/Util.dart';
+import '../../../model/response/StoreSettingResponse.dart';
 import '../../../model/response/vendorListResponse.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../theme/CustomAppColor.dart';
 import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomAlert.dart';
 import '../../component/connectivity_service.dart';
-import '../../component/toastMessage.dart';
 
 class VendorsListScreen extends StatefulWidget {
   final String? data; // Define the 'data' parameter here
@@ -97,266 +97,130 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
                     opacity: 0.7,
                     fit: BoxFit.cover)),
             child: SafeArea(
-              child: Column(
+              child: Stack(
                 children: [
-                  /*SafeArea(
-                    child: Align(
-                        alignment: Alignment.topCenter,
-                        child: IntrinsicWidth(
-                          child: Container(
-                            //width: mediaWidth * 0.5,
-                              margin: EdgeInsets.only(top: 30),
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 40, vertical: 5),
-                              decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8)),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.location_on),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  Text(
-                                    "Select Location",
-                                    style: TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              )),
-                        )),
-                  ),*/
-                  Container(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        vendorList.isNotEmpty
-                            ? Column(
-                                children: [
-                                  // 🔍 Add the search bar
-                                  Container(
-                                    width: mediaWidth * 0.85,
-                                    height: 45,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(20.0),
-                                    ),
-                                    child: TextField(
-                                      controller: searchController,
-                                      decoration: InputDecoration(
-                                        hintText: "Search location...",
-                                        prefixIcon: Icon(Icons.location_on,
-                                            color: CustomAppColor.Primary),
-                                        border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(20.0),
-                                            borderSide: BorderSide(
-                                                color: Colors.white,
-                                                width: 0.1)),
+                  Column(
+                    children: [
+                      Container(
+                        width: mediaWidth,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            vendorList.isNotEmpty
+                                ? Column(
+                                    children: [
+                                      // 🔍 Add the search bar
+                                      Container(
+                                        width: mediaWidth * 0.85,
+                                        height: 45,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(20.0),
+                                        ),
+                                        child: TextField(
+                                          controller: searchController,
+                                          decoration: InputDecoration(
+                                            hintText: "Search location...",
+                                            prefixIcon: Icon(Icons.location_on,
+                                                color: CustomAppColor.Primary),
+                                            border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(20.0),
+                                                borderSide: BorderSide(
+                                                    color: Colors.white,
+                                                    width: 0.1)),
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
 
-                                  // 📝 Filtered list display
-                                  SizedBox(height: 20),
-                                  Align(
-                                    alignment: Alignment.center,
-                                    child: SingleChildScrollView(
-                                      scrollDirection: Axis.vertical,
-                                      child: Column(
-                                        children:
-                                            filteredVendorList.map((item) {
-                                          return GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                selectedLocality =
-                                                    selectedLocality.isEmpty
-                                                        ? "${item.localityName}"
-                                                        : "";
-                                                selectedLocalityData = item;
-                                              });
+                                      // 📝 Filtered list display
+                                      SizedBox(height: 20),
+                                      Align(
+                                        alignment: Alignment.center,
+                                        child: SingleChildScrollView(
+                                          scrollDirection: Axis.vertical,
+                                          child: Column(
+                                            children:
+                                                filteredVendorList.map((item) {
+                                              return GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                                    selectedLocality =
+                                                        selectedLocality.isEmpty
+                                                            ? "${item.localityName}"
+                                                            : "";
+                                                    selectedLocalityData = item;
+                                                  });
 
-                                              if (selectedLocality.isNotEmpty &&
+                                                  if (selectedLocality
+                                                              .isNotEmpty &&
+                                                          selectedLocalityData
+                                                                  .status
+                                                                  ?.contains(
+                                                                      "online") ==
+                                                              true ||
                                                       selectedLocalityData
                                                               .status
                                                               ?.contains(
-                                                                  "online") ==
-                                                          true ||
-                                                  selectedLocalityData.status
+                                                                  "offline") ==
+                                                          true) {
+                                                    Helper.saveVendorData(
+                                                        selectedLocalityData);
+                                                    Helper.saveApiKey(
+                                                        selectedLocalityData
+                                                            .paymentSetting
+                                                            ?.apiKey);
+                                                    Helper.saveAppId(
+                                                        selectedLocalityData
+                                                            .paymentSetting
+                                                            ?.appId);
+                                                    _getStoreSettingData(
+                                                        selectedLocalityData);
+                                                  } else if (selectedLocalityData
+                                                          .status
                                                           ?.contains(
                                                               "offline") ==
                                                       true) {
-                                                Helper.saveVendorData(
-                                                    selectedLocalityData);
-                                                Helper.saveApiKey(
-                                                    selectedLocalityData
-                                                        .paymentSetting
-                                                        ?.apiKey);
-                                                Helper.saveAppId(
-                                                    selectedLocalityData
-                                                        .paymentSetting
-                                                        ?.appId);
-                                                Navigator.pushReplacementNamed(
-                                                    context,
-                                                    "/BottomNavigation",
-                                                    arguments: 1);
-                                              } else if (selectedLocalityData
-                                                      .status
-                                                      ?.contains("offline") ==
-                                                  true) {
-                                                CustomAlert.showToast(
-                                                    context: context,
-                                                    message:
-                                                        "This store is closed at the moment.");
-                                              } else {
-                                                CustomAlert.showToast(
-                                                    context: context,
-                                                    message:
-                                                        "Select location.");
-                                              }
-                                            },
-                                            child: _buildVendorCard(item),
-                                          );
-                                        }).toList(),
+                                                    CustomAlert.showToast(
+                                                        context: context,
+                                                        message:
+                                                            "This store is closed at the moment.");
+                                                  } else {
+                                                    CustomAlert.showToast(
+                                                        context: context,
+                                                        message:
+                                                            "Select location.");
+                                                  }
+                                                },
+                                                child: _buildVendorCard(item),
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : ShimmerList(),
-                        SizedBox(
-                          height: 50,
-                        )
-                      ],
-                    ),
+                                    ],
+                                  )
+                                : ShimmerList(),
+                            SizedBox(
+                              height: 50,
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
+                  isLoading
+                      ? Center(
+                          child: CircularProgressIndicator(),
+                        )
+                      : SizedBox(),
                 ],
               ),
             ),
           ),
         ));
   }
-
-  // Separate Widgets for readability
-
-  /* /// Vendor Card
-  Widget _buildVendorCard(item) {
-    return Center(
-      child: Container(
-        width: mediaWidth * 0.8,
-        margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          color: Colors.white,
-        ),
-        child: Column(
-          children: [
-            Stack(
-              children: [
-                Container(
-                  height: screenHeight * 0.1,
-                  width: mediaWidth * 0.9,
-                  decoration: BoxDecoration(
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  child: ClipRRect(
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(20)),
-                    child: item.storeImage!.isNotEmpty
-                        ? Image.network(
-                            item.storeImage ?? placeholderImage,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Center(child: CircularProgressIndicator());
-                            },
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(color: Colors.black54);
-                            },
-                          )
-                        : Image.asset("assets/vendorLoc.png",
-                            fit: BoxFit.fitWidth),
-                  ),
-                ),
-                item.status?.contains("online") == true
-                    ? _buildStatusBadge("Open", Colors.green)
-                    : _buildStatusBadge("Close", Colors.red),
-              ],
-            ),
-            Container(
-              height: screenHeight * 0.08,
-              width: mediaWidth * 0.85,
-              decoration: BoxDecoration(
-                borderRadius:
-                    BorderRadius.vertical(bottom: Radius.circular(20)),
-                gradient: LinearGradient(
-                  colors: (item.localityName == selectedLocality)
-                      ? [
-                          CustomAppColor.Primary,
-                          CustomAppColor.Primary.withOpacity(0.4)
-                        ]
-                      : [Colors.white, Colors.white, Colors.white],
-                ),
-              ),
-              padding: EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Container(
-                          width: 200,
-                          child: Text(
-                            capitalizeFirstLetter("${item.businessName}"),
-                            maxLines: 2,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black,
-                              overflow: TextOverflow.fade,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.location_on,
-                              size: 16,
-                            ),
-                            SizedBox(
-                              width: 2,
-                            ),
-                            Text(
-                              capitalizeFirstLetter("${item.localityName}"),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          capitalizeFirstLetter("${item.description}"),
-                          style: TextStyle(fontSize: 11, color: Colors.black),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }*/
 
   /// Vendor Card
   Widget _buildVendorCard(item) {
@@ -491,18 +355,6 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
     );
   }
 
-  Widget _buildHeaderText() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Image.asset(
-          "assets/selectStore.png",
-          height: 50,
-        ),
-      ],
-    );
-  }
-
   void _fetchData() async {
     setState(() {
       isLoading = false;
@@ -553,6 +405,67 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
         });
 
         //_showPicker(context: context);
+
+        return Container(); // Return an empty container as you'll navigate away
+      case Status.ERROR:
+        return Center(
+          child: Text('Please try again later!!!'),
+        );
+      case Status.INITIAL:
+      default:
+        return Center(
+          child: Text(''),
+        );
+    }
+  }
+
+  void _getStoreSettingData(VendorData selectedLocalityData) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    bool isConnected = await _connectivityService.isConnected();
+    if (!isConnected) {
+      setState(() {
+        isLoading = false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text('${Languages.of(context)?.labelNoInternetConnection}'),
+            duration: maxDuration,
+          ),
+        );
+      });
+    } else {
+      await Future.delayed(Duration(milliseconds: 2));
+      await Provider.of<MainViewModel>(context, listen: false)
+          .fetchStoreSettingData(
+              "/api/v1/vendors/${selectedLocalityData.id}/vendor_store_setting");
+      ApiResponse apiResponse =
+          Provider.of<MainViewModel>(context, listen: false).response;
+      getVendorStoreSettingData(context, apiResponse);
+    }
+  }
+
+  Widget getVendorStoreSettingData(
+      BuildContext context, ApiResponse apiResponse)
+  {
+    StoreSettingResponse? storeSettingResponse =
+        apiResponse.data as StoreSettingResponse?;
+    var message = apiResponse.message.toString();
+    setState(() {
+      isLoading = false;
+    });
+    switch (apiResponse.status) {
+      case Status.LOADING:
+        return Center(child: CircularProgressIndicator());
+      case Status.COMPLETED:
+        print("rwrwr ${storeSettingResponse?.gst}");
+        Helper.saveStoreSettingData(storeSettingResponse);
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, "/BottomNavigation",
+              arguments: 1);
+        }
 
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:

@@ -28,12 +28,11 @@ import '../../../model/response/storeStatusResponse.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomAlert.dart';
 import '../../component/DashedLine.dart';
 import '../../component/ShimmerList.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/session_expired_dialog.dart';
-import '../../component/toastMessage.dart';
-import '../../component/CustomAlert.dart';
 
 class MyCartScreen extends StatefulWidget {
   MyCartScreen();
@@ -120,6 +119,13 @@ class _MyCartScreenState extends State<MyCartScreen> {
     Helper.getVendorDetails().then((data) {
       setState(() {
         vendorId = int.parse("${data?.id}");
+        //gst = int.parse("${data?.gst ?? 0}");
+        //pst = int.parse("${data?.pst ?? 0}");
+        //hst = int.parse("${data?.hst ?? 0}");
+      });
+    });
+    Helper.getStoreSettingDetails().then((data) {
+      setState(() {
         gst = int.parse("${data?.gst ?? 0}");
         pst = int.parse("${data?.pst ?? 0}");
         hst = int.parse("${data?.hst ?? 0}");

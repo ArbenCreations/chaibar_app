@@ -354,7 +354,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
         paymentItems: paymentItems,
         customerEmail: "${widget.orderData?.order?.customerEmail}",
         customerName: "${widget.orderData?.order?.customerName}",
-        companyName: "Concerto Soft",
+        companyName: "TheChaiBar",
       );
 
       print("Payment response: ${applePaymentData.toString()}");
