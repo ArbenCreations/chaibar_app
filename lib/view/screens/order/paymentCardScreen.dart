@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_credit_card/flutter_credit_card.dart';
 import 'package:provider/provider.dart';
 
-import '../../component/CustomAlert.dart';
 import '/model/request/successCallbackRequest.dart';
 import '../../../language/Languages.dart';
 import '../../../model/db/ChaiBarDB.dart';
@@ -27,9 +26,9 @@ import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
 import '../../../utils/apiHandling/api_response.dart';
 import '../../component/ApplePayButton.dart';
+import '../../component/CustomAlert.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/session_expired_dialog.dart';
-import '../../component/toastMessage.dart';
 
 class PaymentCardScreen extends StatefulWidget {
   final String? data;
@@ -219,6 +218,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
 
     mediaWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
+    print("rewardPoints ${widget.rewardPoints}");
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 65,
@@ -728,7 +728,8 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
       });
     } else {
       GetRewardPointsRequest request = GetRewardPointsRequest(
-          pointsToRedeem: double.parse("${widget.rewardPoints}"));
+          pointsToRedeem: double.parse("${widget.rewardPoints}"),
+          orderId: int.parse("${widget.orderData?.order?.id}"));
 
       await Provider.of<MainViewModel>(context, listen: false)
           .fetchRewardPointsDetails(

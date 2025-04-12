@@ -162,6 +162,8 @@ class _MyCartScreenState extends State<MyCartScreen> {
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
         print("rwrwr ${getApiAccessKeyResponse?.apiAccessKey.toString()}");
+        print("redeemAmount ${redeemAmount}");
+        print("actualRewardPoints ${actualRewardPoints}");
         //cartDataDao.clearAllCartProduct();
         createOrderResponse?.order?.redeemPoints = "${rewardPoints}";
         setState(() {
@@ -1719,7 +1721,8 @@ class _MyCartScreenState extends State<MyCartScreen> {
       });
     } else {
       GetRewardPointsRequest request =
-          GetRewardPointsRequest(pointsToRedeem: double.parse("$rewardPoints"));
+          GetRewardPointsRequest(pointsToRedeem: double.parse("$rewardPoints"),
+          orderId: int.parse("0"));
 
       await Provider.of<MainViewModel>(context, listen: false)
           .fetchRewardPointsDetails(
