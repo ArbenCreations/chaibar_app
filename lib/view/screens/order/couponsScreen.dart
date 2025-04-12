@@ -94,6 +94,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
         body: SafeArea(
           minimum: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
           child: Container(
+            width: mediaWidth,
             padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             child: SingleChildScrollView(
               child: Column(

@@ -3,8 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../component/CustomAlert.dart';
-import '../../../utils/apiHandling/api_response.dart';
+
 import '/model/request/signUpRequest.dart';
 import '/model/response/signUpInitializeResponse.dart';
 import '/utils/Util.dart';
@@ -12,10 +11,11 @@ import '../../../../language/Languages.dart';
 import '../../../../theme/CustomAppColor.dart';
 import '../../../../utils/Helper.dart';
 import '../../../model/viewModel/mainViewModel.dart';
+import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomAlert.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/custom_button_component.dart';
 import '../../component/googleSignIN.dart';
-import '../../component/toastMessage.dart';
 
 class RegisterScreen extends StatefulWidget {
   final String? userId;
@@ -115,175 +115,184 @@ class _RegisterScreenState extends State<RegisterScreen> {
     mediaWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
     ApiResponse apiResponse = Provider.of<MainViewModel>(context).response;
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: GestureDetector(
-        onTap: () {
-          hideKeyBoard();
-        },
-        child: Container(
-          height: screenHeight,
-          decoration: BoxDecoration(
-              image: DecorationImage(
-                  image: AssetImage("assets/signUpBack.png"),
-                  fit: BoxFit.cover)),
-          child: Stack(
-            children: [
-              SingleChildScrollView(
-                child: Container(
-                  height: screenHeight,
-                  margin: EdgeInsets.symmetric(horizontal: 10),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Image.asset(
-                        "assets/app_logo.png",
-                        height: 45,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 18.0, vertical: 10),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              buildTextInput(
-                                  context,
-                                  "${Languages.of(context)!.labelFirstname}",
-                                  _nameController,
-                                  Icons.account_box_outlined),
-                              SizedBox(width: 5),
-                              buildTextInput(
-                                  context,
-                                  "${Languages.of(context)!.labelLastname}",
-                                  _lastNameController,
-                                  Icons.account_box_outlined),
-                              _buildEmailInput(
-                                  context,
-                                  "Enter your ${Languages.of(context)!.labelEmail}",
-                                  _emailController,
-                                  Icons.email_outlined),
-                              _buildPhoneInput(
-                                  context,
-                                  "Enter your ${Languages.of(context)!.labelPhoneNumber}",
-                                  _phoneController,
-                                  Icons.call),
-                              _buildPasswordTextField(
-                                  context,
-                                  "New ${Languages.of(context)!.labelPassword}",
-                                  _passwordController,
-                                  passwordVisible,
-                                  isDarkMode,
-                                  "password",
-                                  Icons.password),
-                              _buildPasswordTextField(
-                                  context,
-                                  Languages.of(context)!.labelConfirmPass,
-                                  _confirmPasswordController,
-                                  confirmPasswordVisible,
-                                  isDarkMode,
-                                  "confirmPassword",
-                                  Icons.verified_user),
-                            ],
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (bool didPop) {
+        if (didPop) {
+          return;
+        }
+        Navigator.pushReplacementNamed(context, "/SignInScreen");
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        body: GestureDetector(
+          onTap: () {
+            hideKeyBoard();
+          },
+          child: Container(
+            height: screenHeight,
+            decoration: BoxDecoration(
+                image: DecorationImage(
+                    image: AssetImage("assets/signUpBack.png"),
+                    fit: BoxFit.cover)),
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  child: Container(
+                    height: screenHeight,
+                    margin: EdgeInsets.symmetric(horizontal: 10),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        Image.asset(
+                          "assets/app_logo.png",
+                          height: 45,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 18.0, vertical: 10),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                buildTextInput(
+                                    context,
+                                    "${Languages.of(context)!.labelFirstname}",
+                                    _nameController,
+                                    Icons.account_box_outlined),
+                                SizedBox(width: 5),
+                                buildTextInput(
+                                    context,
+                                    "${Languages.of(context)!.labelLastname}",
+                                    _lastNameController,
+                                    Icons.account_box_outlined),
+                                _buildEmailInput(
+                                    context,
+                                    "Enter your ${Languages.of(context)!.labelEmail}",
+                                    _emailController,
+                                    Icons.email_outlined),
+                                _buildPhoneInput(
+                                    context,
+                                    "Enter your ${Languages.of(context)!.labelPhoneNumber}",
+                                    _phoneController,
+                                    Icons.call),
+                                _buildPasswordTextField(
+                                    context,
+                                    "New ${Languages.of(context)!.labelPassword}",
+                                    _passwordController,
+                                    passwordVisible,
+                                    isDarkMode,
+                                    "password",
+                                    Icons.password),
+                                _buildPasswordTextField(
+                                    context,
+                                    Languages.of(context)!.labelConfirmPass,
+                                    _confirmPasswordController,
+                                    confirmPasswordVisible,
+                                    isDarkMode,
+                                    "confirmPassword",
+                                    Icons.verified_user),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      _submitButton(null),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      _divider(),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      _googleButton(),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      /*SizedBox(
-                        width: mediaWidth * 0.55,
-                        child: SignInWithAppleButton(
-                          style: SignInWithAppleButtonStyle.black,
-                          text: "Sign up",
-                          //iconAlignment: IconAlignment.center,
-                          onPressed: () async {
-                            User? user = await context
-                                .read<AuthenticationProvider>()
-                                .signInWithApple();
-                            if (user != null) {
-                              // Check if we have all required info
-                              print(
-                                  "User signed in successfully: ${user.email}");
-                              print(
-                                  "User signed in successfully: ${user.displayName}");
-                              bool isEmailRelay = user.email?.endsWith(
-                                      "@privaterelay.appleid.com") ??
-                                  true;
-                              bool isNameMissing = user.displayName == null ||
-                                  user.displayName!.isEmpty;
-
-                              if (isEmailRelay || isNameMissing) {
-                                // Show bottom sheet to collect missing details
-                                showUserDetailsBottomSheet(context, user);
-                              } else {
+                        SizedBox(
+                          height: 5,
+                        ),
+                        _submitButton(null),
+                        SizedBox(
+                          height: 5,
+                        ),
+                        _divider(),
+                        SizedBox(
+                          height: 5,
+                        ),
+                        _googleButton(),
+                        SizedBox(
+                          height: 5,
+                        ),
+                        /*SizedBox(
+                          width: mediaWidth * 0.55,
+                          child: SignInWithAppleButton(
+                            style: SignInWithAppleButtonStyle.black,
+                            text: "Sign up",
+                            //iconAlignment: IconAlignment.center,
+                            onPressed: () async {
+                              User? user = await context
+                                  .read<AuthenticationProvider>()
+                                  .signInWithApple();
+                              if (user != null) {
+                                // Check if we have all required info
                                 print(
                                     "User signed in successfully: ${user.email}");
+                                print(
+                                    "User signed in successfully: ${user.displayName}");
+                                bool isEmailRelay = user.email?.endsWith(
+                                        "@privaterelay.appleid.com") ??
+                                    true;
+                                bool isNameMissing = user.displayName == null ||
+                                    user.displayName!.isEmpty;
+
+                                if (isEmailRelay || isNameMissing) {
+                                  // Show bottom sheet to collect missing details
+                                  showUserDetailsBottomSheet(context, user);
+                                } else {
+                                  print(
+                                      "User signed in successfully: ${user.email}");
+                                }
+                              } else {
+                                print("Apple sign-in failed or was canceled.");
                               }
-                            } else {
-                              print("Apple sign-in failed or was canceled.");
-                            }
-                          },
-                        ),
-                      ),*/
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            "Have an account?",
-                            style: TextStyle(
-                                fontSize: 12, color: Colors.black54),
+                            },
                           ),
-                          SizedBox(
-                            width: 4,
-                          ),
-                          GestureDetector(
-                              onTap: () {
-                                Navigator.pushNamed(context, "/SignInScreen");
-                              },
-                              child: Text(
-                                "Sign in",
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold),
-                              )),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              isLoading
-                  ? Stack(
-                      children: [
-                        // Block interaction
-                        ModalBarrier(
-                            dismissible: false, color: Colors.transparent),
-                        // Loader indicator
-                        Center(
-                          child: CircularProgressIndicator(),
+                        ),*/
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              "Have an account?",
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.black54),
+                            ),
+                            SizedBox(
+                              width: 4,
+                            ),
+                            GestureDetector(
+                                onTap: () {
+                                  Navigator.pushNamed(context, "/SignInScreen");
+                                },
+                                child: Text(
+                                  "Sign in",
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold),
+                                )),
+                          ],
                         ),
                       ],
-                    )
-                  : SizedBox()
-            ],
+                    ),
+                  ),
+                ),
+                isLoading
+                    ? Stack(
+                        children: [
+                          // Block interaction
+                          ModalBarrier(
+                              dismissible: false, color: Colors.transparent),
+                          // Loader indicator
+                          Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ],
+                      )
+                    : SizedBox()
+              ],
+            ),
           ),
         ),
       ),
@@ -875,8 +884,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<Widget> getSignUpResponse(BuildContext context,
-      ApiResponse apiResponse, SignUpRequest request) async
-  {
+      ApiResponse apiResponse, SignUpRequest request) async {
     SignUpInitializeResponse? signUpResponse =
         apiResponse.data as SignUpInitializeResponse?;
     String? message = apiResponse.message.toString();
@@ -903,8 +911,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           message =
               "Something went wrong, Please signup normally for the time being";
         } else if (message.contains("401")) {
-        }else if (apiResponse.status == 500) {
-          CustomAlert.showToast(context: context, message: "Something went wrong!");
+        } else if (apiResponse.status == 500) {
+          CustomAlert.showToast(
+              context: context, message: "Something went wrong!");
         } else {
           CustomAlert.showToast(context: context, message: "message");
         }

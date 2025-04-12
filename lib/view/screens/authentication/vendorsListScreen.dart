@@ -103,6 +103,7 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
                     children: [
                       Container(
                         width: mediaWidth,
+                        margin: EdgeInsets.only(top: 10),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -448,8 +449,7 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
   }
 
   Widget getVendorStoreSettingData(
-      BuildContext context, ApiResponse apiResponse)
-  {
+      BuildContext context, ApiResponse apiResponse) {
     StoreSettingResponse? storeSettingResponse =
         apiResponse.data as StoreSettingResponse?;
     var message = apiResponse.message.toString();

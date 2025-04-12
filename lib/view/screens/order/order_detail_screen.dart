@@ -320,7 +320,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                   child: Column(
                                     children: [
                                       _buildDetailCard('Subtotal: ',
-                                          "${double.parse("${order.payableAmount}").toStringAsFixed(2)}", false),
+                                          "${double.parse("${order.totalAmount}").toStringAsFixed(2)}", false),
                                       "${order.discountAmount}" != "0"
                                           ? _buildDetailCard('Discount ',
                                               "${double.parse("${order.discountAmount}").toStringAsFixed(2)}", false)
@@ -347,7 +347,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                           "${order.pointsRedeemed}", false),
                                       _buildDetailCard(
                                           'Order Total: ',
-                                          "${double.parse("${order.totalAmount}").toStringAsFixed(2)}",
+                                          "${double.parse("${order.payableAmount}").toStringAsFixed(2)}",
                                           true),
                                       _buildDetailCard('Transaction Id: ',
                                           order.transactionId, true),
