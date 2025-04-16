@@ -128,44 +128,47 @@ class _CouponsScreenState extends State<CouponsScreen> {
   }
 
   Widget newCouponWidget(PrivateCouponDetailsResponse couponsResponse) {
-    return CouponCard(
-      height: 130,
-      backgroundColor: CustomAppColor.PrimaryAccent.withOpacity(0.2),
-      curvePosition: 80,
-      curveRadius: 30,
-      curveAxis: Axis.vertical,
-      clockwise: true,
-      borderRadius: 10,
-      firstChild: Container(
-        alignment: Alignment.center,
-        color: CustomAppColor.ButtonBackColor.withOpacity(0.8),
-        child: Text(
-          "${couponsResponse.discount}% OFF",
-          style: TextStyle(
-              fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
+    return Padding(
+      padding: const EdgeInsets.only(top: 4.0),
+      child: CouponCard(
+        height: 110,
+        backgroundColor: CustomAppColor.PrimaryAccent.withOpacity(0.2),
+        curvePosition: 80,
+        curveRadius: 30,
+        curveAxis: Axis.vertical,
+        clockwise: true,
+        borderRadius: 10,
+        firstChild: Container(
+          alignment: Alignment.center,
+          color: CustomAppColor.ButtonBackColor.withOpacity(0.8),
+          child: Text(
+            "${couponsResponse.discount}% OFF",
+            style: TextStyle(
+                fontSize: 15, color: Colors.white, fontWeight: FontWeight.bold),
+          ),
         ),
-      ),
-      secondChild: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(height: 5),
-          Text("Use code: ${couponsResponse.couponCode}",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          SizedBox(height: 5),
-          Text(
-              "Valid until: ${convertDateTimeFormat("${couponsResponse.expireAt}")}",
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
-          SizedBox(height: 5),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Text("Min. Amount: ${couponsResponse.minCartAmt}",
-                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
-              Text("Max. Amount: ${couponsResponse.maxDiscountAmt}",
-                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
-            ],
-          )
-        ],
+        secondChild: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(height: 5),
+            Text("Use code: ${couponsResponse.couponCode}",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            SizedBox(height: 5),
+            Text(
+                "Valid until: ${convertDateTimeFormat("${couponsResponse.expireAt}")}",
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
+            SizedBox(height: 5),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Text("Min. Amount: ${couponsResponse.minCartAmt}",
+                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
+                Text("Max. Amount: ${couponsResponse.maxDiscountAmt}",
+                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
+              ],
+            )
+          ],
+        ),
       ),
     );
   }

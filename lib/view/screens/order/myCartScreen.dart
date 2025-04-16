@@ -30,7 +30,6 @@ import '../../../utils/Helper.dart';
 import '../../../utils/apiHandling/api_response.dart';
 import '../../component/CustomAlert.dart';
 import '../../component/DashedLine.dart';
-import '../../component/ShimmerList.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/session_expired_dialog.dart';
 
@@ -776,12 +775,12 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                       ),
                                       GestureDetector(
                                         onTap: () {
-                                          couponsList.length > 0
-                                              ? showCouponBottomSheet(context)
-                                              : CustomAlert.showToast(
+                                          //couponsList.length > 0
+                                          showCouponBottomSheet(context);
+                                          /* : CustomAlert.showToast(
                                                   context: context,
                                                   message:
-                                                      "No available coupons");
+                                                      "No available coupons");*/
                                         },
                                         child: Card(
                                           elevation: 0,
@@ -1720,8 +1719,8 @@ class _MyCartScreenState extends State<MyCartScreen> {
         );
       });
     } else {
-      GetRewardPointsRequest request =
-          GetRewardPointsRequest(pointsToRedeem: double.parse("$rewardPoints"),
+      GetRewardPointsRequest request = GetRewardPointsRequest(
+          pointsToRedeem: double.parse("$rewardPoints"),
           orderId: int.parse("0"));
 
       await Provider.of<MainViewModel>(context, listen: false)
@@ -2115,23 +2114,24 @@ class _MyCartScreenState extends State<MyCartScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
       ),
       builder: (context) {
-        return Container(
-          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Available Coupons",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            // Optionally, you can pass a function here to update setState when data changes externally
+            return Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.7,
               ),
-              SizedBox(height: 10),
-              Expanded(
-                child: isDataLoading
-                    ? ShimmerList() // Show shimmer loader if data is loading
-                    : couponsList.isNotEmpty
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Available Coupons",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 10),
+                  Expanded(
+                    child: couponsList.isNotEmpty
                         ? ListView.builder(
                             itemCount: couponsList.length,
                             shrinkWrap: true,
@@ -2148,9 +2148,11 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                   TextStyle(color: Colors.grey, fontSize: 14),
                             ),
                           ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );

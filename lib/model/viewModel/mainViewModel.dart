@@ -2,15 +2,8 @@ import 'dart:convert';
 
 import 'package:ChaiBar/model/request/deleteProfileRequest.dart';
 import 'package:ChaiBar/model/response/StoreSettingResponse.dart';
+import 'package:flutter/cupertino.dart';
 
-import '../../utils/apiHandling/api_response.dart';
-import '../request/addRewardPointsRequest.dart';
-import '../request/getRewardPointsRequest.dart';
-import '../request/itemReviewRequest.dart';
-import '../response/addRewardPointsResponse.dart';
-import '../response/getRewardPointsResponse.dart';
-import '../response/getViewRewardPointsResponse.dart';
-import '../response/itemReviewResponse.dart';
 import '/model/main_repository.dart';
 import '/model/request/TransactionRequest.dart';
 import '/model/request/featuredListRequest.dart';
@@ -21,9 +14,9 @@ import '/model/request/globalSearchRequest.dart';
 import '/model/request/markFavoriteRequest.dart';
 import '/model/request/signUpRequest.dart';
 import '/model/request/vendorSearchRequest.dart';
-import '/model/response/couponListResponse.dart';
 import '/model/response/bannerListResponse.dart';
 import '/model/response/categoryListResponse.dart';
+import '/model/response/couponListResponse.dart';
 import '/model/response/favoriteListResponse.dart';
 import '/model/response/featuredListResponse.dart';
 import '/model/response/getApiAccessKeyResponse.dart';
@@ -36,13 +29,15 @@ import '/model/response/signInResponse.dart';
 import '/model/response/signUpInitializeResponse.dart';
 import '/model/response/signUpVerifyResponse.dart';
 import '/model/response/vendorSearchResponse.dart';
-import 'package:flutter/cupertino.dart';
-
+import '../../utils/apiHandling/api_response.dart';
 import '../request/CardDetailRequest.dart';
 import '../request/CreateOrderRequest.dart';
+import '../request/addRewardPointsRequest.dart';
 import '../request/createOtpChangePass.dart';
 import '../request/editProfileRequest.dart';
 import '../request/getCouponDetailsRequest.dart';
+import '../request/getRewardPointsRequest.dart';
+import '../request/itemReviewRequest.dart';
 import '../request/otpVerifyRequest.dart';
 import '../request/signInRequest.dart';
 import '../request/signUpWithGoogleRequest.dart';
@@ -50,10 +45,14 @@ import '../request/successCallbackRequest.dart';
 import '../request/verifyOtpChangePass.dart';
 import '../response/ErrorResponse.dart';
 import '../response/PaymentDetailsResponse.dart';
+import '../response/addRewardPointsResponse.dart';
 import '../response/createOrderResponse.dart';
 import '../response/createOtpChangePassResponse.dart';
 import '../response/dashboardDataResponse.dart';
 import '../response/getCouponDetailsResponse.dart';
+import '../response/getRewardPointsResponse.dart';
+import '../response/getViewRewardPointsResponse.dart';
+import '../response/itemReviewResponse.dart';
 import '../response/markFavoriteResponse.dart';
 import '../response/storeStatusResponse.dart';
 import '../response/successCallbackResponse.dart';
@@ -83,21 +82,23 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(signInResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print("signInResponse $e");
     }
     notifyListeners();
   }
 
-
-  Future<void> signInWithGoogle(String value, SignUpWithGoogleRequest signUpWithGoogleRequest) async {
+  Future<void> signInWithGoogle(
+      String value, SignUpWithGoogleRequest signUpWithGoogleRequest) async {
     _apiResponse = ApiResponse.loading('Loading');
     print("Yess" + "${signUpWithGoogleRequest.customer?.email}");
     notifyListeners();
     try {
       //print(signInRequest.customer.phoneNumber);
-      SignInResponse signInResponse =
-          await MainRepository().signInWithGoogle(value, signUpWithGoogleRequest);
+      SignInResponse signInResponse = await MainRepository()
+          .signInWithGoogle(value, signUpWithGoogleRequest);
       print("Yess" + "${signInResponse.customer?.firstName}");
       //_apiResponse = ApiResponse.completed(signInResponse);
       if (signInResponse.status == 200 || signInResponse.status == 201) {
@@ -106,7 +107,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(signInResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print("signInResponse $e");
     }
     notifyListeners();
@@ -127,7 +130,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error("${getApiAccessKeyResponse.message}");
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print("signInResponse $e");
     }
     notifyListeners();
@@ -140,7 +145,7 @@ class MainViewModel with ChangeNotifier {
     notifyListeners();
     try {
       TokenDetailsResponse tokenDetailsResponse =
-      await MainRepository().getApiToken(value, apiKey, cardRequest);
+          await MainRepository().getApiToken(value, apiKey, cardRequest);
       print("Yess: ${tokenDetailsResponse.message}");
 
       if (tokenDetailsResponse.id?.isNotEmpty == true) {
@@ -150,30 +155,23 @@ class MainViewModel with ChangeNotifier {
       }
     } catch (e) {
       print("signInResponse: ${e.toString()}");
-      _apiResponse = ApiResponse.error(e.toString());
 
       try {
-        // Check if the error message contains JSON
+        // Optional: check if it's a known Clover error format
         int jsonStartIndex = e.toString().indexOf('{');
         if (jsonStartIndex == -1) {
+          print("Raw error (not JSON): ${e.toString()}");
           throw FormatException("Invalid error format: JSON not found");
         }
 
-        // Extract and clean the JSON string
         String jsonString = e.toString().substring(jsonStartIndex).trim();
-        print("Extracted JSON: $jsonString");
-
-        // Decode JSON safely
         final Map<String, dynamic> decodedJson = jsonDecode(jsonString);
-
-        // Parse error response
         ErrorResponse errorResponse = ErrorResponse.fromJson(decodedJson);
         _apiResponse = ApiResponse.error(errorResponse.error.message);
-
         print("signInResponse: ${errorResponse.error.message}");
       } catch (jsonError) {
-        print("JSON Parsing Error: $jsonError");
-        _apiResponse = ApiResponse.error("An unexpected error occurred.");
+        print("Raw error (fallback): ${e.toString()}");
+        _apiResponse = ApiResponse.error("An unexpected error occurred. ");
       }
     }
 
@@ -206,7 +204,8 @@ class MainViewModel with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> successCallback(String value, SuccessCallbackRequest successCallbackRequest) async {
+  Future<void> successCallback(
+      String value, SuccessCallbackRequest successCallbackRequest) async {
     _apiResponse = ApiResponse.loading('Loading');
     print("Yess" + "${successCallbackRequest?.transactionId}");
     notifyListeners();
@@ -245,10 +244,15 @@ class MainViewModel with ChangeNotifier {
         print("success");
         _apiResponse = ApiResponse.completed(signUpInitializeResponse);
       } else {
-        _apiResponse = ApiResponse.error(signUpInitializeResponse.message?.contains("401")  == true ? signUpInitializeResponse.data : signUpInitializeResponse.message);
+        _apiResponse = ApiResponse.error(
+            signUpInitializeResponse.message?.contains("401") == true
+                ? signUpInitializeResponse.data
+                : signUpInitializeResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print("signInResponse $e");
     }
     notifyListeners();
@@ -271,7 +275,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(signUpResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print("signInResponse $e");
     }
     notifyListeners();
@@ -291,7 +297,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(locationListResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(" catch ${e}");
     }
     notifyListeners();
@@ -314,7 +322,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(vendorListResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(" catch ${e}");
     }
     notifyListeners();
@@ -336,7 +346,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(storeSettingResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(" catch ${e}");
     }
     notifyListeners();
@@ -359,7 +371,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(bannerListResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(" catch ${e}");
     }
     notifyListeners();
@@ -381,7 +395,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(dashboardDataResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(" catch ${e}");
     }
     notifyListeners();
@@ -403,7 +419,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(categoryListResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(" catch ${e}");
     }
     notifyListeners();
@@ -428,7 +446,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(featuredListResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -451,7 +471,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(favoriteListResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -476,7 +498,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(markFavoriteResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -499,7 +523,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(markFavoriteResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -520,7 +546,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(storeStatusResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -541,7 +569,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(profileResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -561,7 +591,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(profileResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -582,7 +614,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(profileResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -603,7 +637,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(profileResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -626,7 +662,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(couponListResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -651,7 +689,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(productListResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -676,7 +716,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(globalSearchResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -701,7 +743,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(vendorSearchResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -726,15 +770,16 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(couponDetailsResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
   }
 
   Future<void> fetchRewardPointsDetails(
-      String value, GetRewardPointsRequest getRewardPointsRequest) async
-  {
+      String value, GetRewardPointsRequest getRewardPointsRequest) async {
     _apiResponse = ApiResponse.loading('Loading');
     //String requestAsString = phoneRequestToString(request);
     notifyListeners();
@@ -742,31 +787,30 @@ class MainViewModel with ChangeNotifier {
       GetRewardPointsResponse response = await MainRepository()
           .fetchRewardPointsDetails(value, getRewardPointsRequest);
       print("Yess" + "${response.totalPoints}");
-      if (response.status == 200 ||
-          response.status == 201) {
+      if (response.status == 200 || response.status == 201) {
         _apiResponse = ApiResponse.completed(response);
       } else {
         print("viewmodel ${response.message}");
         _apiResponse = ApiResponse.error(response.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
   }
 
   Future<void> addRewardPointsDetails(
-      String value, AddRewardPointsRequest addRewardPointsRequest) async
-  {
+      String value, AddRewardPointsRequest addRewardPointsRequest) async {
     _apiResponse = ApiResponse.loading('Loading');
     //String requestAsString = phoneRequestToString(request);
     notifyListeners();
     try {
       AddRewardPointsResponse? response = await MainRepository()
           .addRewardPointsDetails(value, addRewardPointsRequest);
-      if (response?.status == 200 ||
-          response?.status == 201) {
+      if (response?.status == 200 || response?.status == 201) {
         print("addRewardPointsRequest ${response?.pointsEarned}");
         _apiResponse = ApiResponse.completed(response);
       } else {
@@ -774,7 +818,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(response?.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -799,7 +845,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(createOrderResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -825,31 +873,33 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(createOtpChangePassResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
   }
 
-  Future<void> itemReviewRequestApi(String value,
-      ItemReviewRequest createOtpChangePassRequest) async {
+  Future<void> itemReviewRequestApi(
+      String value, ItemReviewRequest createOtpChangePassRequest) async {
     _apiResponse = ApiResponse.loading('Loading');
 
     notifyListeners();
     try {
-      ItemReviewResponse response =
-          await MainRepository()
-              .itemReviewRequestApi(value, createOtpChangePassRequest);
+      ItemReviewResponse response = await MainRepository()
+          .itemReviewRequestApi(value, createOtpChangePassRequest);
       print("Yess" + "${response.data}");
 
-      if (response.status == 200 ||
-          response.status == 201) {
+      if (response.status == 200 || response.status == 201) {
         _apiResponse = ApiResponse.completed(response);
       } else {
         _apiResponse = ApiResponse.error(response.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -868,7 +918,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(response.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();
@@ -888,7 +940,9 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.error(getHistoryResponse.message);
       }
     } catch (e) {
-      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>") ? "Something went wrong!" : e.toString());
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
       print(e);
     }
     notifyListeners();

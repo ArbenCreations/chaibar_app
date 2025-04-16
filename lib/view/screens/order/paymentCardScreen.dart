@@ -314,6 +314,9 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
                           Platform.isIOS
                               ? ApplePayButton(
                                   onPressed: () {
+                                    setState(() {
+                                      isLoading = true;
+                                    });
                                     makePayment(); // your payment logic
                                   },
                                 )
@@ -340,11 +343,13 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
           amount: double.parse("${widget.orderData?.order?.totalAmount}"),
           shippingcharge: 0.0)
     ];
-
+    setState(() {
+      isLoading = false;
+    });
     try {
       applePaymentData = await ApplePayFlutter.makePayment(
-        countryCode: "US",
-        currencyCode: "USD",
+        countryCode: "CA",
+        currencyCode: "CAD",
         paymentNetworks: [
           PaymentNetwork.visa,
           PaymentNetwork.mastercard,
