@@ -12,7 +12,6 @@ import '../../../utils/Helper.dart';
 import '../../../utils/apiHandling/api_response.dart';
 import '../../component/CustomAlert.dart';
 import '../../component/connectivity_service.dart';
-import '../../component/toastMessage.dart';
 
 class GetStartedScreen extends StatefulWidget {
   @override
@@ -63,15 +62,14 @@ class _WelcomeScreenState extends State<GetStartedScreen> {
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.all(
-                                  Radius.circular(6)
-                              )
-                            ),
+                                color: Colors.white,
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(6))),
                             padding: EdgeInsets.all(5.0),
                             margin: EdgeInsets.only(top: 15),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.all(Radius.circular(15)),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(15)),
                               child: Image.asset(
                                 "assets/app_logo.png",
                                 height: 60,
@@ -96,39 +94,101 @@ class _WelcomeScreenState extends State<GetStartedScreen> {
                             height: 30,
                           ),
                           Center(
-                            child: MaterialButton(
-                              minWidth: mediaWidth * 0.55,
-                              color: CustomAppColor.Primary,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
-                              height: 48,
-                              onPressed: () async {
+                            child: GestureDetector(
+                              onTap: () async {
                                 Navigator.of(context)
                                     .pushReplacementNamed("/SignInScreen");
                               },
-                              child: Text(
-                                "Sign In",
-                                style: TextStyle(
-                                    fontSize: 14, color: Colors.white),
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Container(
+                                    width: mediaWidth * 0.55,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black,
+                                      // Change this to match your theme
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        "Sign In",
+                                        style: TextStyle(
+                                            fontSize: 16, color: Colors.white),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                      right: -10, // Adjust position
+                                      top: -10,
+                                      bottom: -10,
+                                      child: Container(
+                                        width: 36,
+                                        height: 36,
+                                        padding: EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                          color: CustomAppColor.PrimaryAccent,
+                                          // Change color as needed
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Image(
+                                          image: AssetImage(
+                                              "assets/coffeeIcon.png"),
+                                          height: 10,
+                                          width: 10, // Use appropriate icon
+                                        ),
+                                      )),
+                                ],
                               ),
                             ),
                           ),
                           SizedBox(height: 10),
                           Center(
-                            child: MaterialButton(
-                              minWidth: mediaWidth * 0.55,
-                              color: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
-                              height: 48,
-                              onPressed: () async {
+                            child: GestureDetector(
+                              onTap: () async {
                                 Navigator.of(context)
                                     .pushReplacementNamed("/RegisterScreen");
                               },
-                              child: Text(
-                                "Sign Up",
-                                style: TextStyle(
-                                    fontSize: 14, color: CustomAppColor.Primary,),
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Container(
+                                    width: mediaWidth * 0.55,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      // Change this to match your theme
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        "Sign Up",
+                                        style: TextStyle(
+                                            fontSize: 16, color: Colors.black),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                      right: -10, // Adjust position
+                                      top: -10,
+                                      bottom: -10,
+                                      child: Container(
+                                        width: 36,
+                                        height: 36,
+                                        padding: EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                          color: CustomAppColor.PrimaryAccent,
+                                          // Change color as needed
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Image(
+                                          image: AssetImage(
+                                              "assets/coffeeIcon.png"),
+                                          height: 10,
+                                          width: 10, // Use appropriate icon
+                                        ),
+                                      )),
+                                ],
                               ),
                             ),
                           ),
@@ -176,7 +236,7 @@ class _WelcomeScreenState extends State<GetStartedScreen> {
                               width: mediaWidth * 0.55,
                               height: 50,
                               decoration: BoxDecoration(
-                                color: Colors.black,
+                                color: CustomAppColor.PrimaryAccent,
                                 // Change this to match your theme
                                 borderRadius: BorderRadius.circular(8),
                               ),

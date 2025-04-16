@@ -147,6 +147,7 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
                                               return GestureDetector(
                                                 onTap: () {
                                                   setState(() {
+                                                    isLoading == true;
                                                     selectedLocality =
                                                         selectedLocality.isEmpty
                                                             ? "${item.localityName}"
@@ -166,6 +167,9 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
                                                               ?.contains(
                                                                   "offline") ==
                                                           true) {
+                                                    setState(() {
+                                                      isLoading = false;
+                                                    });
                                                     Helper.saveVendorData(
                                                         selectedLocalityData);
                                                     Helper.saveApiKey(
@@ -183,11 +187,17 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
                                                           ?.contains(
                                                               "offline") ==
                                                       true) {
+                                                    setState(() {
+                                                      isLoading = false;
+                                                    });
                                                     CustomAlert.showToast(
                                                         context: context,
                                                         message:
                                                             "This store is closed at the moment.");
                                                   } else {
+                                                    setState(() {
+                                                      isLoading = false;
+                                                    });
                                                     CustomAlert.showToast(
                                                         context: context,
                                                         message:
@@ -212,9 +222,16 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
                     ],
                   ),
                   isLoading
-                      ? Center(
-                          child: CircularProgressIndicator(),
-                        )
+                      ? Stack(
+                    children: [
+                      // Block interaction
+                      ModalBarrier(dismissible: false, color: Colors.transparent),
+                      // Loader indicator
+                      Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ],
+                  )
                       : SizedBox(),
                 ],
               ),
