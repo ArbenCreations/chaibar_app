@@ -5,8 +5,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
-import '../../component/CustomAlert.dart';
+
 import '/model/request/signInRequest.dart';
 import '/model/response/signInResponse.dart';
 import '/utils/Util.dart';
@@ -19,9 +20,11 @@ import '../../../model/response/signUpInitializeResponse.dart';
 import '../../../model/services/AuthenticationProvider.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomAlert.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
+import '../../component/custom_circular_progress.dart';
 import '../../component/googleSignIN.dart';
-import '../../component/toastMessage.dart';
 
 class SigninScreen extends StatefulWidget {
   @override
@@ -39,6 +42,7 @@ class _SigninScreenState extends State<SigninScreen> {
   late double screenHeight;
   late bool isDarkMode;
   String? deviceToken;
+  String _appVersion = '';
 
   final _formKey = GlobalKey<FormState>();
 
@@ -47,10 +51,18 @@ class _SigninScreenState extends State<SigninScreen> {
     super.initState();
     passwordVisible = true;
     inputValid = false;
+    _loadAppVersion();
     Helper.getDeviceToken().then((token) {
       setState(() {
         deviceToken = token;
       });
+    });
+  }
+
+  Future<void> _loadAppVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    setState(() {
+      _appVersion = '${info.version} (${info.buildNumber})';
     });
   }
 
@@ -151,7 +163,10 @@ class _SigninScreenState extends State<SigninScreen> {
                                                 width: mediaWidth * 0.55,
                                                 child: GestureDetector(
                                                   onTap: () async {
-                                                    User? user = await context.read<AuthenticationProvider>().signInWithApple();
+                                                    User? user = await context
+                                                        .read<
+                                                            AuthenticationProvider>()
+                                                        .signInWithApple();
                                                     if (user != null) {
                                                       bool isEmailRelay =
                                                           user.email?.endsWith(
@@ -220,14 +235,10 @@ class _SigninScreenState extends State<SigninScreen> {
                                             if (!isConnected) {
                                               setState(() {
                                                 isLoading = false;
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                        '${Languages.of(context)?.labelNoInternetConnection}'),
-                                                    duration: maxDuration,
-                                                  ),
-                                                );
+                                                CustomSnackBar.showSnackbar(
+                                                    context: context,
+                                                    message:
+                                                        '${Languages.of(context)?.labelNoInternetConnection}');
                                               });
                                             } else {
                                               await Provider.of<MainViewModel>(
@@ -309,18 +320,24 @@ class _SigninScreenState extends State<SigninScreen> {
                         ),
                       ),
                     ),
-                    isLoading
-                        ? Stack(
-                            children: [
-                              ModalBarrier(
-                                  dismissible: false,
-                                  color: Colors.transparent),
-                              Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            ],
-                          )
-                        : SizedBox(),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        margin: EdgeInsets.only(bottom: 15),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Version $_appVersion',
+                              style: TextStyle(
+                                  color: Colors.grey[400], fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    isLoading ? CustomCircularProgress() : SizedBox(),
                   ],
                 ),
               ),
@@ -338,27 +355,9 @@ class _SigninScreenState extends State<SigninScreen> {
       decoration: BoxDecoration(
         color: CustomAppColor.TextFieldBackColor,
         shape: BoxShape.rectangle,
-        border: Border(
-            top: BorderSide(
-                color: isDarkMode
-                    ? Colors.grey
-                    : CustomAppColor.TextFieldBackColor,
-                width: 0.4),
-            bottom: BorderSide(
-                color: isDarkMode
-                    ? Colors.grey
-                    : CustomAppColor.TextFieldBackColor,
-                width: 0.4),
-            right: BorderSide(
-                color: isDarkMode
-                    ? Colors.grey
-                    : CustomAppColor.TextFieldBackColor,
-                width: 0.4),
-            left: BorderSide(
-                color: isDarkMode
-                    ? Colors.grey
-                    : CustomAppColor.TextFieldBackColor,
-                width: 0.4)),
+        border: Border.all(
+            color: isDarkMode ? Colors.grey : CustomAppColor.TextFieldBackColor,
+            width: 0.4),
         borderRadius: BorderRadius.circular(20.0),
         boxShadow: [
           BoxShadow(
@@ -383,6 +382,7 @@ class _SigninScreenState extends State<SigninScreen> {
               inputFormatters: [
                 FilteringTextInputFormatter.singleLineFormatter
               ],
+              textInputAction: TextInputAction.next,
               maxLength: 30,
               style: TextStyle(fontSize: 14),
               decoration: InputDecoration(
@@ -391,7 +391,6 @@ class _SigninScreenState extends State<SigninScreen> {
                     borderSide: BorderSide(color: Colors.red, width: 0.4)),
                 hintText: text,
                 counterText: "",
-                //icon: icon,
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -606,13 +605,9 @@ class _SigninScreenState extends State<SigninScreen> {
       if (!isConnected) {
         setState(() {
           isLoading = false;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content:
-                  Text('${Languages.of(context)?.labelNoInternetConnection}'),
-              duration: maxDuration,
-            ),
-          );
+          CustomSnackBar.showSnackbar(
+              context: context,
+              message: '${Languages.of(context)?.labelNoInternetConnection}');
         });
       } else {
         await Provider.of<MainViewModel>(context, listen: false)
@@ -641,13 +636,9 @@ class _SigninScreenState extends State<SigninScreen> {
       if (!isConnected) {
         setState(() {
           isLoading = false;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content:
-                  Text('${Languages.of(context)?.labelNoInternetConnection}'),
-              duration: maxDuration,
-            ),
-          );
+          CustomSnackBar.showSnackbar(
+              context: context,
+              message: '${Languages.of(context)?.labelNoInternetConnection}');
         });
       } else {
         await Provider.of<MainViewModel>(context, listen: false)
@@ -706,8 +697,7 @@ class _SigninScreenState extends State<SigninScreen> {
   }
 
   Future<Widget> getSignInResponse(
-      BuildContext context, ApiResponse apiResponse) async
-  {
+      BuildContext context, ApiResponse apiResponse) async {
     SignInResponse? mediaList = apiResponse.data as SignInResponse?;
     setState(() {
       isLoading = false;
@@ -973,8 +963,8 @@ class _SigninScreenState extends State<SigninScreen> {
                     String phone = phoneController.text.trim();
 
                     if (fullName.isEmpty || email.isEmpty || phone.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Please fill all fields")));
+                      CustomSnackBar.showSnackbar(
+                          context: context, message: 'Please fill all fields');
                       return;
                     }
                     //Navigator.pop(context);
@@ -1276,7 +1266,8 @@ class _SignUpFormState extends State<SignUpForm> {
             TextFormField(
               controller: phoneController,
               keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.done, // 👈 This adds the "Done" button
+              textInputAction: TextInputAction.done,
+              // 👈 This adds the "Done" button
               inputFormatters: [maskFormatter],
               decoration: InputDecoration(
                 prefixText: '+1 ',
@@ -1304,7 +1295,7 @@ class _SignUpFormState extends State<SignUpForm> {
             ),
             SizedBox(height: 20),
             isLoading
-                ? Center(child: CircularProgressIndicator())
+                ? CustomCircularProgress()
                 : ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,

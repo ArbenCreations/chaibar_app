@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 
+import '../../../component/custom_circular_progress.dart';
 import '/model/request/verifyOtpChangePass.dart';
 import 'package:flutter/material.dart';
 
@@ -163,34 +164,13 @@ class _OtpForgotPassScreenState extends State<OtpForgotPassScreen> {
               ),
             ),
             isLoading
-                ? Stack(
-                    children: [
-                      // Block interaction
-                      ModalBarrier(
-                          dismissible: false,
-                          color: Colors.transparent),
-                      // Loader indicator
-                      Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    ],
-                  )
+                ? CustomCircularProgress()
                 : SizedBox(),
           ],
         ),
       ),
       isLoading
-          ? Stack(
-              children: [
-                // Block interaction
-                ModalBarrier(
-                    dismissible: false, color : Colors.black.withOpacity(0.3)),
-                // Loader indicator
-                Center(
-                  child: CircularProgressIndicator(),
-                ),
-              ],
-            )
+          ? CustomCircularProgress()
           : SizedBox(),
     ]);
   }

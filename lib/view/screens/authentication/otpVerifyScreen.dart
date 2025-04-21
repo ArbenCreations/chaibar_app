@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_timer_countdown/flutter_timer_countdown.dart';
 import 'package:provider/provider.dart';
 import '../../component/CustomAlert.dart';
+import '../../component/CustomSnackbar.dart';
+import '../../component/custom_circular_progress.dart';
 import '/model/request/otpVerifyRequest.dart';
 import '/model/response/signUpVerifyResponse.dart';
 import '../../../../language/Languages.dart';
@@ -124,14 +126,14 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
         //String? retrievedToken = await Helper.getUserToken();
         //print('Retrieved Token: $retrievedToken');
 
-        CustomAlert.showToast(
+        CustomSnackBar.showSnackbar(
             context: context,
             message: "Signup completed. Please Login to continue.");
 
         Navigator.pushReplacementNamed(context, "/SignInScreen", arguments: "");
         return Container();
       case Status.ERROR:
-        CustomAlert.showToast(context: context, message: message);
+        CustomSnackBar.showSnackbar(context: context, message: message);
         return Center(
           child: Text('Please try again later!!!'),
         );
@@ -153,11 +155,11 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
         //Call Toast
-        CustomAlert.showToast(context: context, message: message);
+        CustomSnackBar.showSnackbar(context: context, message: message);
         // Navigate to the new screen after receiving the response
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
-        CustomAlert.showToast(context: context, message: apiResponse.message);
+        CustomSnackBar.showSnackbar(context: context, message: apiResponse.message);
         return Center(
           child: Text('Please try again later!!!'),
         );
@@ -274,14 +276,7 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
                                   if (!isConnected) {
                                     setState(() {
                                       isLoading = false;
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                              '${Languages.of(context)?.labelNoInternetConnection}'),
-                                          duration: maxDuration,
-                                        ),
-                                      );
+                                      CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
                                     });
                                   } else {
                                     OtpVerifyRequest phoneRequest =
@@ -304,13 +299,7 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
                                         context, apiResponse);
                                   }
                                 } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          '${Languages.of(context)?.labelPleaseEnterValidPhoneNo}'),
-                                      duration: maxDuration,
-                                    ),
-                                  );
+                                  CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelPleaseEnterValidPhoneNo}');
                                 }
                               }
                             } else {
@@ -327,16 +316,7 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
             ),
           ),
           isLoading
-              ? Stack(
-                  children: [
-                    // Block interaction
-                    ModalBarrier(dismissible: false, color: Colors.transparent),
-                    // Loader indicator
-                    Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  ],
-                )
+              ? CustomCircularProgress()
               : SizedBox(),
         ],
       ),

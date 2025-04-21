@@ -55,7 +55,7 @@ class _DashboardCategoryComponentState
 
   @override
   Widget build(BuildContext context) {
-    print("selectedCategory ${widget.categoryData?.categoryName}");
+    //print("selectedCategory ${widget.categoryData?.categoryName}");
     selectedCategory = selectedCategory ?? widget.categoryData;
     return ListView.builder(
       itemCount: widget.categories.length,

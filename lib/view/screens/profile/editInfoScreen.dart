@@ -18,8 +18,10 @@ import '../../../model/viewModel/mainViewModel.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
 import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/custom_button_component.dart';
+import '../../component/custom_circular_progress.dart';
 import '../../component/session_expired_dialog.dart';
 import '../../component/toastMessage.dart';
 
@@ -131,12 +133,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                 "${Languages.of(context)?.labelInvalidAccessToken}")) {
           SessionExpiredDialog.showDialogBox(context: context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Something went wrong.'),
-              duration: maxDuration,
-            ),
-          );
+          CustomSnackBar.showSnackbar(context: context, message: 'Something went wrong.');
         }
         print(apiResponse.message);
         return Center(
@@ -412,13 +409,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                           isLoading = false;
                           isInternetConnected = false;
                         });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(Languages.of(context)!
-                                .labelNoInternetConnection),
-                            duration: maxDuration,
-                          ),
-                        );
+                        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
                       } else {
                         DeleteProfileRequest request = DeleteProfileRequest(
                           email: _emailController.text,
@@ -725,18 +716,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
             ),
           ),
           isLoading
-              ? Stack(
-                  children: [
-                    // Block interaction
-                    ModalBarrier(
-                        dismissible: false,
-                        color: Colors.black.withOpacity(0.3)),
-                    // Loader indicator
-                    Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  ],
-                )
+              ? CustomCircularProgress()
               : SizedBox(),
         ],
       ),

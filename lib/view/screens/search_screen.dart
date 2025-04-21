@@ -1,3 +1,5 @@
+import '../component/CustomSnackbar.dart';
+import '../component/custom_circular_progress.dart';
 import '/language/Languages.dart';
 import '/model/request/globalSearchRequest.dart';
 import '/model/response/globalSearchResponse.dart';
@@ -79,7 +81,7 @@ class GlobalSearchDelegate extends SearchDelegate {
         future: fetchSearchResults(query, context), // Hit the API when query is more than 4 characters
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Center(child: CustomCircularProgress());
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return Center(child: Text('No suggestions.'));
           } else {
@@ -435,14 +437,7 @@ class GlobalSearchDelegate extends SearchDelegate {
 
         bool isConnected = await _connectivityService.isConnected();
     if (!isConnected) {
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-            Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+      CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
         return [];
     } else {
       await Future.delayed(Duration(milliseconds: 2));

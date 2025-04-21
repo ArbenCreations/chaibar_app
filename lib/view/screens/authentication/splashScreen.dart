@@ -1,89 +1,107 @@
-import 'dart:async';
-
-import '/utils/Helper.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:local_auth/local_auth.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-import '../../../../model/response/notificationOtpResponse.dart';
+import '../../../model/services/PushNotificationService.dart';
+import '../../../utils/Helper.dart';
+
+late AndroidNotificationChannel channel;
+late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+bool isFlutterLocalNotificationsInitialized = false;
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  await setupFlutterNotifications();
+  print('Handling a background message ${message.messageId}');
+}
+
+Future<void> setupFlutterNotifications() async {
+  if (isFlutterLocalNotificationsInitialized) return;
+
+  channel = const AndroidNotificationChannel(
+    'high_importance_channel',
+    'High Importance Notifications',
+    description: 'This channel is used for important notifications.',
+    importance: Importance.high,
+  );
+
+  flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(channel);
+
+  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  isFlutterLocalNotificationsInitialized = true;
+}
 
 class SplashScreen extends StatefulWidget {
-  final NotificationOtpResponse? data; // Define the 'data' parameter here
-
-  SplashScreen({Key? key, this.data}) : super(key: key);
+  const SplashScreen({Key? key}) : super(key: key);
 
   @override
-  _SplashScreenState createState() => _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  String? token = "";
-  final LocalAuthentication auth = LocalAuthentication();
-  bool? isUserAuthenticated = false;
+  String? token;
   int? vendorId;
-
-  // NotificationOtpResponse? notificationOtpResponse;
 
   @override
   void initState() {
     super.initState();
-    _fetchToken();
-    //notificationOtpResponse = widget.data;
-    Helper.getVendorDetails().then((onValue) {
-      if (onValue != null) {
-        vendorId = onValue.id;
-      } else {
-        print("Error: Vendor details are null");
-      }
-    }).catchError((error) {
-      print("Error fetching vendor details: $error");
-    });
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    await FirebaseMessaging.instance.getInitialMessage();
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    await setupFlutterNotifications();
+    await PushNotificationService().setupInteractedMessage();
+
+    final permissionStatus = await Permission.notification.status;
+    if (permissionStatus.isDenied) {
+      await Permission.notification.request();
+    }
+
+    token = await Helper.getUserToken();
+    final vendor = await Helper.getVendorDetails();
+    vendorId = vendor?.id;
+
+    await Future.delayed(const Duration(seconds: 1));
+    _navigate();
+  }
+
+  void _navigate() {
+    if (token == null || token!.isEmpty) {
+      Navigator.pushReplacementNamed(context, "/GetStartedScreen");
+    } else if (vendorId != null && vendorId != 0) {
+      Navigator.pushReplacementNamed(context, "/BottomNavigation",
+          arguments: 1);
+    } else {
+      Navigator.pushReplacementNamed(context, "/VendorsListScreen",
+          arguments: "");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    double screenHeight = MediaQuery.of(context).size.height;
-    double mediaWidth = MediaQuery.of(context).size.width;
-    return Scaffold(
-      body: GestureDetector(
-        onTap: () {},
-        child: Padding(
-          padding: EdgeInsets.all(8),
-          child: Center(
-              child: Image(
-            height: screenHeight * 0.1,
-            width: mediaWidth * 0.55,
-            image: AssetImage(
-                isDarkMode ? "assets/app_logo.png" : "assets/app_logo.png"),
-            fit: BoxFit.fill,
-          )),
+    return const Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Image(
+          image: AssetImage("assets/app_logo.png"),
+          width: 200,
         ),
       ),
     );
-  }
-
-  Future<void>  _fetchToken() async {
-    Helper.getUserToken().then((deviceToken) {
-      setState(() {
-        token = deviceToken;
-      });
-    });
-    print("Token${token}");
-    Timer(Duration(seconds: 2), () {
-      _navigation();
-    });
-  }
-
-  void _navigation() {
-    if (token == null || token?.isEmpty == true) {
-      Navigator.pushReplacementNamed(context, "/GetStartedScreen");
-    } else {
-      if (vendorId != null && vendorId != 0) {
-        Navigator.pushReplacementNamed(context, "/BottomNavigation", arguments: 1);
-      } else {
-        Navigator.pushReplacementNamed(context, "/VendorsListScreen",
-            arguments: "");
-      }
-    }
   }
 }

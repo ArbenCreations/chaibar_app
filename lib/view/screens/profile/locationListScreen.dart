@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../component/CustomSnackbar.dart';
 import '/language/Languages.dart';
 import '/model/response/locationListResponse.dart';
 import '/utils/Helper.dart';
@@ -187,7 +188,7 @@ class _LocationListScreenState extends State<LocationListScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           Text(
-                            capitalizeFirstLetter(item.businessName ?? "N/A"),
+                            capitalizeFirstLetter(item.localityName ?? "N/A"),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -209,7 +210,7 @@ class _LocationListScreenState extends State<LocationListScreen> {
 
                   // Status Badge
                   _buildStatusBadge(
-                    item.status?.contains("online") == true ? "Open" : "Close",
+                    item.status?.contains("online") == true ? "Open" : "Closed",
                     item.status?.contains("online") == true ? Colors.green : Colors.red,
                   ),
                 ],
@@ -249,13 +250,7 @@ class _LocationListScreenState extends State<LocationListScreen> {
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-            Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       await Future.delayed(Duration(milliseconds: 2));

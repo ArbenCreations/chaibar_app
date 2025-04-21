@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../component/CustomSnackbar.dart';
+import '../component/custom_circular_progress.dart';
 import '/language/Languages.dart';
 import '/model/request/vendorSearchRequest.dart';
 import '/model/response/productListResponse.dart';
@@ -83,7 +85,7 @@ class ItemSearchScreen extends SearchDelegate {
         // Hit the API when query is more than 4 characters
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Center(child: CustomCircularProgress());
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return Center(child: Text('No suggestions.'));
           } else {
@@ -242,12 +244,7 @@ class ItemSearchScreen extends SearchDelegate {
       String query, BuildContext context) async {
     bool isConnected = await _connectivityService.isConnected();
     if (!isConnected) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${Languages.of(context)?.labelNoInternetConnection}'),
-          duration: maxDuration,
-        ),
-      );
+      CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       return [];
     } else {
       await Future.delayed(Duration(milliseconds: 2));

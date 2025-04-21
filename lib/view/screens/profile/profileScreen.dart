@@ -13,6 +13,7 @@ import '../../../theme/CustomAppColor.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
 import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/session_expired_dialog.dart';
 import '../../component/toastMessage.dart';
@@ -153,10 +154,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: SafeArea(
             child: Stack(
               children: [
-                ListView(
-                  padding: EdgeInsets.all(16),
+                Column(
                   children: [
                     Container(
+                      margin: EdgeInsets.only(top: 14),
                       color: Colors.transparent,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -223,8 +224,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           SizedBox(height: 25),
                           _buildSettingsItem(Icons.edit, "Personal Information",
                               "Edit your profile", "/EditInformationScreen"),
-                          /* _buildSettingsItem(Icons.card_giftcard, "Available Coupons",
-                          "Click here for offers", "/CouponsScreen"),*/
                           _buildSettingsItem(Icons.store_sharp, "Locations",
                               "Click here for offers", "/LocationListScreen"),
                           _buildSettingsItem(Icons.logout, "Logout", "", ""),
@@ -321,12 +320,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         isLoading = false;
         isInternetConnected = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(Languages.of(context)!.labelNoInternetConnection),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       hideKeyBoard();
@@ -353,12 +347,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         isLoading = false;
         isInternetConnected = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(Languages.of(context)!.labelNoInternetConnection),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       hideKeyBoard();
@@ -383,12 +372,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         isLoading = false;
         isInternetConnected = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(Languages.of(context)!.labelNoInternetConnection),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       hideKeyBoard();
@@ -440,12 +424,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 "${Languages.of(context)?.labelInvalidAccessToken}")) {
           SessionExpiredDialog.showDialogBox(context: context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Something went wrong.'),
-              duration: maxDuration,
-            ),
-          );
+          CustomSnackBar.showSnackbar(context: context, message: 'Something went wrong!');
         }
         print(apiResponse.message);
         return Center(

@@ -2,6 +2,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:provider/provider.dart';
 
 import '/model/request/signUpRequest.dart';
@@ -13,8 +14,10 @@ import '../../../../utils/Helper.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../utils/apiHandling/api_response.dart';
 import '../../component/CustomAlert.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/custom_button_component.dart';
+import '../../component/custom_circular_progress.dart';
 import '../../component/googleSignIN.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -58,6 +61,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     inputValid = false;
     isDarkMode = false;
   }
+
+  final maskFormatter = MaskTextInputFormatter(
+    mask: '(###) ###-####',
+    filter: {"#": RegExp(r'[0-9]')},
+    type: MaskAutoCompletionType.lazy,
+  );
 
   void _isValidInput() {
     //print(input);
@@ -116,8 +125,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     screenHeight = MediaQuery.of(context).size.height;
     ApiResponse apiResponse = Provider.of<MainViewModel>(context).response;
     return PopScope(
-      canPop: false,
-      onPopInvoked: (bool didPop) {
+      canPop: true,
+      onPopInvokedWithResult: (bool didPop, Object? result) async {
         if (didPop) {
           return;
         }
@@ -278,19 +287,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                 ),
-                isLoading
-                    ? Stack(
-                        children: [
-                          // Block interaction
-                          ModalBarrier(
-                              dismissible: false, color: Colors.transparent),
-                          // Loader indicator
-                          Center(
-                            child: CircularProgressIndicator(),
-                          ),
-                        ],
-                      )
-                    : SizedBox()
+                isLoading ? CustomCircularProgress() : SizedBox()
               ],
             ),
           ),
@@ -399,8 +396,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _submitButton(User? user) {
     return GestureDetector(
       onTap: () {
-        //_checkValidInput();
-        _signUp(user);
+        _isValidInput();
+        //_signUp(user);
         if (inputValid) {
           _signUp(user);
         }
@@ -618,9 +615,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             controller: numberController,
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.next,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly, // Only allow numbers
-            ],
+            inputFormatters: [maskFormatter],
             maxLength: 12,
             // "+1 " + 10 digits
             style: TextStyle(fontSize: 14),
@@ -630,16 +625,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
               errorBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: Colors.red, width: 0.4),
               ),
-              hintText: "Enter phone number",
+              prefixText: '+1 ',
+              hintText: "(123) 456-7890",
               hintStyle: TextStyle(fontSize: 11, color: Colors.grey),
               counterText: "",
               icon: Icon(Icons.phone, size: 18),
             ),
             validator: (value) {
-              if (value == null || value.length != 12) {
-                return "Please enter a valid 10-digit phone number";
+              String digits = maskFormatter.getUnmaskedText();
+              final regex = RegExp(r'^[2-9]\d{2}[2-9]\d{2}\d{4}$'); // Canada
+              if (digits.isEmpty) {
+                return 'Phone number is required';
+              } else if (!regex.hasMatch(digits)) {
+                return 'Enter a valid Canadian phone number';
               }
               return null;
+            },
+            onFieldSubmitted: (_) {
+              FocusScope.of(context).unfocus();
             },
           )
         ],
@@ -676,6 +679,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           TextFormField(
             controller: nameController,
             style: TextStyle(fontSize: 14),
+            textInputAction: TextInputAction.next,
             decoration: InputDecoration(
               border: InputBorder.none,
               hintText: "Enter your $text",
@@ -835,15 +839,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!isConnected) {
         setState(() {
           isLoading = false;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content:
-                  Text('${Languages.of(context)?.labelNoInternetConnection}'),
-              duration: maxDuration,
-            ),
-          );
+          CustomSnackBar.showSnackbar(
+              context: context,
+              message: '${Languages.of(context)?.labelNoInternetConnection}');
         });
       } else {
+        String cleanPhone = maskFormatter.getUnmaskedText();
         SignUpRequest request = SignUpRequest(
             customer: CustomerSignUp(
           //deviceToken: deviceToken,
@@ -851,7 +852,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           password: _passwordController.text,
           firstName: _nameController.text,
           lastName: _lastNameController.text,
-          phoneNumber: _phoneController.text,
+          phoneNumber: cleanPhone,
         ));
 
         await Provider.of<MainViewModel>(context, listen: false).signUpData(
@@ -899,8 +900,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         await Helper.savePassword(_passwordController.text);
 
         if (_phoneController.text.isNotEmpty) {
+          String cleanPhone = maskFormatter.getUnmaskedText();
           Navigator.pushNamed(context, "/OTPVerifyScreen",
-              arguments: "${_phoneController.text}");
+              arguments: "${cleanPhone}");
         } else {
           Navigator.pushNamed(context, "/OTPVerifyScreen",
               arguments: "${request.customer?.phoneNumber}");
@@ -915,7 +917,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           CustomAlert.showToast(
               context: context, message: "Something went wrong!");
         } else {
-          CustomAlert.showToast(context: context, message: "message");
+          CustomAlert.showToast(context: context, message: "$message");
         }
         return Center(
           child: Text('Try again later..'),
@@ -929,105 +931,129 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _showModal(BuildContext context, User? user) {
-    showDialog<void>(
-        context: context,
-        barrierDismissible: true,
-        useSafeArea: true,
-        builder: (BuildContext context) {
-          bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-          TextEditingController phoneController = TextEditingController();
-          TextEditingController passwordController = TextEditingController();
-          return AlertDialog(
-            insetPadding: EdgeInsets.symmetric(horizontal: 10),
-            title: Text(
-              "Please enter your phone number for verification",
-              style: TextStyle(fontSize: 12),
+    final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+    final TextEditingController phoneController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.black : Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            content: Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 12.0, horizontal: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            child: Form(
+              key: _formKey,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    height: 2,
-                  ),
-                  Text("Signing up as: ${user?.displayName}"),
-                  SizedBox(
-                    height: 2,
-                  ),
                   Text(
-                    "Email : ${user?.email}",
-                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                    "Please enter your phone number for verification",
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(
-                    height: 2,
+                  SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text("Signing up as: ${user?.displayName ?? 'Guest'}"),
                   ),
+                  SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      "Email: ${user?.email ?? 'Not available'}",
+                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                  ),
+                  SizedBox(height: 10),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 4.0),
-                    margin: EdgeInsets.symmetric(vertical: 4.0),
+                    padding: EdgeInsets.symmetric(horizontal: 8.0),
                     decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10.0),
-                        color: isDarkMode
-                            ? CustomAppColor.DarkCardColor
-                            : Colors.white,
-                        border: Border.all(color: Colors.grey, width: 0.5)),
+                      borderRadius: BorderRadius.circular(10.0),
+                      color: isDarkMode
+                          ? CustomAppColor.DarkCardColor
+                          : Colors.grey.shade100,
+                      border: Border.all(color: Colors.grey, width: 0.5),
+                    ),
                     child: Row(
                       children: [
+                        Icon(
+                          Icons.call,
+                          size: 16,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
                         SizedBox(width: 8),
                         Expanded(
-                          child: TextField(
-                            style: TextStyle(
-                              fontSize: 11.0,
-                            ),
-                            obscureText: false,
-                            obscuringCharacter: "*",
+                          child: TextFormField(
                             controller: phoneController,
-                            onChanged: (value) {},
-                            onSubmitted: (value) {},
-                            keyboardType: TextInputType.visiblePassword,
+                            inputFormatters: [maskFormatter],
+                            keyboardType: TextInputType.phone,
                             textInputAction: TextInputAction.done,
+                            style: TextStyle(fontSize: 13.0),
                             decoration: InputDecoration(
                               border: InputBorder.none,
-                              hintText: Languages.of(context)!.labelPhoneNumber,
-                              hintStyle:
-                                  TextStyle(fontSize: 13, color: Colors.grey),
-                              icon: Icon(
-                                Icons.call,
-                                size: 16,
-                                color: isDarkMode ? Colors.white : Colors.black,
-                              ),
+                              prefixText: '+1 ',
+                              hintText: "(123) 456-7890",
+                              hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
                             ),
+                            validator: (value) {
+                              String digits = maskFormatter.getUnmaskedText();
+                              final regex = RegExp(r'^[2-9]\d{2}[2-9]\d{2}\d{4}$'); // Canada
+                              if (digits.isEmpty) {
+                                return 'Phone number is required';
+                              } else if (!regex.hasMatch(digits)) {
+                                return 'Enter a valid Canadian phone number';
+                              }
+                              return null;
+                            },
+                            onFieldSubmitted: (_) {
+                              FocusScope.of(context).unfocus();
+                            },
                           ),
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(
-                    height: 5,
+                  SizedBox(height: 20),
+                  CustomButtonComponent(
+                    text: "Continue",
+                    mediaWidth: MediaQuery.of(context).size.width,
+                    textColor: Colors.white,
+                    buttonColor: CustomAppColor.Primary,
+                    isDarkMode: isDarkMode,
+                    verticalPadding: 10,
+                    onTap: () {
+                      if (_formKey.currentState!.validate()) {
+                        String cleanPhone = maskFormatter.getUnmaskedText();
+                        _saveChanges(
+                          cleanPhone,
+                          "googlesign1",
+                          context,
+                          user,
+                          user?.displayName
+                        );
+                        //Navigator.pop(context); // Close the bottom sheet
+                      }
+                    },
                   ),
+                  SizedBox(height: 10),
                 ],
               ),
             ),
-            actions: <Widget>[
-              CustomButtonComponent(
-                  text: "Continue",
-                  mediaWidth: MediaQuery.of(context).size.width,
-                  textColor: Colors.white,
-                  buttonColor: CustomAppColor.PrimaryAccent,
-                  isDarkMode: isDarkMode,
-                  verticalPadding: 10,
-                  onTap: () {
-                    _saveChanges(phoneController.text, "googlesign1", context,
-                        user, user?.displayName);
-                  })
-            ],
-            actionsAlignment: MainAxisAlignment.center,
-          );
-        });
+          ),
+        );
+      },
+    );
   }
+
 
   void showUserDetailsBottomSheet(BuildContext context, User user) {
     TextEditingController nameController =
@@ -1087,8 +1113,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     String phone = phoneController.text.trim();
 
                     if (fullName.isEmpty || email.isEmpty || phone.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Please fill all fields")));
+                      CustomSnackBar.showSnackbar(
+                          context: context, message: 'Please fill all fields');
                       return;
                     }
                     //Navigator.pop(context);

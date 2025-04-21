@@ -108,8 +108,8 @@ class _BottomNavigationState extends State<BottomNavigation>
           showElevation: true,
           onItemSelected: (index) {
             setState(() {
-              _onItemTapped(index);
               _selectedIndex = index;
+              _onItemTapped(index);
             });
             _pageController.animateToPage(
               index,
@@ -121,6 +121,8 @@ class _BottomNavigationState extends State<BottomNavigation>
           items: [
             BottomNavyBarItem(
               icon: Stack(
+                alignment: Alignment.topRight,
+                clipBehavior: Clip.none,
                 children: [
                   Icon(
                     Icons.history,
@@ -129,8 +131,8 @@ class _BottomNavigationState extends State<BottomNavigation>
                   ),
                   if (activeOrderCount! > 0)
                     Positioned(
-                      right: 0,
-                      top: -4,
+                      top: -6,
+                      right: -6,
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
@@ -138,14 +140,14 @@ class _BottomNavigationState extends State<BottomNavigation>
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
-                          minWidth: 10,
-                          minHeight: 10,
+                          minWidth: 18,
+                          minHeight: 18,
                         ),
                         child: Text(
                           '$activeOrderCount',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
+                            fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
                           textAlign: TextAlign.center,

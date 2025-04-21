@@ -39,8 +39,8 @@ class ProductComponent extends StatelessWidget {
         Navigator.pushNamed(context, "/ProductDetailScreen", arguments: item);
       },
       child: Container(
-        width: (mediaWidth / 2) - 25,
-        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        width: (mediaWidth / 2) - 20,
+        padding: EdgeInsets.symmetric(horizontal: 2, vertical: 4),
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
           borderRadius: BorderRadius.circular(15),
@@ -314,12 +314,12 @@ class ProductComponent extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        width: mediaWidth * 0.2,
+                        width: mediaWidth * 0.3,
                         child: Text(
                           capitalizeFirstLetter("${item.title}"),
                           maxLines: 1,
                           style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.bold),
+                              fontSize: 12, fontWeight: FontWeight.bold),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -328,7 +328,7 @@ class ProductComponent extends StatelessWidget {
                         child: Text(
                           "\$${item.price}",
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: Colors.black87,
                           ),

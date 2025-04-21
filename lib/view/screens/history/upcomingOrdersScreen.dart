@@ -10,6 +10,7 @@ import '../../../theme/CustomAppColor.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
 import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/ShimmerList.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/session_expired_dialog.dart';
@@ -242,13 +243,7 @@ class _UpcomingOrdersScreenState extends State<UpcomingOrdersScreen>
         setState(() {
           isLoading = false;
           isInternetConnected = false;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content:
-                  Text('${Languages.of(context)?.labelNoInternetConnection}'),
-              duration: maxDuration,
-            ),
-          );
+          CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
         });
       } else {
         GetHistoryRequest request = GetHistoryRequest(

@@ -6,13 +6,11 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../component/CustomAlert.dart';
 import '/model/db/dataBaseDao.dart';
 import '/model/response/productDataDB.dart';
 import '/model/response/productListResponse.dart';
 import '/utils/Helper.dart';
 import '/utils/Util.dart';
-import '/view/component/toastMessage.dart';
 import '../../../language/Languages.dart';
 import '../../../model/db/ChaiBarDB.dart';
 import '../../../model/request/itemReviewRequest.dart';
@@ -26,7 +24,10 @@ import '../../../model/response/vendorListResponse.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../theme/CustomAppColor.dart';
 import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomAlert.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
+import '../../component/custom_circular_progress.dart';
 import '../../component/session_expired_dialog.dart';
 import '../../component/view_cart_container.dart';
 
@@ -69,6 +70,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   List<ProductData> cart = []; // Cart holds selected MenuItems
   List<ProductSize> productSizeList = [];
   List<AddOnCategory> addOnList = [];
+  List<AddOnCategory> cartAddOnList = [];
+  List<AddOnDetails> addOnDetails = [];
 
   bool isLoading = false;
   bool? isVoteUp = false;
@@ -90,7 +93,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   @override
   void initState() {
     super.initState();
-    print("vendor : ${widget.data?.vendorId}");
+    //print("vendor : ${widget.data?.vendorId}");
 
     Helper.getVendorDetails().then((onValue) {
       setState(() {
@@ -112,18 +115,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       vsync: this,
     );
     initializeDatabase();
-    print("${widget.data?.description}");
+    //print("${widget.data?.description}");
     setState(() {
       productSizeList = widget.data?.getProductSizeList() ?? [];
       checkedStates = List<bool>.filled(productSizeList.length, false);
       addOnList = widget.data?.getAddOnList() ?? [];
-      addOnList.forEach((item) {
-        if (item.addOnCategoryType == "single") {
-          item.selectedAddOnIdInSingleType = item.addOns?[0].id;
-        } else {
-          item.addOns?[0].isSelected = true;
-        }
-      });
+
       if (widget.data!.upvote_percentage != null &&
           widget.data!.upvote_percentage! > 0 == true) {
         isVoteUp = true;
@@ -151,14 +148,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     mediaWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
     isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
     return PopScope(
-      canPop: false,
-      onPopInvoked: (bool didPop) {
+      canPop: false, // Disable back navigation on this page
+      onPopInvokedWithResult: (bool didPop, Object? result) async {
         if (didPop) {
           return;
         }
-        Navigator.pushNamed(context, "/BottomNavigation", arguments: 1);
+        // Navigate to the home view when back navigation is attempted
+        Navigator.pushReplacementNamed(context, "/BottomNavigation",
+            arguments: 1);
       },
       child: Scaffold(body: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints viewportConstraints) {
@@ -220,7 +218,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                             GestureDetector(
                               onTap: () {
                                 //Navigator.pop(context);
-                                Navigator.pushNamed(context, "/BottomNavigation", arguments: 1);
+                                Navigator.pushNamed(
+                                    context, "/BottomNavigation",
+                                    arguments: 1);
                               },
                               child: Container(
                                 decoration: BoxDecoration(
@@ -431,9 +431,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                   if (int.parse(
                                                           "${widget.data?.quantity}") >
                                                       0) {
-                                                    if (widget
-                                                            .data?.isBuy1Get1 ==
-                                                        true) {
+                                                    if (widget.data
+                                                                ?.isBuy1Get1 !=
+                                                            null &&
+                                                        widget.data
+                                                                ?.isBuy1Get1 ==
+                                                            true) {
                                                       widget.data
                                                           ?.quantity = int.parse(
                                                               "${widget.data?.quantity}") -
@@ -492,7 +495,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                 // if(addOnList.)
                                                 setState(() {
                                                   if (widget.data?.isBuy1Get1 ==
-                                                      false) {
+                                                          null ||
+                                                      widget.data?.isBuy1Get1 ==
+                                                          false) {
                                                     if (int.parse(
                                                             "${widget.data?.quantity}") <
                                                         int.parse(
@@ -670,7 +675,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                               ? Icons.thumb_up
                                                               : Icons
                                                                   .thumb_up_alt_outlined,
-                                                          size: 18,
+                                                          size: 20,
                                                         ),
                                                       ],
                                                     )),
@@ -689,7 +694,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                               ? Icons.thumb_down
                                                               : Icons
                                                                   .thumb_down_alt_outlined,
-                                                          size: 18,
+                                                          size: 20,
                                                         ),
                                                       ],
                                                     ))
@@ -1444,6 +1449,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                   controller: _controller,
                   primaryColor: primaryColor),
             ),
+            isLoading ? CustomCircularProgress() : SizedBox(),
           ],
         );
       })),
@@ -1830,13 +1836,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
     //_fetchCategoryData();
     getCartData();
-    getProductDataDB("${widget.data?.productCategoryId}");
-    getCategoryDataDB();
+    //getProductDataDB("${widget.data?.productCategoryId}");
+    //getCategoryDataDB();
   }
 
   Future<void> getCartData() async {
     List<ProductDataDB?> productsList = await cartDataDao.findAllCartProducts();
-    // print("getCartData");
+    print("getCartData");
     setState(() {
       List<ProductData> list = [];
       productsList.forEach((item) {
@@ -1873,6 +1879,62 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               addOnIdsList: '',
               productSizesList: item.productSizesList));
           cartDBList = list;
+          print("##${cartDBList.first.addOn}");
+          //addOnList.addAll(cartDBList.first.getAddOnList());
+        }
+      });
+      cartDBList.forEach((cart) {
+        cartAddOnList = cart.getAddOnList();
+      });
+      cartAddOnList.forEach((item) {
+        if (item.addOnCategoryType == "single") {
+          item.selectedAddOnIdInSingleType = item.addOns?.first.id;
+          /*  item.addOns?.forEach((addOn){
+            addOnDetails.add(addOn);
+            //addOn.isSelected = true;
+          });*/
+        } else {
+          print("CartAddon:::${"${item.addOns?.length}"}");
+          item.addOns?.forEach((addOn) {
+            addOnDetails.add(addOn);
+            //addOn.isSelected = true;
+          });
+        }
+      });
+      addOnList.forEach((item) {
+        print("CartAddon:::${"${item.addOnCategoryType}"}");
+        if (item.addOnCategoryType == "single") {
+          print("AddOnCategoryType:::${"${item.addOnCategoryType}"}");
+          if (cartAddOnList.length > 0) {
+            cartAddOnList.forEach((addOn) {
+              print("CartAddOnList:::${"${addOn.addOns?.first.id}"}");
+              item.selectedAddOnIdInSingleType = addOn.addOns?.first.id;
+            });
+          } else {
+            item.selectedAddOnIdInSingleType = addOnList[0].addOns?.first.id;
+          }
+          //item.selectedAddOnIdInSingleType = item.addOns?[0].id;
+        } else {
+          if (item.addOns != null && item.addOns!.isNotEmpty) {
+            final hasCartAddOns = cartAddOnList.isNotEmpty;
+            bool hasAnyMatch = false;
+
+            for (var addOn in item.addOns!) {
+              if (hasCartAddOns) {
+                final isMatch = addOnDetails.any((cartAddOn) => cartAddOn.id == addOn.id);
+                addOn.isSelected = isMatch;
+                if (isMatch) hasAnyMatch = true;
+              } else {
+                addOn.isSelected = false;
+              }
+            }
+
+            // If no matches found or cart list is empty, select the first add-on
+            if (!hasAnyMatch) {
+              item.addOns!.first.isSelected = true;
+            }
+          }
+
         }
       });
     });
@@ -1904,7 +1966,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           isCategoryLoading = false;
           getProductDataDB("${widget.data?.productCategoryId}");
         });
-        _fetchCategoryData();
+        //_fetchCategoryData();
       } else {
         setState(() {
           isLoading = true;
@@ -1952,10 +2014,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             vendorId == dbItem.vendorId) {
           setState(() {
             item.quantity = dbItem.quantity;
+            addOnList.addAll(dbItem.getAddOnList());
           });
         }
       });
     });
+
     getCartItemCountDB();
   }
 
@@ -2154,7 +2218,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             isVoteDown = true;
           });
         }
-        CustomAlert.showToast(
+        CustomSnackBar.showSnackbar(
             context: context, message: "${response?.message}");
         //Navigator.pop(context);
         return Container(); // Return an empty container as you'll navigate away
@@ -2164,7 +2228,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 "${Languages.of(context)?.labelInvalidAccessToken}")) {
           SessionExpiredDialog.showDialogBox(context: context);
         } else {
-          CustomAlert.showToast(context: context, message: apiResponse.message);
+          CustomSnackBar.showSnackbar(
+              context: context, message: apiResponse.message);
         }
         return Center(
           child: Text('Please try again later!!!'),

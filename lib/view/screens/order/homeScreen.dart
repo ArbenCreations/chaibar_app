@@ -8,7 +8,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../component/CustomAlert.dart';
 import '/model/db/dataBaseDao.dart';
 import '/model/response/dashboardDataResponse.dart';
 import '/model/response/productDataDB.dart';
@@ -18,7 +17,6 @@ import '/view/component/dashboard_category_component.dart';
 import '/view/component/dashboard_search_component.dart';
 import '/view/component/featured_product_component.dart';
 import '/view/component/product_component.dart';
-import '/view/component/toastMessage.dart';
 import '../../../../language/Languages.dart';
 import '../../../../model/request/markFavoriteRequest.dart';
 import '../../../../model/response/bannerListResponse.dart';
@@ -32,6 +30,8 @@ import '../../../../theme/CustomAppColor.dart';
 import '../../../../utils/Util.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomAlert.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/my_navigator_observer.dart';
 import '../../component/promotion_offers_widget.dart';
@@ -218,15 +218,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        /*  Text(
-                                isStoreOnline ? "Online" : "Offline",
-                                style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: isStoreOnline
-                                        ? CustomAppColor.Primary
-                                        : Colors.red),
-                              ),*/
                                         GestureDetector(
                                           onTap: () {
                                             Helper.clearAllSharedPreferences();
@@ -249,17 +240,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                               Icon(
                                                 Icons.location_on_rounded,
                                                 color: Colors.black54,
-                                                size: 11,
+                                                size: 14,
                                               ),
                                               SizedBox(
-                                                width: 2,
+                                                width: 1,
                                               ),
                                               Text(
                                                 "${capitalizeFirstLetter("${vendorData?.localityName}")}",
                                                 overflow: TextOverflow.ellipsis,
                                                 maxLines: 2,
                                                 style: TextStyle(
-                                                    fontSize: 10,
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.bold,
                                                     color: Colors.black54),
                                               ),
                                               Padding(
@@ -269,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                                 child: Icon(
                                                   Icons.keyboard_arrow_down,
                                                   color: Colors.black54,
-                                                  size: 18,
+                                                  size: 20,
                                                 ),
                                               ),
                                             ],
@@ -612,7 +604,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       },
                                     ),
                                   )),
-                        SizedBox(height: 2),
                         featuredProduct.length > 0
                             ? Padding(
                                 padding: const EdgeInsets.only(
@@ -795,13 +786,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(
+            context: context,
+            message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       await Future.delayed(Duration(milliseconds: 2));
@@ -827,13 +814,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(
+            context: context,
+            message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       await Future.delayed(Duration(milliseconds: 2));
@@ -860,13 +843,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(
+            context: context,
+            message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       MarkFavoriteRequest request = MarkFavoriteRequest(
@@ -892,13 +871,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(
+            context: context,
+            message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       MarkFavoriteRequest request = MarkFavoriteRequest(
@@ -925,13 +900,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(
+            context: context,
+            message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       MarkFavoriteRequest request = MarkFavoriteRequest(vendorId: vendorId);
@@ -955,13 +926,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(
+            context: context,
+            message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       await Provider.of<MainViewModel>(context, listen: false).fetchStoreStatus(
@@ -1444,7 +1411,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Future<void> getProductDataDB(String? categoryId) async {
-    print("getProductDataDB :: ${categoryId}");
+    //print("getProductDataDB :: ${categoryId}");
     List<ProductData?> localProductList = await productsDataDao
         .getProductsAccToCategory(int.parse(categoryId ?? "1"));
     if (localProductList.isNotEmpty) {
@@ -1551,7 +1518,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         }
       }
     }
-    print("updateProductsDetails :: ${selectedCategoryDetail?.id}");
+    //print("updateProductsDetails :: ${selectedCategoryDetail?.id}");
     if (selectedCategoryDetail != null) {
       getProductDataDB("${selectedCategoryDetail?.id}");
     }

@@ -12,6 +12,7 @@ import '../../../theme/CustomAppColor.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
 import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/ShimmerList.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/session_expired_dialog.dart';
@@ -176,42 +177,38 @@ class _CouponsScreenState extends State<CouponsScreen> {
   Future<void> _getCouponDetails() async {
     if (!mounted) return;
 
-    BuildContext currentContext = context; // Store context early
+    final BuildContext currentContext = context;
 
-    bool isConnected = await _connectivityService.isConnected();
+    final bool isConnected = await _connectivityService.isConnected();
     print("isConnected - $isConnected");
 
     if (!isConnected) {
-      if (mounted) {
-        setState(() {
-          isDataLoading = false;
-          isInternetConnected = false;
-        });
+      setState(() {
+        isDataLoading = false;
+        isInternetConnected = false;
+      });
 
-        ScaffoldMessenger.of(currentContext).showSnackBar(
-          SnackBar(
-            content:
-                Text(Languages.of(currentContext)!.labelNoInternetConnection),
-            duration: maxDuration,
-          ),
-        );
-      }
-    } else {
-      GetCouponListRequest request = GetCouponListRequest(
-        vendorId: int.parse("$vendorId"),
-        customerId: customerId,
+      CustomSnackBar.showSnackbar(
+        context: currentContext,
+        message: '${Languages.of(currentContext)?.labelNoInternetConnection}',
       );
-
-      await Provider.of<MainViewModel>(currentContext, listen: false)
-          .fetchCouponList(
-              "api/v1/app/customers/get_customer_coupons", request);
-
-      if (mounted) {
-        ApiResponse apiResponse =
-            Provider.of<MainViewModel>(currentContext, listen: false).response;
-        getCouponResponse(currentContext, apiResponse);
-      }
+      return;
     }
+
+    final request = GetCouponListRequest(
+      vendorId: int.parse("$vendorId"), // only if vendorId is String
+      customerId: customerId,
+    );
+
+    await Provider.of<MainViewModel>(currentContext, listen: false)
+        .fetchCouponList("api/v1/app/customers/get_customer_coupons", request);
+
+    if (!mounted) return;
+
+    final ApiResponse apiResponse =
+        Provider.of<MainViewModel>(currentContext, listen: false).response;
+
+    getCouponResponse(currentContext, apiResponse);
   }
 
   Future<Widget> getCouponResponse(
@@ -238,12 +235,8 @@ class _CouponsScreenState extends State<CouponsScreen> {
                 "${Languages.of(context)?.labelInvalidAccessToken}")) {
           SessionExpiredDialog.showDialogBox(context: context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Something went wrong.'),
-              duration: maxDuration,
-            ),
-          );
+          CustomSnackBar.showSnackbar(
+              context: context, message: 'Something went wrong.');
         }
         print(apiResponse.message);
         return Center(

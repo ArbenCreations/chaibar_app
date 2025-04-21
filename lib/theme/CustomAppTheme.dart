@@ -125,6 +125,12 @@ class CustomAppTheme {
         onBackground: Colors.black54,
         brightness: Brightness.light,
       ),
+        pageTransitionsTheme: PageTransitionsTheme(
+            builders: {
+              TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+              TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+            }
+        ),
       dropdownMenuTheme: DropdownMenuThemeData(
         textStyle: TextStyle(color: Colors.black),
       ),
@@ -231,6 +237,12 @@ class CustomAppTheme {
         background: CustomAppColor.DarkBackground,
         onBackground: CustomAppColor.DarkBackground,
         brightness: Brightness.dark,
+      ),
+      pageTransitionsTheme: PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          }
       ),
     );
   }

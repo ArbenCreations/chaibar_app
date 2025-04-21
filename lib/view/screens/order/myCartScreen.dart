@@ -29,8 +29,10 @@ import '../../../model/viewModel/mainViewModel.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/apiHandling/api_response.dart';
 import '../../component/CustomAlert.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/DashedLine.dart';
 import '../../component/connectivity_service.dart';
+import '../../component/custom_circular_progress.dart';
 import '../../component/session_expired_dialog.dart';
 
 class MyCartScreen extends StatefulWidget {
@@ -76,6 +78,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
   String? email = "";
   String? pickupDate = "";
   String? pickupTime = "";
+  String? storeStatus = "";
   CouponDetailsResponse? couponDetails = CouponDetailsResponse();
   final ConnectivityService _connectivityService = ConnectivityService();
   static const maxDuration = Duration(seconds: 2);
@@ -118,6 +121,8 @@ class _MyCartScreenState extends State<MyCartScreen> {
     Helper.getVendorDetails().then((data) {
       setState(() {
         vendorId = int.parse("${data?.id}");
+        storeStatus = data?.status ?? "online";
+        isStoreOnline = storeStatus == "offline" ? false : true;
         //gst = int.parse("${data?.gst ?? 0}");
         //pst = int.parse("${data?.pst ?? 0}");
         //hst = int.parse("${data?.hst ?? 0}");
@@ -128,6 +133,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
         gst = int.parse("${data?.gst ?? 0}");
         pst = int.parse("${data?.pst ?? 0}");
         hst = int.parse("${data?.hst ?? 0}");
+        IsUpcomingAllowed = data?.upcomingOrReserveDay ?? false;
       });
     });
     Helper.getApiKey().then((data) {
@@ -203,12 +209,14 @@ class _MyCartScreenState extends State<MyCartScreen> {
     isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return PopScope(
-      canPop: false,
-      onPopInvoked: (bool didPop) {
+      canPop: false, // Disable back navigation on this page
+      onPopInvokedWithResult: (bool didPop, Object? result) async {
         if (didPop) {
           return;
         }
-        Navigator.pushNamed(context, "/BottomNavigation", arguments: 1);
+        // Navigate to the home view when back navigation is attempted
+        Navigator.pushReplacementNamed(context, "/BottomNavigation",
+            arguments: 1);
       },
       child: Scaffold(
         resizeToAvoidBottomInset: false,
@@ -257,21 +265,37 @@ class _MyCartScreenState extends State<MyCartScreen> {
                 getCartTotal();
               },
               child: Container(
-                padding: EdgeInsets.symmetric(vertical: 6, horizontal: 5),
+                padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
                 margin: EdgeInsets.only(right: 10),
                 decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10)),
-                child: Text(
-                  "Clear Cart",
-                  maxLines: 2,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.red,
-                      decoration: TextDecoration.underline,
-                      decorationColor: Colors.red,
-                      fontWeight: FontWeight.w500),
+                  color: Colors.redAccent.shade200,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.remove_shopping_cart_outlined,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      "Clear Cart",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             )
@@ -493,6 +517,51 @@ class _MyCartScreenState extends State<MyCartScreen> {
                           SizedBox(
                             height: 5,
                           ),
+                          Align(
+                            alignment: Alignment.topRight,
+                            child: GestureDetector(
+                              onTap: (){
+                                Navigator.pushNamed(context, "/BottomNavigation",
+                                    arguments: 1);
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                                margin: EdgeInsets.only(right: 15, bottom: 10),
+                                width: mediaWidth * 0.24,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.white.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.add,
+                                      color: Colors.black,
+                                      size: 14,
+                                    ),
+                                    SizedBox(width: 2),
+                                    Text(
+                                      "Add items",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                           cartList.length > 0
                               ? Padding(
                                   padding: const EdgeInsets.only(bottom: 2.0),
@@ -599,6 +668,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                         ),
                                 )
                               : SizedBox(),
+
                           SizedBox(
                             height: 5,
                           ),
@@ -1107,20 +1177,23 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                                         "/OrderSuccessfulScreen"
                                                                       );*/
                                                               //_getApiAccessKey();
-                                                              _createOrder(GetApiAccessKeyResponse(
-                                                                  active: true,
-                                                                  apiAccessKey:
-                                                                      "apiAccessKey",
-                                                                  createdTime:
-                                                                      244242424,
-                                                                  modifiedTime:
-                                                                      24242424,
-                                                                  developerAppUuid:
-                                                                      "24242424",
-                                                                  merchantUuid:
-                                                                      "24242424",
-                                                                  message:
-                                                                      "message"));
+                                                              isLoading == false
+                                                                  ? _createOrder(GetApiAccessKeyResponse(
+                                                                      active:
+                                                                          true,
+                                                                      apiAccessKey:
+                                                                          "apiAccessKey",
+                                                                      createdTime:
+                                                                          244242424,
+                                                                      modifiedTime:
+                                                                          24242424,
+                                                                      developerAppUuid:
+                                                                          "24242424",
+                                                                      merchantUuid:
+                                                                          "24242424",
+                                                                      message:
+                                                                          "message"))
+                                                                  : SizedBox();
                                                           //_createOrder(null);
                                                           //_fetchStoreStatus(true);
                                                         },
@@ -1244,7 +1317,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
                             dismissible: false, color: Colors.transparent),
                         // Loader indicator
                         Center(
-                          child: CircularProgressIndicator(),
+                          child: CustomCircularProgress(),
                         ),
                       ],
                     )
@@ -1541,13 +1614,9 @@ class _MyCartScreenState extends State<MyCartScreen> {
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(
+            context: context,
+            message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       getCartData();
@@ -1614,7 +1683,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
     });
     switch (apiResponse.status) {
       case Status.LOADING:
-        return Center(child: CircularProgressIndicator());
+        return Center(child: CustomCircularProgress());
       case Status.COMPLETED:
         print("rwrwr ${couponDetailsResponse?.discount}");
         if (isSheet) {
@@ -1796,12 +1865,13 @@ class _MyCartScreenState extends State<MyCartScreen> {
         );
       });
     } else {
-      await Future.delayed(Duration(milliseconds: 2));
       await Provider.of<MainViewModel>(context, listen: false).fetchStoreStatus(
           "api/v1/app/orders/get_store_status?vendor_id=$vendorId");
-      ApiResponse apiResponse =
-          Provider.of<MainViewModel>(context, listen: false).response;
-      getStoreStatusResponse(context, apiResponse, isOrder);
+      if (mounted) {
+        ApiResponse apiResponse =
+            Provider.of<MainViewModel>(context, listen: false).response;
+        getStoreStatusResponse(context, apiResponse, isOrder);
+      }
     }
   }
 

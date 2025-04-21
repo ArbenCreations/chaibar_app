@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../component/CustomSnackbar.dart';
 import '/language/Languages.dart';
 import '/model/request/markFavoriteRequest.dart';
 import '/model/response/favoriteListResponse.dart';
@@ -516,13 +517,7 @@ class _MenuScreenState extends State<MenuScreen>
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       await Future.delayed(Duration(milliseconds: 2));
@@ -593,13 +588,7 @@ class _MenuScreenState extends State<MenuScreen>
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       FeaturedListRequest request = FeaturedListRequest(featured: true);
@@ -623,13 +612,7 @@ class _MenuScreenState extends State<MenuScreen>
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       MarkFavoriteRequest request = MarkFavoriteRequest(
@@ -675,13 +658,7 @@ class _MenuScreenState extends State<MenuScreen>
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       MarkFavoriteRequest request = MarkFavoriteRequest(
@@ -708,13 +685,7 @@ class _MenuScreenState extends State<MenuScreen>
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       MarkFavoriteRequest request = MarkFavoriteRequest(vendorId: vendorId);

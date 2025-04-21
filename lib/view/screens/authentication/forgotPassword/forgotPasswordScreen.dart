@@ -1,6 +1,8 @@
+import 'package:ChaiBar/view/component/CustomSnackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../../component/custom_circular_progress.dart';
 import '/utils/Util.dart';
 import '/view/component/toastMessage.dart';
 import '/view/component/CustomAlert.dart';
@@ -190,9 +192,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             children: [
               _buildForgotPasswordWidget(),
               isLoading
-                  ? Center(
-                      child: CircularProgressIndicator(),
-                    )
+                  ? CustomCircularProgress()
                   : SizedBox(),
             ],
           ),
@@ -377,9 +377,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           Provider.of<MainViewModel>(context, listen: false).response;
       generateOtpResponse(context, apiResponse);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(Languages.of(context)!.labelEnterValidPhone),
-      ));
+      CustomSnackBar.showSnackbar(context: context, message: "Please enter email!");
     }
   }
 

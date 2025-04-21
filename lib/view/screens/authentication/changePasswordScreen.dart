@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
 
 import '../../component/CustomAlert.dart';
+import '../../component/CustomSnackbar.dart';
+import '../../component/custom_circular_progress.dart';
 import '/model/request/verifyOtpChangePass.dart';
 import '/model/response/signUpInitializeResponse.dart';
 import '/theme/CustomAppColor.dart';
@@ -181,17 +183,7 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
         ),
       ),
       isLoading
-          ? Stack(
-              children: [
-                // Block interaction
-                ModalBarrier(
-                    dismissible: false, color : Colors.black.withOpacity(0.3)),
-                // Loader indicator
-                Center(
-                  child: CircularProgressIndicator(),
-                ),
-              ],
-            )
+          ? CustomCircularProgress()
           : SizedBox(),
     ]);
   }
@@ -334,12 +326,7 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
               if (!isConnected) {
                 setState(() {
                   isLoading = false;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${Languages.of(context)?.labelNoInternetConnection}'),
-                      duration: maxDuration,
-                    ),
-                  );
+                  CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
                 });
               } else {
                 print(_phoneNumberController.text);

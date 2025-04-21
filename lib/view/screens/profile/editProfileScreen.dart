@@ -1,5 +1,7 @@
 import 'package:flutter/services.dart';
 
+import '../../component/CustomSnackbar.dart';
+import '../../component/custom_circular_progress.dart';
 import '/model/db/ChaiBarDB.dart';
 import '/model/request/editProfileRequest.dart';
 import '/model/request/getCouponListRequest.dart';
@@ -184,17 +186,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
               isLoading
-                  ? Stack(
-                children: [
-                  // Block interaction
-                  ModalBarrier(
-                      dismissible: false, color: Colors.transparent),
-                  // Loader indicator
-                  Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                ],
-              )
+                  ? CustomCircularProgress()
                   : SizedBox()
             ],
           ),
@@ -210,12 +202,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() {
         isLoading = false;
         isInternetConnected = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(Languages.of(context)!.labelNoInternetConnection),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       hideKeyBoard();
@@ -245,12 +232,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() {
         isLoading = false;
         isInternetConnected = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(Languages.of(context)!.labelNoInternetConnection),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
         EditProfileRequest request = EditProfileRequest(
@@ -297,12 +279,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 "${Languages.of(context)?.labelInvalidAccessToken}")) {
           SessionExpiredDialog.showDialogBox(context: context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Something went wrong.'),
-              duration: maxDuration,
-            ),
-          );
+          CustomSnackBar.showSnackbar(context: context, message: 'Something went wrong!');
         }
         print(apiResponse.message);
         return Center(

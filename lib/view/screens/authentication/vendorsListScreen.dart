@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../component/CustomSnackbar.dart';
+import '../../component/custom_circular_progress.dart';
+import '../../component/shimmer_card.dart';
 import '/language/Languages.dart';
 import '/utils/Helper.dart';
 import '/utils/Util.dart';
@@ -222,16 +225,7 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
                     ],
                   ),
                   isLoading
-                      ? Stack(
-                    children: [
-                      // Block interaction
-                      ModalBarrier(dismissible: false, color: Colors.transparent),
-                      // Loader indicator
-                      Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    ],
-                  )
+                      ? CustomCircularProgress()
                       : SizedBox(),
                 ],
               ),
@@ -271,9 +265,8 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
                               loadingBuilder:
                                   (context, child, loadingProgress) {
                                 if (loadingProgress == null) return child;
-                                return const Center(
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2));
+                                return Center(
+                                    child: ShimmerCard());
                               },
                               errorBuilder: (_, __, ___) =>
                                   Container(color: Colors.black54),
@@ -335,7 +328,7 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
 
                   // Status Badge
                   _buildStatusBadge(
-                    item.status?.contains("online") == true ? "Open" : "Close",
+                    item.status?.contains("online") == true ? "Open" : "Closed",
                     item.status?.contains("online") == true
                         ? Colors.brown
                         : Colors.red,
@@ -382,13 +375,7 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       await Future.delayed(Duration(milliseconds: 2));
@@ -446,13 +433,7 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       await Future.delayed(Duration(milliseconds: 2));

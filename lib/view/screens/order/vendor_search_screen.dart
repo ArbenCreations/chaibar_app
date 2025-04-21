@@ -11,6 +11,7 @@ import '../../../model/viewModel/mainViewModel.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
 import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/product_component.dart';
 
@@ -223,12 +224,7 @@ class VendorSearchDelegate extends SearchDelegate {
       String query, BuildContext context) async {
     bool isConnected = await _connectivityService.isConnected();
     if (!isConnected) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${Languages.of(context)?.labelNoInternetConnection}'),
-          duration: maxDuration,
-        ),
-      );
+      CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       return [];
     } else {
       await Future.delayed(Duration(milliseconds: 2));

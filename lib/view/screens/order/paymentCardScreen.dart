@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_credit_card/flutter_credit_card.dart';
 import 'package:provider/provider.dart';
 
+import '../../component/CustomSnackbar.dart';
 import '/model/request/successCallbackRequest.dart';
 import '../../../language/Languages.dart';
 import '../../../model/db/ChaiBarDB.dart';
@@ -340,7 +341,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
     List<PaymentItem> paymentItems = [
       PaymentItem(
           label: 'Label',
-          amount: double.parse("${widget.orderData?.order?.totalAmount}"),
+          amount: double.parse("${widget.orderData?.order?.payableAmount}"),
           shippingcharge: 0.0)
     ];
     setState(() {
@@ -511,13 +512,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       if (expiryDate.isNotEmpty) {
@@ -591,13 +586,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       TransactionRequest transactionRequest = TransactionRequest(
@@ -658,20 +647,14 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       SuccessCallbackRequest request = SuccessCallbackRequest(
           orderId: int.parse("${widget.orderData?.order?.id}"),
           transactionId: "$paymentId",
           customerId: "$customerId",
-          transactionStatus: "$transactionStatus",
+          transactionStatus: "succeeded",
           isPaymentSuccessTrue: true);
       await Provider.of<MainViewModel>(context, listen: false)
           .successCallback("api/v1/app/customers/success_callback", request);
@@ -723,13 +706,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
     if (!isConnected) {
       setState(() {
         isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       GetRewardPointsRequest request = GetRewardPointsRequest(
@@ -763,8 +740,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
 
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("${message}")));
+        CustomSnackBar.showSnackbar(context: context, message: '$message');
         return Center(
           child: Text('Please try again later!!!'),
         );
@@ -787,12 +763,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
       setState(() {
         isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${Languages.of(context)?.labelNoInternetConnection}'),
-          duration: maxDuration,
-        ),
-      );
+      CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
     } else {
       AddRewardPointsRequest request = AddRewardPointsRequest(
           amountSpent:
@@ -834,8 +805,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
         );
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("${message}")));
+        CustomSnackBar.showSnackbar(context: context, message: '$message');
         return Center(
           child: Text('Please try again later!!!'),
         );

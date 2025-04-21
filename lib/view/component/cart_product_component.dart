@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:ChaiBar/theme/CustomAppColor.dart';
+import 'package:ChaiBar/view/component/CustomSnackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -33,307 +36,176 @@ class CartProductComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    //CustomSnackBar.showSnackbar(context: context, message: "${jsonDecode("${item?.addOn}")}");
     return Dismissible(
       key: Key(item.id.toString()),
-      // Ensure each item has a unique key
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
-        onRemoveTap(); // Call the remove function when swiped
+        onRemoveTap();
       },
       background: Container(
         alignment: Alignment.centerRight,
+        padding: EdgeInsets.only(right: 20),
+        margin: EdgeInsets.only(top: 8),
         decoration: BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.only(
-              topRight: Radius.circular(20), bottomRight: Radius.circular(20)),
+          color: Colors.redAccent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Icon(Icons.delete, color: Colors.white, size: 24),
+      ),
+      child: Container(
+        margin: EdgeInsets.only(top: 8),
+        padding: EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Color.fromRGBO(0, 0, 0, 0.06),
-              // Shadow color
-              offset: Offset(0, 1),
-              // Adjust X and Yoffset to match Figma
-              blurRadius: 5,
-              // Adjust this for more/less blur
-              spreadRadius: 0.1, // Adjust spread if needed
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: Offset(0, 4),
             ),
           ],
         ),
-        padding: EdgeInsets.symmetric(horizontal: 20),
-        margin: EdgeInsets.only(top: 5),
-        child: Icon(Icons.delete, color: Colors.white),
-      ),
-      child: Container(
-          width: mediaWidth,
-          alignment: Alignment.center,
-          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Color.fromRGBO(0, 0, 0, 0.08),
-                // Shadow color
-                offset: Offset(0, 2),
-                // Adjust X and Yoffset to match Figma
-                blurRadius: 10,
-                // Adjust this for more/less blur
-                spreadRadius: 0.2, // Adjust spread if needed
-              ),
-            ],
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              item.imageUrl == "" || item.imageUrl == null
-                  ? Container(
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          color: primaryColor),
-                      child: Image.asset(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Product Image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: item.imageUrl == null || item.imageUrl!.isEmpty
+                  ? Image.asset(
+                      "assets/app_logo.png",
+                      height: 65,
+                      width: 65,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.network(
+                      item.imageUrl!,
+                      height: 65,
+                      width: 65,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, _) => Image.asset(
                         "assets/app_logo.png",
                         height: 65,
                         width: 65,
-                        fit: BoxFit.fitWidth,
+                        fit: BoxFit.cover,
                       ),
-                    )
-                  : Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                            color: Theme.of(context).cardColor, width: 0.3),
-                        color: Colors.white,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(15),
-                        child: Image.network(
-                          "${item.imageUrl}",
-                          height: 65,
-                          width: 65,
-                          fit: BoxFit.cover,
-                          errorBuilder: (BuildContext context,
-                              Object exception, StackTrace? stackTrace) {
-                            return Container(
-                              child: Image.asset(
-                                "assets/app_logo.png",
-                                height: 65,
-                                width: 65,
-                                fit: BoxFit.fitWidth,
-                              ),
-                            );
-                          },
-                          loadingBuilder: (BuildContext context, Widget child,
-                              ImageChunkEvent? loadingProgress) {
-                            if (loadingProgress == null) {
-                              return child;
-                            } else {
-                              return Shimmer.fromColors(
-                                baseColor: Colors.white38,
-                                highlightColor: Colors.grey,
-                                child: Container(
-                                  height: 65,
-                                  width: 65,
-                                  color: Colors.white,
-                                ),
-                              );
-                            }
-                          },
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return Shimmer.fromColors(
+                          baseColor: Colors.grey.shade300,
+                          highlightColor: Colors.grey.shade100,
+                          child: Container(
+                            height: 65,
+                            width: 65,
+                            color: Colors.white,
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            SizedBox(width: 14),
+            // Product Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (item.isBuy1Get1 == true)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        "Buy 1 GET 1",
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.redAccent,
                         ),
                       ),
                     ),
-              Padding(
-                padding: const EdgeInsets.only(left: 14),
-                child: Container(
-                  width: mediaWidth * 0.7,
-                  child: Column(
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        //height: 90,
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.max,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              item.isBuy1Get1 == true
-                                  ? Text(
-                                      "Buy 1 GET 1",
-                                      style: TextStyle(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.red),
-                                    )
-                                  : SizedBox(),
-                              Row(
-                                mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Container(
-                                    width: mediaWidth * 0.5,
-                                    child: Row(
-                                      children: [
-                                        Flexible(
-                                          child: Text(
-                                            capitalizeFirstLetter(
-                                              "${item.title}",
-                                            ),
-                                            style: TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        /* item?.productSizesList ==
-                                                                "[]" || item?.productSizesList?.isEmpty == true ? */
-                                        /*  Text(' (\$${(item.price)})',
-                                            style: TextStyle(
-                                                fontSize: 10,
-                                                color: Colors.grey[700]))*/
-                                        //: SizedBox(),
-                                      ],
-                                    ),
-                                  ),
-                                  Spacer(),
-                                  Align(
-                                      alignment: Alignment.topRight,
-                                      child: Icon(
-                                        Icons.arrow_forward_ios,
-                                        color: Colors.black54,
-                                        size: 14,
-                                      )),
-                                ],
-                              ),
-                              Row(
-                                mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    mainAxisSize: MainAxisSize.max,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Container(
-                                          width: mediaWidth * 0.5,
-                                          child: Text(
-                                            item.getAddOnList()?.isEmpty ==
-                                                    true
-                                                ? capitalizeFirstLetter(
-                                                    "${item.shortDescription}")
-                                                : addOns(item),
-                                            style: TextStyle(
-                                                fontSize: 10,
-                                                color: Colors.grey[700]),
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: item
-                                                        .getAddOnList()
-                                                        ?.isEmpty ==
-                                                    true
-                                                ? 1
-                                                : 2,
-                                          )),
-                                      SizedBox(
-                                        height: 5,
-                                      ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                              '\$${itemTotalPrice.toStringAsFixed(2)}',
-                                              style: TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight:
-                                                      FontWeight.w600)),
-                                          item.getAddOnList()?.isEmpty == true
-                                              ? SizedBox()
-                                              : Text(
-                                                  '+\$${addOnTotalPrice.toStringAsFixed(2)}',
-                                                  style: TextStyle(
-                                                      fontSize: 12,
-                                                      color:
-                                                          Colors.grey[600])),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 4,
-                                      ),
-                                    ],
-                                  ),
-                                  Spacer(),
-                                  Column(
-                                    mainAxisSize: MainAxisSize.max,
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      SizedBox(
-                                        height: 15,
-                                      ),
-                                      /* item?.productSizesList ==
-                                                              "[]" || item?.productSizesList?.isEmpty == true ? */
-                                      Row(
-                                        children: [
-                                          /*Text(
-                                              'Quantity: ', style: TextStyle(fontSize: 12),),*/
-                                          GestureDetector(
-                                            child: Icon(
-                                              Icons
-                                                  .remove_circle_outline_rounded,
-                                              size: 20,
-                                              color: item.quantity == 0
-                                                  ? Colors.grey
-                                                  : Colors.grey,
-                                            ),
-                                            onTap: onMinusTap,
-                                          ),
-                                          SizedBox(
-                                            width: 4,
-                                          ),
-                                          Text(
-                                            "${item.quantity.toString()}",
-                                            style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          SizedBox(
-                                            width: 4,
-                                          ),
-                                          GestureDetector(
-                                            child: Icon(
-                                              Icons.add_circle_outlined,
-                                              size: 20,
-                                              color: CustomAppColor
-                                                  .ButtonBackColor,
-                                            ),
-                                            onTap: onAddTap,
-                                          ),
-                                        ],
-                                      )
-                                      /* : Text(
-                                                            '${item?.quantity}',
-                                                            style: TextStyle(
-                                                                fontSize:
-                                                                    12,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600),
-                                                          ),*/
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
+                      Expanded(
+                        child: Text(
+                          capitalizeFirstLetter(item.title.toString()),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
+                      ),
+                      Icon(Icons.arrow_forward_ios,
+                          size: 14, color: Colors.grey),
+                    ],
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    item.getAddOnList()?.isEmpty ?? true
+                        ? capitalizeFirstLetter(
+                            item.shortDescription.toString())
+                        : addOns(item, context),
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                  SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            '\$${itemTotalPrice.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (!(item.getAddOnList()?.isEmpty ?? true)) ...[
+                            SizedBox(width: 4),
+                            Text(
+                              '+\$${addOnTotalPrice.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ]
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: onMinusTap,
+                            child: Icon(Icons.remove_circle_outline,
+                                size: 22, color: Colors.grey),
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            '${item.quantity}',
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: onAddTap,
+                            child: Icon(Icons.add_circle_outline,
+                                size: 22,
+                                color: CustomAppColor.ButtonBackColor),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
-            ],
-          )),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -482,13 +354,18 @@ class CartProductComponent extends StatelessWidget {
                                               ),
                                             )
                                           : SizedBox()*/
-  String addOns(ProductData item) {
+  String addOns(ProductData item, BuildContext context) {
     String text = "";
+
     item.getAddOnList().forEach((category) {
+      print("${category?.addOns?.length}");
+      //CustomSnackBar.showSnackbar(context: context, message: "${category?.addOns?.length}");
       if (category.addOnCategoryType == "multiple") {
+        List<String> names = [];
         category.addOns?.forEach((addOn) {
-          text = capitalizeFirstLetter("${addOn.name} ");
+          names.add(capitalizeFirstLetter("${addOn.name}"));
         });
+        text = names.join(", ");
       } else {
         category.addOns?.forEach((addOn) {
           text = capitalizeFirstLetter("${addOn.name} ");
