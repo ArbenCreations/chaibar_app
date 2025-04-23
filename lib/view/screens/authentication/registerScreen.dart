@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:provider/provider.dart';
 
+import '../../../model/request/signInRequest.dart';
+import '../../../model/response/profileResponse.dart';
+import '../../../model/response/signInResponse.dart';
+import '../../../model/services/AuthenticationProvider.dart';
 import '/model/request/signUpRequest.dart';
 import '/model/response/signUpInitializeResponse.dart';
 import '/utils/Util.dart';
@@ -19,6 +25,7 @@ import '../../component/connectivity_service.dart';
 import '../../component/custom_button_component.dart';
 import '../../component/custom_circular_progress.dart';
 import '../../component/googleSignIN.dart';
+import 'loginScreen.dart';
 
 class RegisterScreen extends StatefulWidget {
   final String? userId;
@@ -223,68 +230,125 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         SizedBox(
                           height: 5,
                         ),
-                        /*SizedBox(
+                        Platform.isIOS
+                            ? SizedBox(
                           width: mediaWidth * 0.55,
-                          child: SignInWithAppleButton(
-                            style: SignInWithAppleButtonStyle.black,
-                            text: "Sign up",
-                            //iconAlignment: IconAlignment.center,
-                            onPressed: () async {
+                          child: GestureDetector(
+                            onTap: () async {
                               User? user = await context
-                                  .read<AuthenticationProvider>()
+                                  .read<
+                                  AuthenticationProvider>()
                                   .signInWithApple();
                               if (user != null) {
-                                // Check if we have all required info
-                                print(
-                                    "User signed in successfully: ${user.email}");
-                                print(
-                                    "User signed in successfully: ${user.displayName}");
-                                bool isEmailRelay = user.email?.endsWith(
+                                bool isEmailRelay =
+                                    user.email?.endsWith(
                                         "@privaterelay.appleid.com") ??
-                                    true;
-                                bool isNameMissing = user.displayName == null ||
-                                    user.displayName!.isEmpty;
-
-                                if (isEmailRelay || isNameMissing) {
-                                  // Show bottom sheet to collect missing details
-                                  showUserDetailsBottomSheet(context, user);
-                                } else {
-                                  print(
-                                      "User signed in successfully: ${user.email}");
-                                }
+                                        true;
+                                bool isNameMissing =
+                                    user.displayName ==
+                                        null ||
+                                        user.displayName!
+                                            .isEmpty;
+                                _appleSignIn(user, true);
                               } else {
-                                print("Apple sign-in failed or was canceled.");
+                                print(
+                                    "Apple sign-in failed or was canceled.");
                               }
                             },
+                            child: Container(
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: Colors.black,
+                                borderRadius:
+                                BorderRadius.circular(
+                                    8),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment
+                                    .center,
+                                children: [
+                                  Icon(Icons.apple,
+                                      color:
+                                      Colors.white),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    'Continue with Apple',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      // <- Change text size here
+                                      fontWeight:
+                                      FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),*/
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              "Have an account?",
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.black54),
-                            ),
-                            SizedBox(
-                              width: 4,
-                            ),
-                            GestureDetector(
-                                onTap: () {
-                                  Navigator.pushNamed(context, "/SignInScreen");
-                                },
-                                child: Text(
-                                  "Sign in",
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold),
-                                )),
-                          ],
-                        ),
+                        )
+                            : SizedBox(),
+
                       ],
                     ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    margin: EdgeInsets.only(bottom: 30),
+                    child:  Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "Have an account?",
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.black54),
+                        ),
+                        SizedBox(
+                          width: 4,
+                        ),
+                        GestureDetector(
+                            onTap: () {
+                              Navigator.pushNamed(context, "/SignInScreen");
+                            },
+                            child: Text(
+                              "Sign in",
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold),
+                            )),
+                      ],
+                    ),
+
+
+             /*       Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "Not Registered? ",
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(context, '/RegisterScreen');
+                          },
+                          child: Text(
+                            "${Languages.of(context)?.labelSignup}",
+                            style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),*/
                   ),
                 ),
                 isLoading ? CustomCircularProgress() : SizedBox()
@@ -1126,6 +1190,118 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Future<void> _appleSignIn(User? user, bool isAppleLogin) async {
+    hideKeyBoard();
+    setState(() {
+      isLoading = true;
+    });
+    if (inputValid || user != null) {
+      SignInRequest signInRequest = SignInRequest(
+          customer: CustomerSignIn(
+            deviceToken: "${deviceToken}",
+            email: user != null ? "${user.email}" : _emailController.text,
+            password: user != null ? "applesign1" : _passwordController.text,
+          ));
+      bool isConnected = await _connectivityService.isConnected();
+      if (!isConnected) {
+        setState(() {
+          isLoading = false;
+          CustomSnackBar.showSnackbar(
+              context: context,
+              message: '${Languages.of(context)?.labelNoInternetConnection}');
+        });
+      } else {
+        await Provider.of<MainViewModel>(context, listen: false)
+            .signInWithPass("/api/v1/app/customers/sign_in", signInRequest);
+
+        ApiResponse apiResponse =
+            Provider.of<MainViewModel>(context, listen: false).response;
+        getAppleSignInResponse(context, apiResponse, user);
+      }
+    }
+  }
+
+  Future<Widget> getAppleSignInResponse(
+      BuildContext context, ApiResponse apiResponse, User? user) async
+  {
+    SignInResponse? mediaList = apiResponse.data as SignInResponse?;
+    setState(() {
+      isLoading = false;
+    });
+    switch (apiResponse.status) {
+      case Status.LOADING:
+        return Center(child: CircularProgressIndicator());
+      case Status.COMPLETED:
+        print("GetSignInResponse : ${mediaList}");
+
+        ProfileResponse data = ProfileResponse(
+          phoneNumber: mediaList?.customer?.phoneNumber,
+          id: mediaList?.customer?.id,
+          email: mediaList?.customer?.email,
+          lastName: mediaList?.customer?.lastName,
+          firstName: mediaList?.customer?.firstName,
+          totalPoints: mediaList?.customer?.totalPoints,
+        );
+        Helper.saveProfileDetails(data);
+        Helper.saveRedeemPoints(mediaList?.customer?.totalPoints);
+        String token = "${mediaList?.token}";
+        print("token :: $token ${mediaList?.customer?.totalPoints}");
+        bool isSaved = await Helper.saveUserToken(token);
+
+        // Check if the token was saved successfully
+        if (isSaved) {
+          print('Token saved successfully.');
+        } else {
+          print('Failed to save token.');
+        }
+
+        await Helper.savePassword("applesign1");
+        String? password = await Helper.getPassword();
+        print("password: ${password}");
+        Navigator.pushReplacementNamed(context, "/VendorsListScreen",
+            arguments: "");
+
+        return Container(); // Return an empty container as you'll navigate away
+      case Status.ERROR:
+        print("message : ${apiResponse.message}");
+        if (apiResponse.message == "Invalid email or password") {
+          //showUserDetailsBottomSheet(context, user);
+          _showSignUpBottomSheet(context, user);
+        } else {
+          CustomAlert.showToast(context: context, message: apiResponse.message);
+        }
+
+        return Center();
+      case Status.INITIAL:
+      default:
+        return Center();
+    }
+  }
+
+  void _showSignUpBottomSheet(BuildContext context, User? user) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      enableDrag: true,
+      constraints: BoxConstraints(
+          maxHeight: screenHeight * 0.8, minHeight: screenHeight * 0.8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SignUpForm(user),
         );
       },
     );

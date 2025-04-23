@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:intl/intl.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -94,7 +95,8 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
         _nameController.text = "${firstName}";
         _lastNameController.text = "${lastName}";
         _emailController.text = "${email}";
-        _phoneController.text = "${phone}";
+        _phoneController.text = maskFormatter.maskText("${phone}");
+      //  String cleanPhone = maskFormatter.getUnmaskedText();
         isDataLoading = false;
       });
     });
@@ -104,6 +106,13 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
       print("Password: ${password}");
     });
   }
+
+  final maskFormatter = MaskTextInputFormatter(
+    mask: '(###) ###-####',
+    filter: {"#": RegExp(r'[0-9]')},
+    type: MaskAutoCompletionType.lazy,
+  );
+
 
   Future<Widget> getProfileResponse(
       BuildContext context, ApiResponse apiResponse) async {
@@ -647,7 +656,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                                   maxWidth: mediaWidth * 0.9,
                                   minWidth: mediaWidth * 0.9,
                                 ),
-                                child: editableDetailBox(
+                                child: editablePhoneNumberBox(
                                     Languages.of(context)!.labelPhoneNumber,
                                     "${email}",
                                     12,
@@ -898,6 +907,82 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                 enabled: isClickable,
                 textInputAction: TextInputAction.done,
                 decoration: InputDecoration(
+                  contentPadding: EdgeInsets.symmetric(vertical: 12),
+                  border: OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(width: 0, color: Colors.white),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          width: 0, color: Theme.of(context).cardColor)),
+                  hintText: heading,
+                  prefixIcon: Icon(
+                    icon,
+                    size: 16,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget editablePhoneNumberBox(
+      String heading,
+      String subHeading,
+      double subHeadingTextSize,
+      double headingTextSize,
+      IconData icon,
+      TextEditingController controller,
+      bool isClickable)
+  {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      child: Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+        decoration: BoxDecoration(
+          color: CustomAppColor.Background,
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  heading,
+                  style: TextStyle(
+                    fontSize: headingTextSize,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(
+              height: 2,
+            ),
+            Container(
+              color: Colors.white,
+              child: TextField(
+                scrollPadding: EdgeInsets.all(0),
+                controller: controller,
+                textAlignVertical: TextAlignVertical.center,
+                onChanged: (value) {
+                  //isInputValid();
+                },
+                keyboardType: TextInputType.phone,
+                inputFormatters: [maskFormatter],
+                style: TextStyle(fontSize: 13),
+                onSubmitted: (value) {},
+                enabled: isClickable,
+                textInputAction: TextInputAction.done,
+                decoration: InputDecoration(
+                  prefixText: '+1 ',
                   contentPadding: EdgeInsets.symmetric(vertical: 12),
                   border: OutlineInputBorder(),
                   enabledBorder: OutlineInputBorder(
