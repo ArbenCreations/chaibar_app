@@ -53,6 +53,7 @@ class ProductData {
   bool? status;
   bool? isBuy1Get1;
   bool? favorite;
+  String? userVote;
   String? environmentalFee;
   String? addOnIdsList;
   String? salePrice;
@@ -76,6 +77,7 @@ class ProductData {
     this.description,
     this.gst,
     this.favorite,
+    this.userVote,
     this.price,
     this.productCategoryId,
     this.createdAt,
@@ -124,6 +126,7 @@ class ProductData {
       addOnIdsList: _convertToString(json["add_on_ids"]),
       featured: json["featured"] as bool?,
       favorite: json["favourite"] as bool?,
+      userVote: json["user_vote"] as String?,
       isBuy1Get1: json["is_buy_1_get_1"] as bool?,
       price: (json["price"] is int) ? (json["price"] as int).toDouble() : json["price"] as double?,
       upvote_percentage: (json["upvote_percentage"] is int) ? (json["upvote_percentage"] as int).toDouble() : json["upvote_percentage"] as double?,
@@ -164,6 +167,7 @@ class ProductData {
     data['add_on_ids'] = this.addOnIdsList;
     data['featured'] = this.featured;
     data['favourite'] = this.favorite;
+    data['user_vote'] = this.userVote;
     data['is_buy_1_get_1'] = this.isBuy1Get1;
     data['upvote_percentage'] = this.upvote_percentage;
     data['downvote_percentage'] = this.downvote_percentage;

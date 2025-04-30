@@ -1,48 +1,9 @@
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../model/services/PushNotificationService.dart';
 import '../../../utils/Helper.dart';
-
-late AndroidNotificationChannel channel;
-late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
-bool isFlutterLocalNotificationsInitialized = false;
-
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  await setupFlutterNotifications();
-  print('Handling a background message ${message.messageId}');
-}
-
-Future<void> setupFlutterNotifications() async {
-  if (isFlutterLocalNotificationsInitialized) return;
-
-  channel = const AndroidNotificationChannel(
-    'high_importance_channel',
-    'High Importance Notifications',
-    description: 'This channel is used for important notifications.',
-    importance: Importance.high,
-  );
-
-  flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
-  await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-      ?.createNotificationChannel(channel);
-
-  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
-
-  isFlutterLocalNotificationsInitialized = true;
-}
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -55,20 +16,28 @@ class _SplashScreenState extends State<SplashScreen> {
   String? token;
   int? vendorId;
 
+
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    _initializeWithTimeout();
+  }
+
+  Future<void> _initializeWithTimeout() async {
+    try {
+      final initFuture = _initializeApp();
+      await initFuture.timeout(const Duration(seconds: 10));
+    } catch (e) {
+      print("Initialization timeout or error: $e");
+      _navigate(); // fallback
+    }
   }
 
   Future<void> _initializeApp() async {
-    await FirebaseMessaging.instance.getInitialMessage();
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    await setupFlutterNotifications();
     await PushNotificationService().setupInteractedMessage();
 
     final permissionStatus = await Permission.notification.status;
-    if (permissionStatus.isDenied) {
+    if (permissionStatus.isDenied || permissionStatus.isRestricted) {
       await Permission.notification.request();
     }
 
@@ -76,7 +45,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final vendor = await Helper.getVendorDetails();
     vendorId = vendor?.id;
 
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 3));
     _navigate();
   }
 
@@ -94,13 +63,14 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    var screenHeight = MediaQuery.of(context).size.height;
+    return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
-        child: Image(
-          image: AssetImage("assets/app_logo.png"),
-          width: 200,
-        ),
+        child: Container(
+            height: screenHeight,
+            alignment: Alignment.center,
+            child: Lottie.asset('assets/splash_anim.json')),
       ),
     );
   }

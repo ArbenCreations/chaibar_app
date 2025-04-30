@@ -103,7 +103,6 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
 
     Helper.getPassword().then((userPassword) {
       password = userPassword;
-      print("Password: ${password}");
     });
   }
 

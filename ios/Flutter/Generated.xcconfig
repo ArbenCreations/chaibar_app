@@ -4,7 +4,7 @@ FLUTTER_APPLICATION_PATH=/Users/akashsingh/Downloads/chaibar 2
 COCOAPODS_PARALLEL_CODE_SIGN=true
 FLUTTER_TARGET=/Users/akashsingh/Downloads/chaibar 2/lib/main.dart
 FLUTTER_BUILD_DIR=build
-FLUTTER_BUILD_NAME=1.0.0
+FLUTTER_BUILD_NAME=4.0.7
 FLUTTER_BUILD_NUMBER=1
 EXCLUDED_ARCHS[sdk=iphonesimulator*]=i386
 EXCLUDED_ARCHS[sdk=iphoneos*]=armv7

@@ -1105,9 +1105,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       case Status.LOADING:
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
-        Helper.saveActiveOrderCounts(
-            dashboardDataResponse?.activeOrderCounts ?? 0);
         setState(() {
+          Helper.saveActiveOrderCounts(
+              dashboardDataResponse?.activeOrderCounts ?? 0);
           favoriteProducts =
               dashboardDataResponse?.getFavoritesList() as List<ProductData>;
           updateQuantity(favoriteProducts);

@@ -246,8 +246,7 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
         child: Stack(
           children: [
             Container(
-              // height: screenHeight * 0.17,
-              width: mediaWidth * 0.85,
+              width: mediaWidth * 0.9,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -348,7 +347,7 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
       alignment: Alignment.topLeft,
       child: IntrinsicWidth(
         child: Container(
-          margin: EdgeInsets.only(top: 10, left: 10),
+          margin: EdgeInsets.only(top: 10, right: 10),
           decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20), color: color),
           padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
@@ -398,11 +397,6 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
       case Status.LOADING:
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
-        print("rwrwr ${vendorListResponse?.vendors?[0].businessName}");
-
-        // countryList = countryListResponse!.countries!;
-        //Helper.saveCountryList(vendorList);
-        //selectedItem = "${countryListResponse?.countries?[0].flagImageUrl}";
         setState(() {
           vendorList = vendorListResponse!.vendors!;
           filteredVendorList = vendorList;

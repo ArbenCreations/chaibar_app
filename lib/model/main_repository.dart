@@ -1,9 +1,12 @@
+import 'package:ChaiBar/model/request/EncryptedWalletRequest.dart';
 import 'package:ChaiBar/model/request/addRewardPointsRequest.dart';
 import 'package:ChaiBar/model/request/deleteProfileRequest.dart';
+import 'package:ChaiBar/model/request/getOrderDetailRequest.dart';
 import 'package:ChaiBar/model/request/getRewardPointsRequest.dart';
 import 'package:ChaiBar/model/request/itemReviewRequest.dart';
 import 'package:ChaiBar/model/response/StoreSettingResponse.dart';
 import 'package:ChaiBar/model/response/addRewardPointsResponse.dart';
+import 'package:ChaiBar/model/response/appleTokenDetailsResponse.dart';
 import 'package:ChaiBar/model/response/getRewardPointsResponse.dart';
 import 'package:ChaiBar/model/response/getViewRewardPointsResponse.dart';
 import 'package:ChaiBar/model/response/itemReviewResponse.dart';
@@ -103,6 +106,17 @@ class MainRepository {
     final jsonData = response;
     print(" ${jsonData}");
     TokenDetailsResponse mediaList = TokenDetailsResponse.fromJson(jsonData);
+    return mediaList;
+  }
+
+  Future<AppleTokenDetailsResponse> getApiTokenForApplePay(
+      String value, String apiKey, EncryptedWallet applePayTokenRequest) async {
+    dynamic response = await _baseService.postCloverResponse(
+        value, apiKey, applePayTokenRequest);
+    print(value);
+    final jsonData = response;
+    print(" ${jsonData}");
+    AppleTokenDetailsResponse mediaList = AppleTokenDetailsResponse.fromJson(jsonData);
     return mediaList;
   }
 
@@ -266,6 +280,14 @@ class MainRepository {
     final jsonData = response;
     print(jsonData);
     StoreStatusResponse mediaList = StoreStatusResponse.fromJson(jsonData);
+    return mediaList;
+  }
+
+  Future<OrderDetails> fetchOrderStatus(String value, GetOrderDetailRequest request) async {
+    dynamic response = await _baseService.postResponse(value,request);
+    final jsonData = response;
+    print(jsonData);
+    OrderDetails mediaList = OrderDetails.fromJson(jsonData);
     return mediaList;
   }
 

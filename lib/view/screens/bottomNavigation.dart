@@ -47,11 +47,6 @@ class _BottomNavigationState extends State<BottomNavigation>
     Helper.getUserAuthenticated().then((onValue) {
       isUserAuthenticated = onValue;
     });
-    Helper.getActiveOrderCounts().then((count) {
-      setState(() {
-        activeOrderCount = count;
-      });
-    });
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -78,10 +73,20 @@ class _BottomNavigationState extends State<BottomNavigation>
   }
 
   void _onItemTapped(int index) {
+    Helper.getActiveOrderCounts().then((count) {
+      if (mounted) {
+        setState(() {
+          activeOrderCount= 0;
+          activeOrderCount = count;
+        });
+      }
+    });
     setState(() {
       _selectedIndex = index;
     });
     _animationController.forward(from: 0.0);
+    // Fetch updated active order count on screen change
+
   }
 
   @override

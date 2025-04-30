@@ -52,7 +52,7 @@ abstract class FavoritesDataDao {
 
 @dao
 abstract class CategoryDataDao {
-  @Query('SELECT * FROM CategoryDataDB ORDER BY createdAt DESC')
+  @Query('SELECT * FROM CategoryDataDB')
   Future<List<CategoryDataDB?>> findAllCategories();
 
 

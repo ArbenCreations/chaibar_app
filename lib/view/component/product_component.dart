@@ -71,8 +71,6 @@ class ProductComponent extends StatelessWidget {
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: Theme.of(context).cardColor, width: 0.3),
                           color: isDarkMode
                               ? CustomAppColor.DarkCardColor
                               : Colors.white,

@@ -20,7 +20,6 @@ import '../../../model/db/dataBaseDao.dart';
 import '../../../model/request/getCouponListRequest.dart';
 import '../../../model/request/getRewardPointsRequest.dart';
 import '../../../model/response/couponListResponse.dart';
-import '../../../model/response/getApiAccessKeyResponse.dart';
 import '../../../model/response/getRewardPointsResponse.dart';
 import '../../../model/response/getViewRewardPointsResponse.dart';
 import '../../../model/response/productDataDB.dart';
@@ -99,6 +98,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
   void initState() {
     super.initState();
     setState(() {
+      isStoreOnline= true;
       pickupDate = "${DateFormat('yyyy-MM-dd').format(DateTime.now())}";
       pickupTime =
           "${DateFormat('hh:mm a').format(DateTime.now().add(Duration(minutes: 20)))}";
@@ -123,9 +123,6 @@ class _MyCartScreenState extends State<MyCartScreen> {
         vendorId = int.parse("${data?.id}");
         storeStatus = data?.status ?? "online";
         isStoreOnline = storeStatus == "offline" ? false : true;
-        //gst = int.parse("${data?.gst ?? 0}");
-        //pst = int.parse("${data?.pst ?? 0}");
-        //hst = int.parse("${data?.hst ?? 0}");
       });
     });
     Helper.getStoreSettingDetails().then((data) {
@@ -155,8 +152,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
     _fetchStoreStatus(false);
   }
 
-  Widget getCreateOrderResponse(BuildContext context, ApiResponse apiResponse,
-      GetApiAccessKeyResponse? getApiAccessKeyResponse) {
+  Widget getCreateOrderResponse(BuildContext context, ApiResponse apiResponse) {
     CreateOrderResponse? createOrderResponse =
         apiResponse.data as CreateOrderResponse?;
     setState(() {
@@ -166,29 +162,18 @@ class _MyCartScreenState extends State<MyCartScreen> {
       case Status.LOADING:
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
-        print("rwrwr ${getApiAccessKeyResponse?.apiAccessKey.toString()}");
         print("redeemAmount ${redeemAmount}");
         print("actualRewardPoints ${actualRewardPoints}");
-        //cartDataDao.clearAllCartProduct();
         createOrderResponse?.order?.redeemPoints = "${rewardPoints}";
-        setState(() {
-          //menuItems = createOrderResponse!.products!;
-        });
-        //getCartData();
         Navigator.pushNamed(
           context,
           "/PaymentCardScreen",
           arguments: {
-            "data": getApiAccessKeyResponse == null
-                ? ""
-                : getApiAccessKeyResponse?.apiAccessKey.toString(),
+            "data": "",
             'rewardPoints': "${redeemAmount > 0 ? actualRewardPoints : 0.0}",
             'orderData': createOrderResponse
           },
         );
-
-        //Navigator.pushNamed(context, "/OrderSuccessfulScreen", arguments: createOrderResponse);
-
         return Container();
       case Status.ERROR:
         return Center(
@@ -268,11 +253,11 @@ class _MyCartScreenState extends State<MyCartScreen> {
                 padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
                 margin: EdgeInsets.only(right: 10),
                 decoration: BoxDecoration(
-                  color: Colors.redAccent.shade200,
+                  color: Colors.black,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.red.withOpacity(0.3),
+                      color: Colors.black.withOpacity(0.3),
                       blurRadius: 8,
                       offset: Offset(0, 3),
                     ),
@@ -520,14 +505,16 @@ class _MyCartScreenState extends State<MyCartScreen> {
                           Align(
                             alignment: Alignment.topRight,
                             child: GestureDetector(
-                              onTap: (){
-                                Navigator.pushNamed(context, "/BottomNavigation",
+                              onTap: () {
+                                Navigator.pushNamed(
+                                    context, "/BottomNavigation",
                                     arguments: 1);
                               },
                               child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                                padding: EdgeInsets.symmetric(
+                                    vertical: 6, horizontal: 4),
                                 margin: EdgeInsets.only(right: 15, bottom: 10),
-                                width: mediaWidth * 0.24,
+                                width: mediaWidth * 0.26,
                                 decoration: BoxDecoration(
                                   color: Colors.grey.shade100,
                                   borderRadius: BorderRadius.circular(20),
@@ -554,7 +541,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                         fontSize: 14,
                                         color: Colors.black,
                                         fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.5,
+                                        letterSpacing: 0.2,
                                       ),
                                     ),
                                   ],
@@ -578,7 +565,28 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                               }
                                             else
                                               {
-                                                CustomAlert.showToast(
+                                                /*  ScaffoldMessenger.of(context)
+                                    ..hideCurrentSnackBar()
+                                    ..showSnackBar(SnackBar(
+                                      content: Text(
+                                        "Please Enter Promo Code",
+                                        style: const TextStyle(color: Colors.white),
+                                      ),
+                                      duration: Duration(seconds: 2),
+                                      behavior: SnackBarBehavior.floating,
+                                      backgroundColor: Colors.black87,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      action: SnackBarAction(
+                                        label: 'OK',
+                                        textColor: Colors.white,
+                                        onPressed: () {
+                                          // Optional: Add logic here if needed
+                                        },
+                                      ),
+                                    ))*/
+                                                CustomSnackBar.showSnackbar(
                                                     context: context,
                                                     message:
                                                         "Please Enter Promo Code",
@@ -668,7 +676,6 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                         ),
                                 )
                               : SizedBox(),
-
                           SizedBox(
                             height: 5,
                           ),
@@ -845,24 +852,16 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                       ),
                                       GestureDetector(
                                         onTap: () {
-                                          //couponsList.length > 0
                                           showCouponBottomSheet(context);
-                                          /* : CustomAlert.showToast(
-                                                  context: context,
-                                                  message:
-                                                      "No available coupons");*/
                                         },
                                         child: Card(
                                           elevation: 0,
-                                          margin: EdgeInsets.symmetric(
-                                              vertical: 0, horizontal: 0),
                                           shape: Border(
                                               bottom: BorderSide(width: 0.01)),
                                           child: Container(
                                             alignment: Alignment.center,
-                                            margin: EdgeInsets.only(bottom: 4),
                                             padding: EdgeInsets.symmetric(
-                                                vertical: 4),
+                                                vertical: 2),
                                             child: Row(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.center,
@@ -875,7 +874,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                       Alignment.centerLeft,
                                                   child: Container(
                                                       padding: EdgeInsets.only(
-                                                          left: 15),
+                                                          left: 10),
                                                       child: Row(
                                                         children: [
                                                           Icon(
@@ -921,7 +920,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                           rewardPoints! > 99 &&
                                                   redeemAmount == 0
                                               ? _fetchRedeemPointsData()
-                                              : CustomAlert.showToast(
+                                              : CustomSnackBar.showSnackbar(
                                                   context: context,
                                                   message:
                                                       "Min. 100 points required to redeem points.");
@@ -932,9 +931,9 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                               bottom: BorderSide(width: 0.01)),
                                           child: Container(
                                             alignment: Alignment.center,
-                                            margin: EdgeInsets.only(bottom: 4),
+                                            margin: EdgeInsets.only(bottom: 2),
                                             padding: EdgeInsets.symmetric(
-                                                vertical: 4),
+                                                vertical: 2),
                                             child: Row(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.center,
@@ -1012,8 +1011,8 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                 DashedLine(width: mediaWidth, height: 1.0),
                                 Container(
                                   color: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 0.0, vertical: 5),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 4),
                                   child: Column(
                                     children: [
                                       Container(
@@ -1031,7 +1030,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w500),
                                             ),
-                                            SizedBox(height: 10),
+                                            SizedBox(height: 5),
                                             _buildDetailCard('Sub Total ',
                                                 totalPrice.toStringAsFixed(2)),
                                             discountPercent != null &&
@@ -1040,8 +1039,6 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                     'Discount ($discountPercent%) ',
                                                     "${discountAmount.toStringAsFixed(2)}")
                                                 : SizedBox(),
-                                            /*_buildDetailCard(
-                                    'Tax (10%): ', taxAmount.toStringAsFixed(2)),*/
                                             redeemAmount != 0
                                                 ? _buildDetailCard(
                                                     'Points Redeemed',
@@ -1050,19 +1047,19 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                 : SizedBox(),
                                             gst != 0
                                                 ? _buildDetailCard(
-                                                    'Gst ($gst%) ',
+                                                    'GST ($gst%) ',
                                                     gstTaxAmount
                                                         .toStringAsFixed(2))
                                                 : SizedBox(),
                                             pst != 0
                                                 ? _buildDetailCard(
-                                                    'Pst ($pst%) ',
+                                                    'PST ($pst%) ',
                                                     pstTaxAmount
                                                         .toStringAsFixed(2))
                                                 : SizedBox(),
                                             hst != 0
                                                 ? _buildDetailCard(
-                                                    'Hst ($hst%) ',
+                                                    'HST ($hst%) ',
                                                     hstTaxAmount
                                                         .toStringAsFixed(2))
                                                 : SizedBox(),
@@ -1086,7 +1083,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                             left: 15,
                                             top: 8,
                                             right: 8,
-                                            bottom: 10),
+                                            bottom: 5),
                                         child: Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
@@ -1165,37 +1162,13 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                         apiKey != "null"
                                                     ? GestureDetector(
                                                         onTap: () {
-                                                          email ==
-                                                                  "guest@isekaitech.com"
+                                                          email == "guest@isekaitech.com"
                                                               ? showGuestUserAlert(
                                                                   context)
-                                                              :
-                                                              //CustomAlert.showToast(context: context, message: "ApiKey 8e422a10-2d70-abda-35cc-8ed49cc03884");
-                                                              //_addRedeemPointsData();
-                                                              /*                      Navigator.pushNamed(
-                                                                        context,
-                                                                        "/OrderSuccessfulScreen"
-                                                                      );*/
-                                                              //_getApiAccessKey();
-                                                              isLoading == false
-                                                                  ? _createOrder(GetApiAccessKeyResponse(
-                                                                      active:
-                                                                          true,
-                                                                      apiAccessKey:
-                                                                          "apiAccessKey",
-                                                                      createdTime:
-                                                                          244242424,
-                                                                      modifiedTime:
-                                                                          24242424,
-                                                                      developerAppUuid:
-                                                                          "24242424",
-                                                                      merchantUuid:
-                                                                          "24242424",
-                                                                      message:
-                                                                          "message"))
-                                                                  : SizedBox();
+                                                              : isLoading == false && firstName?.isNotEmpty == true
+                                                                  ? _fetchStoreStatus(true)
+                                                                  : CustomSnackBar.showSnackbar(context: context, message: "Please complete your profile first.", isClick: true);
                                                           //_createOrder(null);
-                                                          //_fetchStoreStatus(true);
                                                         },
                                                         child: Container(
                                                           height: 45,
@@ -1253,25 +1226,63 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                         ? Container(
                                                             margin:
                                                                 EdgeInsets.only(
-                                                                    top: 5,
+                                                                    top: 10,
                                                                     bottom: 30),
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                0.7,
-                                                            child: Text(
-                                                              "Store is closed at the moment.\nTry again later!!",
-                                                              style: TextStyle(
-                                                                  fontSize: 14,
+                                                            width: mediaWidth *
+                                                                0.8,
+                                                            padding: EdgeInsets
+                                                                .symmetric(
+                                                                    vertical:
+                                                                        12,
+                                                                    horizontal:
+                                                                        16),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color: Colors
+                                                                  .red.shade50,
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          12),
+                                                              border: Border.all(
+                                                                  color: Colors
+                                                                      .red
+                                                                      .shade200),
+                                                            ),
+                                                            child: Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .center,
+                                                              children: [
+                                                                Icon(
+                                                                  Icons
+                                                                      .store_mall_directory,
                                                                   color: Colors
                                                                       .red,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .center,
+                                                                  size: 20,
+                                                                ),
+                                                                SizedBox(
+                                                                    width: 8),
+                                                                Flexible(
+                                                                  child: Text(
+                                                                    "Store is closed at the moment!",
+                                                                    style:
+                                                                        TextStyle(
+                                                                      fontSize:
+                                                                          14,
+                                                                      color: Colors
+                                                                          .red
+                                                                          .shade800,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                    ),
+                                                                    textAlign:
+                                                                        TextAlign
+                                                                            .center,
+                                                                  ),
+                                                                ),
+                                                              ],
                                                             ),
                                                           )
                                                         : SizedBox(),
@@ -1366,12 +1377,16 @@ class _MyCartScreenState extends State<MyCartScreen> {
 
   double getTaxAmount(double totalPrice) {
     setState(() {
-      gstTaxAmount = (totalPrice * gst) / 100;
-      pstTaxAmount = (totalPrice * pst) / 100;
-      hstTaxAmount = (totalPrice * hst) / 100;
-      taxAmount = gstTaxAmount + hstTaxAmount + pstTaxAmount;
+      gstTaxAmount = roundToTwoDecimal((totalPrice * gst) / 100);
+      pstTaxAmount = roundToTwoDecimal((totalPrice * pst) / 100);
+      hstTaxAmount = roundToTwoDecimal((totalPrice * hst) / 100);
+      taxAmount = roundToTwoDecimal(gstTaxAmount + pstTaxAmount + hstTaxAmount);
     });
     return taxAmount;
+  }
+
+  double roundToTwoDecimal(double value) {
+    return double.parse(value.toStringAsFixed(2));
   }
 
   void getGrandTotal(
@@ -1552,60 +1567,42 @@ class _MyCartScreenState extends State<MyCartScreen> {
 
   Future<void> getCartTotal() async {
     List<ProductDataDB?> productsList = await cartDataDao.findAllCartProducts();
-    //print("getCartData");
-    setState(() {
-      double totalAmount = 0;
-      productsList.forEach((item) {
-        if (item != null) {
-          double itemTotal = 0;
-          //if (item.productSizesList == "[]") {
-          if (item.isBuy1Get1 == true) {
-            double addonTotal = 0;
-            item.getAddOnList().forEach((addOnCategory) {
-              addOnCategory.addOns?.forEach((addOn) {
-                addonTotal = addonTotal + double.parse("${addOn.price}");
-              });
-            });
-            addonTotal = ((item.quantity ?? 0.00) / 2) * addonTotal;
 
-            itemTotal = (((item.quantity ?? 0.00) / 2) * (item.price ?? 0)) +
-                addonTotal;
-          } else {
-            if (item.getAddOnList().isEmpty) {
-              itemTotal = (item.quantity ?? 0.00) * (item.price ?? 0);
-            } else {
-              double addonTotal = 0;
-              item.getAddOnList().forEach((addOnCategory) {
-                addOnCategory.addOns?.forEach((addOn) {
-                  addonTotal = addonTotal + double.parse("${addOn.price}");
-                });
-              });
-              addonTotal = (item.quantity ?? 0.00) * addonTotal;
+    double totalAmount = 0;
+    for (var item in productsList) {
+      if (item != null) {
+        double itemTotal = 0;
+        double addonTotal = 0;
 
-              itemTotal =
-                  ((item.quantity ?? 0.00) * (item.price ?? 0)) + addonTotal;
-            }
-          }
-          /* } else {
-            List<ProductSize> productSizes = item.getProductSizeList();
-            productSizes.forEach((size) {
-              itemTotal = itemTotal +
-                  double.parse("${size.quantity}") *
-                      double.parse("${size.price}");
-            });
-          }*/
+        item.getAddOnList().forEach((addOnCategory) {
+          addOnCategory.addOns?.forEach((addOn) {
+            addonTotal += double.tryParse('${addOn.price}') ?? 0.0;
+          });
+        });
 
-          totalAmount = totalAmount + itemTotal;
+        if (item.isBuy1Get1 == true) {
+          addonTotal = ((item.quantity ?? 0.0) / 2) * addonTotal;
+          itemTotal = (((item.quantity ?? 0.0) / 2) * (item.price ?? 0)) + addonTotal;
+        } else {
+          addonTotal = (item.quantity ?? 0.0) * addonTotal;
+          itemTotal = ((item.quantity ?? 0.0) * (item.price ?? 0)) + addonTotal;
         }
-      });
+
+        totalAmount += itemTotal;
+      }
+    }
+
+    setState(() {
       totalPrice = totalAmount;
     });
+
     getTaxAmount(totalPrice);
     getDiscountAmt();
     getGrandTotal(totalPrice, taxAmount, discountAmount);
   }
 
-  void _createOrder(GetApiAccessKeyResponse? getApiAccessKeyResponse) async {
+
+  void _createOrder() async {
     setState(() {
       isLoading = true;
     });
@@ -1655,9 +1652,9 @@ class _MyCartScreenState extends State<MyCartScreen> {
             status: 0,
             couponId: int.parse("${couponDetails?.id ?? 0}"),
             couponCode: "${couponDetails?.couponCode ?? ""}",
-            totalAmount: totalPrice,
+            totalAmount: double.parse("${grandTotal.toStringAsFixed(2)}"),
             discountAmount: discountAmount,
-            payableAmount: double.parse("${grandTotal.toStringAsFixed(2)}"),
+            payableAmount: totalPrice,
             deliveryCharges: 0,
             orderNotes: "${_notesController.text}",
             tip: 0,
@@ -1669,7 +1666,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
           .placeOrder("/api/v1/app/orders", request);
       ApiResponse apiResponse =
           Provider.of<MainViewModel>(context, listen: false).response;
-      getCreateOrderResponse(context, apiResponse, getApiAccessKeyResponse);
+      getCreateOrderResponse(context, apiResponse);
     }
   }
 
@@ -1876,7 +1873,8 @@ class _MyCartScreenState extends State<MyCartScreen> {
   }
 
   Widget getStoreStatusResponse(
-      BuildContext context, ApiResponse apiResponse, bool isOrder) {
+      BuildContext context, ApiResponse apiResponse, bool isOrder)
+  {
     StoreStatusResponse? storeStatusResponse =
         apiResponse.data as StoreStatusResponse?;
     setState(() {
@@ -1889,12 +1887,12 @@ class _MyCartScreenState extends State<MyCartScreen> {
         setState(() {
           if (storeStatusResponse?.storeStatus == "offline") {
             isStoreOnline = false;
-            CustomAlert.showToast(
+            CustomSnackBar.showSnackbar(
                 context: context, message: "Store is Closed!");
           } else if (storeStatusResponse?.storeStatus == "online") {
             isStoreOnline = true;
             if (isOrder) {
-              _getApiAccessKey();
+              _createOrder();
             }
           }
 
@@ -2110,7 +2108,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
   }
 
   //Api Call
-  Future<void> _getApiAccessKey() async {
+/*  Future<void> _getApiAccessKey() async {
     hideKeyBoard();
     const maxDuration = Duration(seconds: 2);
     setState(() {
@@ -2137,10 +2135,11 @@ class _MyCartScreenState extends State<MyCartScreen> {
           Provider.of<MainViewModel>(context, listen: false).response;
       getApiAccessKeyResponse(context, apiResponse);
     }
-  }
+  }*/
 
-  Future<Widget> getApiAccessKeyResponse(
-      BuildContext context, ApiResponse apiResponse) async {
+  /* Future<Widget> getApiAccessKeyResponse(
+      BuildContext context, ApiResponse apiResponse) async
+  {
     GetApiAccessKeyResponse? getApiAccessKeyResponse =
         apiResponse.data as GetApiAccessKeyResponse?;
     setState(() {
@@ -2174,7 +2173,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
       default:
         return Center();
     }
-  }
+  }*/
 
   void showCouponBottomSheet(BuildContext context) {
     showModalBottomSheet(

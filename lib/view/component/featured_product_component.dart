@@ -37,7 +37,7 @@ class FeaturedProductComponent extends StatelessWidget {
           Navigator.pushNamed(context, "/ProductDetailScreen", arguments: data),
       child: Container(
         width: MediaQuery.of(context).size.width * 0.6,
-        padding: const EdgeInsets.symmetric(vertical: 2.0), // Merged Padding
+        padding: const EdgeInsets.symmetric(vertical: 0.0), // Merged Padding
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
           color: Colors.white, // Add a color to avoid unnecessary rebuilds
@@ -111,10 +111,6 @@ class FeaturedProductComponent extends StatelessWidget {
 
   Widget _networkImage(String? imageUrl, BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-        border: Border.all(color: Theme.of(context).cardColor, width: 0.3),
-      ),
       child: ClipRRect(
         borderRadius: const BorderRadius.all(Radius.circular(10)),
         child: CachedNetworkImage(

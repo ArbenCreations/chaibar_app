@@ -7,16 +7,16 @@ import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:provider/provider.dart';
 
-import '../../../model/request/signInRequest.dart';
-import '../../../model/response/profileResponse.dart';
-import '../../../model/response/signInResponse.dart';
-import '../../../model/services/AuthenticationProvider.dart';
 import '/model/request/signUpRequest.dart';
 import '/model/response/signUpInitializeResponse.dart';
 import '/utils/Util.dart';
 import '../../../../language/Languages.dart';
 import '../../../../theme/CustomAppColor.dart';
 import '../../../../utils/Helper.dart';
+import '../../../model/request/signInRequest.dart';
+import '../../../model/response/profileResponse.dart';
+import '../../../model/response/signInResponse.dart';
+import '../../../model/services/AuthenticationProvider.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../utils/apiHandling/api_response.dart';
 import '../../component/CustomAlert.dart';
@@ -76,15 +76,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   );
 
   void _isValidInput() {
-    //print(input);
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+    final passwordError = validatePasswordMessage(password);
+
     if (_emailController.text.isNotEmpty &&
         _nameController.text.isNotEmpty &&
         _lastNameController.text.isNotEmpty &&
-        _passwordController.text.isNotEmpty &&
         _phoneController.text.isNotEmpty &&
-        _confirmPasswordController.text.isNotEmpty &&
-        _passwordController.text.length >= 8 &&
-        _passwordController.text == _confirmPasswordController.text &&
+        password.isNotEmpty &&
+        confirmPassword.isNotEmpty &&
+        password == confirmPassword &&
+        passwordError == null &&
         EmailValidator.validate(_emailController.text)) {
       setState(() {
         inputValid = true;
@@ -161,10 +164,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: <Widget>[
-                        Image.asset(
-                          "assets/app_logo.png",
-                          height: 45,
-                        ),
                         Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 18.0, vertical: 10),
@@ -232,63 +231,52 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         Platform.isIOS
                             ? SizedBox(
-                          width: mediaWidth * 0.55,
-                          child: GestureDetector(
-                            onTap: () async {
-                              User? user = await context
-                                  .read<
-                                  AuthenticationProvider>()
-                                  .signInWithApple();
-                              if (user != null) {
-                                bool isEmailRelay =
-                                    user.email?.endsWith(
-                                        "@privaterelay.appleid.com") ??
-                                        true;
-                                bool isNameMissing =
-                                    user.displayName ==
-                                        null ||
-                                        user.displayName!
-                                            .isEmpty;
-                                _appleSignIn(user, true);
-                              } else {
-                                print(
-                                    "Apple sign-in failed or was canceled.");
-                              }
-                            },
-                            child: Container(
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: Colors.black,
-                                borderRadius:
-                                BorderRadius.circular(
-                                    8),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment
-                                    .center,
-                                children: [
-                                  Icon(Icons.apple,
-                                      color:
-                                      Colors.white),
-                                  SizedBox(width: 10),
-                                  Text(
-                                    'Continue with Apple',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      // <- Change text size here
-                                      fontWeight:
-                                      FontWeight.bold,
+                                width: mediaWidth * 0.55,
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    User? user = await context
+                                        .read<AuthenticationProvider>()
+                                        .signInWithApple();
+                                    if (user != null) {
+                                      bool isEmailRelay = user.email?.endsWith(
+                                              "@privaterelay.appleid.com") ??
+                                          true;
+                                      bool isNameMissing =
+                                          user.displayName == null ||
+                                              user.displayName!.isEmpty;
+                                      _appleSignIn(user, true);
+                                    } else {
+                                      print(
+                                          "Apple sign-in failed or was canceled.");
+                                    }
+                                  },
+                                  child: Container(
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.apple, color: Colors.white),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          'Continue with Apple',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            // <- Change text size here
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        )
+                                ),
+                              )
                             : SizedBox(),
-
                       ],
                     ),
                   ),
@@ -297,14 +285,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   alignment: Alignment.bottomCenter,
                   child: Container(
                     margin: EdgeInsets.only(bottom: 30),
-                    child:  Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
                           "Have an account?",
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.black54),
+                          style: TextStyle(fontSize: 12, color: Colors.black54),
                         ),
                         SizedBox(
                           width: 4,
@@ -323,8 +310,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ],
                     ),
 
-
-             /*       Row(
+                    /*       Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -461,7 +447,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return GestureDetector(
       onTap: () {
         _isValidInput();
-        //_signUp(user);
+        if (_formKey.currentState?.validate() == true) {
+        } else {
+          print("Not Validated");
+        }
         if (inputValid) {
           _signUp(user);
         }
@@ -680,7 +669,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.next,
             inputFormatters: [maskFormatter],
-            maxLength: 12,
             // "+1 " + 10 digits
             style: TextStyle(fontSize: 14),
             decoration: InputDecoration(
@@ -825,9 +813,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               counterText: "",
               hintStyle: TextStyle(fontSize: 11, color: Colors.grey),
               errorStyle: TextStyle(fontSize: 9, height: 0.5),
-              // Reduces error text size
               errorMaxLines: 2,
-              // Allows error messages to wrap properly
               errorBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: Colors.red, width: 0.4),
               ),
@@ -861,14 +847,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               if (!hasMinLength(value)) {
                 return "$text must be at least 8 characters long";
               }
-              if (!hasUppercase(value)) {
-                return "$text must contain at least one uppercase letter";
+              if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                return "Password must contain at least one uppercase letter";
               }
-              if (!hasDigit(value)) {
-                return "$text must contain at least one digit";
+              if (!RegExp(r'[0-9]').hasMatch(value)) {
+                return "Password must contain at least one digit";
               }
-              if (!hasSpecialCharacter(value)) {
-                return "$text must contain at least one special character";
+              if (!RegExp(r'[!@#\$&*~]').hasMatch(value)) {
+                return "Password must contain at least one special character";
               }
               if (_passwordController.text != _confirmPasswordController.text) {
                 return "Password doesn't match";
@@ -1027,7 +1013,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Text("Signing up as: ${user?.displayName ?? 'Guest'}"),
+                    child:
+                        Text("Signing up as: ${user?.displayName ?? 'Guest'}"),
                   ),
                   SizedBox(height: 4),
                   Align(
@@ -1066,12 +1053,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               border: InputBorder.none,
                               prefixText: '+1 ',
                               hintText: "(123) 456-7890",
-                              hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
+                              hintStyle:
+                                  TextStyle(fontSize: 13, color: Colors.grey),
                             ),
                             validator: (value) {
-                              String digits = maskFormatter.getUnmaskedText();
-                              final regex = RegExp(r'^[2-9]\d{2}[2-9]\d{2}\d{4}$'); // Canada
-                              if (digits.isEmpty) {
+                              String digits =
+                                  maskFormatter.getUnmaskedText().trim();
+                              final regex = RegExp(
+                                  r'^[2-9]\d{2}[2-9]\d{2}\d{4}$'); // Valid Canadian number
+
+                              if (digits.isEmpty || digits.length < 10) {
                                 return 'Phone number is required';
                               } else if (!regex.hasMatch(digits)) {
                                 return 'Enter a valid Canadian phone number';
@@ -1096,15 +1087,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     verticalPadding: 10,
                     onTap: () {
                       if (_formKey.currentState!.validate()) {
-                        String cleanPhone = maskFormatter.getUnmaskedText();
-                        _saveChanges(
-                          cleanPhone,
-                          "googlesign1",
-                          context,
-                          user,
-                          user?.displayName
-                        );
-                        //Navigator.pop(context); // Close the bottom sheet
+                        if (phoneController.text.isNotEmpty) {
+                          String cleanPhone = maskFormatter.getUnmaskedText();
+                          _saveChanges(cleanPhone, "googlesign1", context, user,
+                              user?.displayName);
+                        } else {
+                          Navigator.pop(context);
+                          CustomSnackBar.showSnackbar(
+                              context: context,
+                              message: "Please enter your number.");
+                        }
+
+                        // // Close the bottom sheet
                       }
                     },
                   ),
@@ -1117,7 +1111,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       },
     );
   }
-
 
   void showUserDetailsBottomSheet(BuildContext context, User user) {
     TextEditingController nameController =
@@ -1203,10 +1196,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (inputValid || user != null) {
       SignInRequest signInRequest = SignInRequest(
           customer: CustomerSignIn(
-            deviceToken: "${deviceToken}",
-            email: user != null ? "${user.email}" : _emailController.text,
-            password: user != null ? "applesign1" : _passwordController.text,
-          ));
+        deviceToken: "${deviceToken}",
+        email: user != null ? "${user.email}" : _emailController.text,
+        password: user != null ? "applesign1" : _passwordController.text,
+      ));
       bool isConnected = await _connectivityService.isConnected();
       if (!isConnected) {
         setState(() {
@@ -1227,8 +1220,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<Widget> getAppleSignInResponse(
-      BuildContext context, ApiResponse apiResponse, User? user) async
-  {
+      BuildContext context, ApiResponse apiResponse, User? user) async {
     SignInResponse? mediaList = apiResponse.data as SignInResponse?;
     setState(() {
       isLoading = false;
@@ -1262,7 +1254,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         await Helper.savePassword("applesign1");
         String? password = await Helper.getPassword();
-        print("password: ${password}");
         Navigator.pushReplacementNamed(context, "/VendorsListScreen",
             arguments: "");
 

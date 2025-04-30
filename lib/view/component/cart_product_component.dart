@@ -136,8 +136,13 @@ class CartProductComponent extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Icon(Icons.arrow_forward_ios,
-                          size: 14, color: Colors.grey),
+                      Row(
+                        children: [
+                          Icon(Icons.arrow_back_ios_new,
+                              size: 9 , color: Colors.grey),
+                          Text("Swipe to delete", style: TextStyle(fontSize: 7),)
+                        ],
+                      ),
                     ],
                   ),
                   SizedBox(height: 2),
@@ -209,151 +214,6 @@ class CartProductComponent extends StatelessWidget {
     );
   }
 
-  /*productSize.isNotEmpty
-                                          ? Container(
-                                              width: mediaWidth * 0.48,
-                                              child: Wrap(
-                                                spacing: 10,
-                                                runSpacing: 5,
-                                                children: List.generate(
-                                                    productSize.length,
-                                                    (index) {
-                                                  itemTotalPrice = itemTotalPrice +
-                                                      (int.parse(
-                                                              "${productSize[index].price}") *
-                                                          productSize[index]
-                                                              .quantity);
-                                                  return productSize[index]
-                                                              .quantity >
-                                                          0
-                                                      ? Container(
-                                                          width: mediaWidth *
-                                                              0.48,
-                                                          child: Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .spaceBetween,
-                                                            children: [
-                                                              Row(
-                                                                children: [
-                                                                  ConstrainedBox(
-                                                                    constraints:
-                                                                        BoxConstraints(
-                                                                            maxWidth:
-                                                                                mediaWidth * 0.173),
-                                                                    child: Text(
-                                                                      capitalizeFirstLetter(
-                                                                          '${productSize[index].size}: '),
-                                                                      style: TextStyle(
-                                                                          fontSize:
-                                                                              11,
-                                                                          color:
-                                                                              Colors.grey[700]),
-                                                                      overflow:
-                                                                          TextOverflow
-                                                                              .ellipsis,
-                                                                    ),
-                                                                  ),
-                                                                  Text(
-                                                                    '\$${productSize[index].price}/item ',
-                                                                    style: TextStyle(
-                                                                        fontSize:
-                                                                            11,
-                                                                        color: Colors
-                                                                            .grey[700]),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              Row(
-                                                                children: [
-                                                                  GestureDetector(
-                                                                    child: Icon(
-                                                                      Icons
-                                                                          .remove_circle_outline_rounded,
-                                                                      size: 18,
-                                                                      color:
-                                                                          primaryColor,
-                                                                    ),
-                                                                    onTap: () {
-                                                                      if (int.parse(
-                                                                              "${productSize[index].quantity}") >
-                                                                          0) {
-                                                                        productSize[index]
-                                                                            .quantity--;
-                                                                        item?.quantity--;
-
-                                                                        setState(
-                                                                            () {
-                                                                          item?.productSizesList =
-                                                                              jsonEncode(productSize);
-                                                                          itemTotalPrice =
-                                                                              itemTotalPrice + (int.parse("${productSize[index].price}") * productSize[index].quantity);
-                                                                        });
-                                                                        deleteProductInDb(item
-                                                                            as ProductData);
-                                                                      }
-                                                                    },
-                                                                  ),
-                                                                  ConstrainedBox(
-                                                                    constraints: BoxConstraints(
-                                                                        minWidth:
-                                                                            12,
-                                                                        maxWidth:
-                                                                            15),
-                                                                    child:
-                                                                        Container(
-                                                                      child:
-                                                                          Center(
-                                                                        child:
-                                                                            Text(
-                                                                          "${productSize[index].quantity.toString()}",
-                                                                          style: TextStyle(
-                                                                              fontSize: 12,
-                                                                              color: Colors.grey[700]),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                  GestureDetector(
-                                                                    child: Icon(
-                                                                      Icons
-                                                                          .add_circle_outline_outlined,
-                                                                      size: 18,
-                                                                      color:
-                                                                          primaryColor,
-                                                                    ),
-                                                                    onTap: () {
-                                                                      setState(
-                                                                          () {
-                                                                        if (int.parse("${item?.quantity}") <=
-                                                                            int.parse("${item?.qtyLimit}")) {
-                                                                          productSize[index]
-                                                                              .quantity++;
-                                                                          item?.quantity++;
-
-                                                                          setState(
-                                                                              () {
-                                                                            item?.productSizesList =
-                                                                                jsonEncode(productSize);
-                                                                            itemTotalPrice =
-                                                                                itemTotalPrice + (int.parse("${productSize[index].price}") * productSize[index].quantity);
-                                                                          });
-                                                                          addProductInDb(item
-                                                                              as ProductData);
-                                                                        }
-                                                                      });
-                                                                    },
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        )
-                                                      : SizedBox();
-                                                }),
-                                              ),
-                                            )
-                                          : SizedBox()*/
   String addOns(ProductData item, BuildContext context) {
     String text = "";
 

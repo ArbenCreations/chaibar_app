@@ -4,6 +4,9 @@ import 'package:ChaiBar/model/request/deleteProfileRequest.dart';
 import 'package:ChaiBar/model/response/StoreSettingResponse.dart';
 import 'package:flutter/cupertino.dart';
 
+import '../request/EncryptedWalletRequest.dart';
+import '../request/getOrderDetailRequest.dart';
+import '../response/appleTokenDetailsResponse.dart';
 import '/model/main_repository.dart';
 import '/model/request/TransactionRequest.dart';
 import '/model/request/featuredListRequest.dart';
@@ -152,6 +155,46 @@ class MainViewModel with ChangeNotifier {
         _apiResponse = ApiResponse.completed(tokenDetailsResponse);
       } else {
         _apiResponse = ApiResponse.error(tokenDetailsResponse.message);
+      }
+    } catch (e) {
+      print("signInResponse: ${e.toString()}");
+
+      try {
+        // Optional: check if it's a known Clover error format
+        int jsonStartIndex = e.toString().indexOf('{');
+        if (jsonStartIndex == -1) {
+          print("Raw error (not JSON): ${e.toString()}");
+          throw FormatException("Invalid error format: JSON not found");
+        }
+
+        String jsonString = e.toString().substring(jsonStartIndex).trim();
+        final Map<String, dynamic> decodedJson = jsonDecode(jsonString);
+        ErrorResponse errorResponse = ErrorResponse.fromJson(decodedJson);
+        _apiResponse = ApiResponse.error(errorResponse.error.message);
+        print("signInResponse: ${errorResponse.error.message}");
+      } catch (jsonError) {
+        print("Raw error (fallback): ${e.toString()}");
+        _apiResponse = ApiResponse.error("An unexpected error occurred. ");
+      }
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> getApiTokenForApplePay(
+      String value, String apiKey, EncryptedWallet applePayTokenRequest) async
+  {
+    _apiResponse = ApiResponse.loading('Loading');
+    print("Yess" + "");
+    notifyListeners();
+    try {
+      AppleTokenDetailsResponse tokenDetailsResponse =
+          await MainRepository().getApiTokenForApplePay(value, apiKey, applePayTokenRequest);
+
+      if (tokenDetailsResponse.id?.isNotEmpty == true) {
+        _apiResponse = ApiResponse.completed(tokenDetailsResponse);
+      } else {
+        _apiResponse = ApiResponse.error("Something went wrong");
       }
     } catch (e) {
       print("signInResponse: ${e.toString()}");
@@ -533,7 +576,6 @@ class MainViewModel with ChangeNotifier {
 
   Future<void> fetchStoreStatus(String value) async {
     _apiResponse = ApiResponse.loading('Loading');
-    //String requestAsString = phoneRequestToString(request);
     notifyListeners();
     try {
       StoreStatusResponse storeStatusResponse =
@@ -948,6 +990,27 @@ class MainViewModel with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Call the media service and gets the data of requested media data of
-  /// an artist.
+
+  Future<void> fetchOrderStatus(String value,GetOrderDetailRequest request) async {
+    _apiResponse = ApiResponse.loading('Loading');
+    notifyListeners();
+    try {
+      OrderDetails storeStatusResponse =
+      await MainRepository().fetchOrderStatus(value,request);
+      if (storeStatusResponse.status == 200 ||
+          storeStatusResponse.status == 201) {
+        _apiResponse = ApiResponse.completed(storeStatusResponse);
+      } else {
+        //print("viewmodel ${storeStatusResponse.message}");
+        _apiResponse = ApiResponse.error("Something went wrong!");
+      }
+    } catch (e) {
+      _apiResponse = ApiResponse.error(e.toString().contains("<!DOCTYPE html>")
+          ? "Something went wrong!"
+          : e.toString());
+      print(e);
+    }
+    notifyListeners();
+  }
+
 }

@@ -1,8 +1,9 @@
 import 'package:ChaiBar/model/db/ChaiBarDB.dart';
 import 'package:flutter/material.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../component/CustomAlert.dart';
+
 import '../../../language/Languages.dart';
 import '../../../model/request/editProfileRequest.dart';
 import '../../../model/response/couponListResponse.dart';
@@ -13,10 +14,10 @@ import '../../../theme/CustomAppColor.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
 import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomAlert.dart';
 import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/session_expired_dialog.dart';
-import '../../component/toastMessage.dart';
 
 class ProfileScreen extends StatefulWidget {
   //final Function(ThemeMode) onThemeChanged;
@@ -69,6 +70,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String selectedValue = "";
 
   Uri _url = Uri.parse('');
+
+  final maskFormatter = MaskTextInputFormatter(
+    mask: '(###) ###-####',
+    filter: {"#": RegExp(r'[0-9]')},
+    type: MaskAutoCompletionType.lazy,
+  );
 
   @override
   void initState() {
@@ -185,7 +192,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           SizedBox(height: 2),
                           phoneNo != "null"
                               ? Text(
-                                  "Mobile: ${phoneNo == "null" ? "" : phoneNo}",
+                                  "Mobile: ${phoneNo == "null" ? "" : "+1 ${maskFormatter.maskText('$phoneNo')}"}",
                                   style: TextStyle(
                                       fontSize: 13, color: Colors.white))
                               : SizedBox(),
@@ -320,7 +327,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         isLoading = false;
         isInternetConnected = false;
-        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
+        CustomSnackBar.showSnackbar(
+            context: context,
+            message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       hideKeyBoard();
@@ -347,7 +356,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         isLoading = false;
         isInternetConnected = false;
-        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
+        CustomSnackBar.showSnackbar(
+            context: context,
+            message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       hideKeyBoard();
@@ -372,7 +383,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         isLoading = false;
         isInternetConnected = false;
-        CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
+        CustomSnackBar.showSnackbar(
+            context: context,
+            message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
       hideKeyBoard();
@@ -424,7 +437,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 "${Languages.of(context)?.labelInvalidAccessToken}")) {
           SessionExpiredDialog.showDialogBox(context: context);
         } else {
-          CustomSnackBar.showSnackbar(context: context, message: 'Something went wrong!');
+          CustomSnackBar.showSnackbar(
+              context: context, message: 'Something went wrong!');
         }
         print(apiResponse.message);
         return Center(

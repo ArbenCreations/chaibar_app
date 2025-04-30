@@ -475,18 +475,18 @@ class _SigninScreenState extends State<SigninScreen> {
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return "Password is required";
+                return "$text is required";
               }
               if (!hasMinLength(value)) {
-                return "Password must be at least 8 characters long";
+                return "$text must be at least 8 characters long";
               }
-              if (!hasUppercase(value)) {
+              if (!RegExp(r'[A-Z]').hasMatch(value)) {
                 return "Password must contain at least one uppercase letter";
               }
-              if (!hasDigit(value)) {
+              if (!RegExp(r'[0-9]').hasMatch(value)) {
                 return "Password must contain at least one digit";
               }
-              if (!hasSpecialCharacter(value)) {
+              if (!RegExp(r'[!@#\$&*~]').hasMatch(value)) {
                 return "Password must contain at least one special character";
               }
               return null;
@@ -731,7 +731,6 @@ class _SigninScreenState extends State<SigninScreen> {
 
         await Helper.savePassword(_passwordController.text);
         String? password = await Helper.getPassword();
-        print("password: ${password}");
         Navigator.pushReplacementNamed(context, "/VendorsListScreen",
             arguments: "");
 
@@ -781,7 +780,6 @@ class _SigninScreenState extends State<SigninScreen> {
 
         await Helper.savePassword("applesign1");
         String? password = await Helper.getPassword();
-        print("password: ${password}");
         Navigator.pushReplacementNamed(context, "/VendorsListScreen",
             arguments: "");
 
@@ -1234,7 +1232,8 @@ class _SignUpFormState extends State<SignUpForm> {
                   ),
                 ),
                 SizedBox(height: 20),
-                Text("First Name"),
+                firstNameController.text.isNotEmpty ? Text("First Name") : SizedBox(),
+                firstNameController.text.isNotEmpty ?
                 TextFormField(
                   controller: firstNameController,
                   decoration: InputDecoration(
@@ -1242,23 +1241,23 @@ class _SignUpFormState extends State<SignUpForm> {
                     border: UnderlineInputBorder(),
                   ),
                   enabled: false,
-                  validator: (value) => value == null || value.trim().isEmpty
+                  /*validator: (value) => value == null || value.trim().isEmpty
                       ? 'First name is required'
-                      : null,
-                ),
+                      : null,*/
+                ) : SizedBox(),
                 SizedBox(height: 8),
-                Text("Last Name"),
-                TextFormField(
+                firstNameController.text.isNotEmpty ? Text("Last Name") : SizedBox(),
+                firstNameController.text.isNotEmpty ? TextFormField(
                   controller: lastNameController,
                   decoration: InputDecoration(
                     hintText: "Required",
                     border: UnderlineInputBorder(),
                   ),
                   enabled: false,
-                  validator: (value) => value == null || value.trim().isEmpty
+                 /* validator: (value) => value == null || value.trim().isEmpty
                       ? 'Last name is required'
-                      : null,
-                ),
+                      : null,*/
+                ) : SizedBox(),
                 SizedBox(height: 8),
                 Text("Email"),
                 Text(

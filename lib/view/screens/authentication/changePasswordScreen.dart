@@ -1,22 +1,19 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
-import '../../component/CustomAlert.dart';
-import '../../component/CustomSnackbar.dart';
-import '../../component/custom_circular_progress.dart';
 import '/model/request/verifyOtpChangePass.dart';
 import '/model/response/signUpInitializeResponse.dart';
 import '/theme/CustomAppColor.dart';
 import '/utils/Util.dart';
-import '/view/component/toastMessage.dart';
 import '/view/screens/authentication/loginScreen.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
 import '../../../../language/Languages.dart';
 import '../../../../utils/Helper.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
+import '../../component/custom_circular_progress.dart';
 import '../../component/session_expired_dialog.dart';
 
 class NewPassForgotPassScreen extends StatefulWidget {
@@ -81,7 +78,8 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
 
   Future<Widget> verifyOtpResponse(
       BuildContext context, ApiResponse apiResponse) async {
-    SignUpInitializeResponse? mediaList = apiResponse.data as SignUpInitializeResponse?;
+    SignUpInitializeResponse? mediaList =
+        apiResponse.data as SignUpInitializeResponse?;
     setState(() {
       isLoading = false;
     });
@@ -91,8 +89,8 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
       case Status.COMPLETED:
         print("rwrwr ");
         //Navigator.pushNamed(context, '/ProfileScreen');
-        CustomAlert.showToast(
-            context: context, message: apiResponse.message);
+        CustomSnackBar.showSnackbar(
+            context: context, message: mediaList?.message ?? "Successful!!");
         Helper.clearAllSharedPreferences();
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => SigninScreen()),
@@ -101,18 +99,18 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
 
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
-        if (nonCapitalizeString("${apiResponse.message}") == nonCapitalizeString("${Languages.of(context)?.labelInvalidAccessToken}")){
-          SessionExpiredDialog.showDialogBox(context: context);}
-        else if (apiResponse.message?.contains("401") == true) {
-          CustomAlert.showToast(
+        if (nonCapitalizeString("${apiResponse.message}") ==
+            nonCapitalizeString(
+                "${Languages.of(context)?.labelInvalidAccessToken}")) {
+          SessionExpiredDialog.showDialogBox(context: context);
+        } else if (apiResponse.message?.contains("401") == true) {
+          CustomSnackBar.showSnackbar(
               context: context, message: "Invalid OTP, please try again !");
-        }else{
-          CustomAlert.showToast(
+        } else {
+          CustomSnackBar.showSnackbar(
               context: context, message: apiResponse.message);
         }
-        return Center(
-            //child: Text('Please try again later!!!'),
-            );
+        return Center();
       case Status.INITIAL:
       default:
         return Center(
@@ -128,64 +126,56 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
 
     mediaWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
-    return Stack(children: [
-      Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 65,
-          systemOverlayStyle: SystemUiOverlayStyle(
-              statusBarIconBrightness: Brightness.light
+    return Scaffold(
+      appBar: AppBar(
+        toolbarHeight: 65,
+        systemOverlayStyle:
+            SystemUiOverlayStyle(statusBarIconBrightness: Brightness.light),
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.white,
           ),
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.white,),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                bottomRight: Radius.circular(30),
-                bottomLeft: Radius.circular(30),
-              )
-          ),
-          title: Text(
-            Languages.of(context)!.labelForgotPass,
-            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w600, color: Colors.white),
-          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
-        //backgroundColor: Theme.of(context).backgroundColor,
-        body: Stack(
-          children: [
-            SingleChildScrollView(
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    Center(
-                      child: Image(
-                        alignment: Alignment.topLeft,
-                        //width: mediaWidth*0.8,
-                        height: screenHeight * 0.27 ,
-                        image: AssetImage("assets/forgot_password.png"),
-                        fit: BoxFit.fitWidth,
-                      ),
-                    ),
-                    // _buildPhoneNumberTextField(),
-
-                    //_buildOtpInput(context, mediaWidth, isDarkMode),
-                    _buildPasswordTextFields(isDarkMode),
-                    SizedBox(height: 15),
-                    _buildSubmitButton(),
-                    //if (isLoading) CircularProgressIndicator(),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+          bottomRight: Radius.circular(30),
+          bottomLeft: Radius.circular(30),
+        )),
+        title: Text(
+          Languages.of(context)!.labelForgotPass,
+          style: TextStyle(
+              fontSize: 18.0, fontWeight: FontWeight.w600, color: Colors.white),
         ),
       ),
-      isLoading
-          ? CustomCircularProgress()
-          : SizedBox(),
-    ]);
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: SafeArea(
+              child: Column(
+                children: [
+                  Center(
+                    child: Image(
+                      alignment: Alignment.topLeft,
+                      height: screenHeight * 0.27,
+                      image: AssetImage("assets/forgot_password.png"),
+                      fit: BoxFit.fitWidth,
+                    ),
+                  ),
+                  _buildPasswordTextFields(isDarkMode),
+                  SizedBox(height: 15),
+                  _buildSubmitButton(),
+                ],
+              ),
+            ),
+          ),
+          isLoading ? CustomCircularProgress() : SizedBox(),
+        ],
+      ),
+    );
   }
 
   Widget _buildPasswordTextFields(bool isDarkMode) {
@@ -270,7 +260,9 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
                       onPressed: () {
                         setState(
                           () {
-                            if (nonCapitalizeString(text) == nonCapitalizeString("${Languages.of(context)!.labelNewPass}")) {
+                            if (nonCapitalizeString(text) ==
+                                nonCapitalizeString(
+                                    "${Languages.of(context)!.labelNewPass}")) {
                               newPasswordVisible = !newPasswordVisible;
                             } else {
                               confirmPasswordVisible = !confirmPasswordVisible;
@@ -289,10 +281,8 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
     );
   }
 
-
   void isInputValid() {
-    if (
-        _newPasswordController.text.isNotEmpty &&
+    if (_newPasswordController.text.isNotEmpty &&
         _confirmPasswordController.text.isNotEmpty &&
         _newPasswordController.text == _confirmPasswordController.text &&
         _newPasswordController.text.length >= 8) {
@@ -326,7 +316,10 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
               if (!isConnected) {
                 setState(() {
                   isLoading = false;
-                  CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
+                  CustomSnackBar.showSnackbar(
+                      context: context,
+                      message:
+                          '${Languages.of(context)?.labelNoInternetConnection}');
                 });
               } else {
                 print(_phoneNumberController.text);
@@ -335,9 +328,9 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
                 });
                 print("${widget.data?.email}");
                 VerifyOtChangePassRequest request = VerifyOtChangePassRequest(
-                        email: "${widget.data?.email}",
-                        password: _newPasswordController.text,
-                        mobileOtp: "${widget.data?.mobileOtp}");
+                    email: "${widget.data?.email}",
+                    password: _newPasswordController.text,
+                    mobileOtp: "${widget.data?.mobileOtp}");
 
                 await Provider.of<MainViewModel>(context, listen: false)
                     .VerifyOtpChangePass(
@@ -358,14 +351,16 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
                 _confirmPasswordController.text) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text("${Languages.of(context)?.labelPasswordDoesntMatch}"),
+                  content: Text(
+                      "${Languages.of(context)?.labelPasswordDoesntMatch}"),
                   duration: maxDuration,
                 ),
               );
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text("${Languages.of(context)?.labelPleaseEnterAllDetails}"),
+                  content: Text(
+                      "${Languages.of(context)?.labelPleaseEnterAllDetails}"),
                   duration: maxDuration,
                 ),
               );
@@ -373,7 +368,8 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
           },
           child: Text(
             Languages.of(context)!.labelValidate,
-            style: TextStyle(color: isValid ? Colors.white : CustomAppColor.Primary),
+            style: TextStyle(
+                color: isValid ? Colors.white : CustomAppColor.Primary),
           ),
           style: ElevatedButton.styleFrom(
               padding: EdgeInsets.symmetric(vertical: 16.0),

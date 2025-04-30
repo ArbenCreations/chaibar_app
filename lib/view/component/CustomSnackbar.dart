@@ -4,11 +4,11 @@ class CustomSnackBar {
   static void showSnackbar({
     required BuildContext context,
     required String? message,
-    Duration duration = const Duration(seconds: 3),
+    Duration duration = const Duration(seconds: 10),
+    bool isClick = false,
   }) {
     if (message != null && message.isNotEmpty && message != "null") {
-      // Run after current frame to ensure context is mounted
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.microtask(() {
         if (!context.mounted) return;
 
         final snackBar = SnackBar(
@@ -26,6 +26,11 @@ class CustomSnackBar {
             label: 'OK',
             textColor: Colors.white,
             onPressed: () {
+              if(isClick)
+                {
+                  Navigator.pushReplacementNamed(context, "/BottomNavigation",
+                      arguments: 3);
+                }
               // Optional: Add logic here if needed
             },
           ),
@@ -38,3 +43,4 @@ class CustomSnackBar {
     }
   }
 }
+

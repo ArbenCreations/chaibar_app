@@ -1,7 +1,11 @@
+import 'package:ChaiBar/view/component/CustomSnackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../../model/request/getOrderDetailRequest.dart';
+import '../../component/connectivity_service.dart';
+import '../../component/custom_circular_progress.dart';
 import '/model/db/ChaiBarDB.dart';
 import '../../../language/Languages.dart';
 import '../../../model/request/itemReviewRequest.dart';
@@ -35,13 +39,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   bool mExpanded = false;
   bool isVoteUp = false;
   bool isVoteDown = false;
-  OrderDetails order = OrderDetails();
+  OrderDetails? order = OrderDetails();
   List<OrderItem> orderItems = [];
   static const maxDuration = Duration(seconds: 2);
   bool isDataLoading = false;
   late ChaiBarDB database;
   final TextEditingController documentNumberController =
       TextEditingController();
+  final ConnectivityService _connectivityService = ConnectivityService();
 
   String? theme = "";
   Color primaryColor = CustomAppColor.PrimaryAccent;
@@ -55,16 +60,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       order = widget.order;
       orderItems = widget.order.orderItems ?? [];
       hstAmt = ((double.parse("${widget.order.hst ?? 0}") *
-              double.parse("${widget.order.totalAmount}")) /
+              double.parse("${widget.order.payableAmount}")) /
           100);
       gstAmt = (double.parse("${widget.order.gst ?? 0}") *
-              double.parse("${widget.order.totalAmount}")) /
+              double.parse("${widget.order.payableAmount}")) /
           100;
       pstAmt = (double.parse("${widget.order.pst ?? 0}") *
-              double.parse("${widget.order.totalAmount}")) /
+              double.parse("${widget.order.payableAmount}")) /
           100;
     });
-    print("id ${order.id}");
+    print("id ${order?.id}");
 
     $FloorChaiBarDB
         .databaseBuilder('basic_structure_database.db')
@@ -85,7 +90,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         systemOverlayStyle:
             SystemUiOverlayStyle(statusBarIconBrightness: Brightness.light),
         title: Text(
-          "${order.orderNo}",
+          "${order?.orderNo}",
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         leading: GestureDetector(
@@ -116,45 +121,54 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             color: CustomAppColor.PrimaryAccent,
                             width: mediaWidth,
                             padding: EdgeInsets.only(left: 12, bottom: 5),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Row(
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      "Order Placed :",
-                                      style: TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          "Order Placed :",
+                                          style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        SizedBox(
+                                          height: 1,
+                                        ),
+                                        Text(
+                                          " ${convertDateFormat("${order?.createdAt}")} @ ${convertTime("${order?.createdAt}")}",
+                                          style: TextStyle(
+                                              fontSize: 12, color: Colors.white),
+                                        ),
+                                      ],
                                     ),
-                                    SizedBox(
-                                      height: 1,
-                                    ),
-                                    Text(
-                                      " ${convertDateFormat("${order.createdAt}")} @ ${convertTime("${order.createdAt}")}",
-                                      style: TextStyle(
-                                          fontSize: 12, color: Colors.white),
+                                    SizedBox(height: 5),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          "Pickup Time :  ",
+                                          style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          "${convertDateFormat("${order?.pickupDate}")} @ ${convertTime("${order?.pickupTime}")}",
+                                          style: TextStyle(
+                                              fontSize: 12, color: Colors.white),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: 5),
-                                Row(
-                                  children: [
-                                    Text(
-                                      "Pickup Time :  ",
-                                      style: TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    Text(
-                                      "${convertDateFormat("${order.pickupDate}")} @ ${convertTime("${order.pickupTime}")}",
-                                      style: TextStyle(
-                                          fontSize: 12, color: Colors.white),
-                                    ),
-                                  ],
-                                ),
+                                IconButton(
+                                  onPressed: () => _fetchOrderStatus(),
+                                  icon: Icon(Icons.refresh, color: Colors.white,),
+                                )
                               ],
                             ),
                           ),
@@ -227,62 +241,62 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                         icon: Icons.shopping_cart,
                                         title: 'Order Placed',
                                         description:
-                                            '${convertDateTimeFormat("${order.createdAt}")}',
+                                            '${convertDateTimeFormat("${order?.createdAt}")}',
                                         isActive: true,
                                         iconColor: Colors.orange,
                                       ),
-                                      order.status == "accepted" ||
-                                              order.status == "completed" ||
-                                              order.status == "new_order"
+                                      order?.status == "accepted" ||
+                                              order?.status == "completed" ||
+                                              order?.status == "new_order"
                                           ? OrderStep(
                                               icon: Icons.receipt_long,
                                               title: 'Order Confirmed',
-                                              description: order.status ==
+                                              description: order?.status ==
                                                       "accepted"
-                                                  ? 'Order was confirmed ${convertDateTimeFormat("${order.updatedAt}")}'
+                                                  ? 'Order was confirmed ${convertDateTimeFormat("${order?.updatedAt}")}'
                                                   : "Waiting for restaurant to confirm the order",
                                               isActive:
-                                                  order.status == "new_order"
+                                                  order?.status == "new_order"
                                                       ? false
                                                       : true,
                                               iconColor: Colors.orange,
                                             )
-                                          : order.status == "rejected"
+                                          : order?.status == "rejected"
                                               ? OrderStep(
                                                   icon: Icons.cancel_sharp,
                                                   title: 'Order Rejected',
                                                   description:
-                                                      'Order was rejected by restaurant ${convertDateTimeFormat("${order.updatedAt}")}',
+                                                      'Order was rejected by restaurant ${convertDateTimeFormat("${order?.updatedAt}")}',
                                                   isActive: true,
                                                   iconColor: Colors.red,
                                                 )
                                               : SizedBox(),
-                                      order.status == "completed" ||
-                                              order.status == "accepted"
+                                      order?.status == "completed" ||
+                                              order?.status == "accepted"
                                           ? OrderStep(
                                               icon: Icons.check_circle,
                                               title: 'Order Completed',
-                                              description: order.status ==
+                                              description: order?.status ==
                                                       "accepted"
-                                                  ? order.preparationTime ==
+                                                  ? order?.preparationTime ==
                                                           null
                                                       ? "Preparing Order"
-                                                      : "Your order will be ready by ${order.preparationTime}"
-                                                  : 'Order was completed at ${convertDateTimeFormat("${order.updatedAt}")}',
+                                                      : "Your order will be ready by ${order?.preparationTime}"
+                                                  : 'Order was completed at ${convertDateTimeFormat("${order?.updatedAt}")}',
                                               isActive:
-                                                  order.status == "accepted"
+                                                  order?.status == "accepted"
                                                       ? false
                                                       : true,
                                               iconColor: Colors.green,
                                             )
                                           : SizedBox(),
 
-                                      order.status == "pending_order"
+                                      order?.status == "pending_order"
                                           ? OrderStep(
                                               icon: Icons.watch_later_sharp,
                                               title: 'Upcoming Order',
                                               description:
-                                                  'Order placed for ${convertDateTimeFormat("${order.pickupTime}")}',
+                                                  'Order placed for ${convertDateTimeFormat("${order?.pickupTime}")}',
                                               isActive: false,
                                               iconColor: Colors.green,
                                             )
@@ -320,40 +334,40 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                     children: [
                                       _buildDetailCard(
                                           'Subtotal: ',
-                                          "${double.parse("${order.totalAmount}").toStringAsFixed(2)}",
+                                          "${double.parse("${order?.payableAmount}").toStringAsFixed(2)}",
                                           false),
-                                      "${order.discountAmount}" != "0"
+                                      "${order?.discountAmount}" != "0"
                                           ? _buildDetailCard(
                                               'Discount ',
-                                              "${double.parse("${order.discountAmount}").toStringAsFixed(2)}",
+                                              "${double.parse("${order?.discountAmount}").toStringAsFixed(2)}",
                                               false)
                                           : SizedBox(),
-                                      order.gst != 0
+                                      order?.gst != 0
                                           ? _buildDetailCard(
-                                              'Gst (${order.gst ?? 0}%) ',
+                                              'GST (${order?.gst ?? 0}%) ',
                                               "${gstAmt.toStringAsFixed(2)}",
                                               false)
                                           : SizedBox(),
-                                      order.pst != 0
+                                      order?.pst != 0
                                           ? _buildDetailCard(
-                                              'Pst (${order.pst ?? 0}%): ',
+                                              'PST (${order?.pst ?? 0}%): ',
                                               "${pstAmt.toStringAsFixed(2)}",
                                               false)
                                           : SizedBox(),
-                                      order.hst != 0
+                                      order?.hst != 0
                                           ? _buildDetailCard(
-                                              'Hst (${order.hst ?? 0}%): ',
+                                              'HST (${order?.hst ?? 0}%): ',
                                               "${hstAmt.toStringAsFixed(2)}",
                                               false)
                                           : SizedBox(),
                                       _buildDetailCard('Points Redeemed: ',
-                                          "${order.pointsRedeemed}", false),
+                                          "${order?.pointsRedeemed}", false),
                                       _buildDetailCard(
                                           'Order Total: ',
-                                          "${double.parse("${order.payableAmount}").toStringAsFixed(2)}",
+                                          "${double.parse("${order?.totalAmount}").toStringAsFixed(2)}",
                                           true),
                                       _buildDetailCard('Transaction Id: ',
-                                          order.transactionId, true),
+                                          order?.transactionId, true),
                                     ],
                                   ),
                                 )
@@ -367,20 +381,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 ),
               ],
             ),
-            /*isLoading
-                  ? Stack(
-                      children: [
-                        // Block interaction
-                        ModalBarrier(
-                          dismissible: false,
-                        ),
-                        // Loader indicator
-                        Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      ],
-                    )
-                  : SizedBox(),*/
+            isLoading
+                ? CustomCircularProgress()
+                : SizedBox(),
           ],
         );
       }),
@@ -406,44 +409,27 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       fontWeight: isMain ? FontWeight.bold : FontWeight.normal,
                       color: isDarkMode ? Colors.white60 : Colors.black87),
                 ),
-                Text.rich(
-                  textAlign: TextAlign.center,
-                  TextSpan(
-                    children: [
-                      WidgetSpan(
-                        child: Transform.translate(
-                          offset: const Offset(0, -4),
-                          // Moves the dollar sign slightly upward
-                          child: Text(
-                            "${title.contains("Points Redeemed:") ? '' : '\$'}",
-                            style: TextStyle(
-                              fontSize: 12,
-                              // Smaller font size for the dollar sign
-                              color: CustomAppColor
-                                  .Primary, // Color of the dollar sign
-                            ),
-                          ),
-                        ),
+                Row(
+                  children: [
+                    Text(
+                      "${title.contains("Points Redeemed:") ? '' : '\$'}",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color:
+                            CustomAppColor.Primary,
                       ),
-                      TextSpan(
-                        text: "${detail}",
-                        // Price value
-                        style: TextStyle(
-                          fontSize: isMain ? 15 : 13,
-                          // Regular font size for price
-                          fontWeight: FontWeight.bold,
-                          color: CustomAppColor.Primary, // Color for price
-                        ),
+                    ),
+                    Text(
+                      "${detail}",
+                      // Price value
+                      style: TextStyle(
+                        fontSize: isMain ? 15 : 13,
+                        fontWeight: FontWeight.bold,
+                        color: CustomAppColor.Primary,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                /* Text(
-            '\$$detail',
-            style: TextStyle(
-                fontSize:isMain ? 15 : 13,
-                color: isDarkMode ? Colors.white60 : Colors.black87),
-          ),*/
               ],
             ),
           );
@@ -529,7 +515,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Future<Widget> getItemReviewResponse(
-      BuildContext context, ApiResponse apiResponse, isLike) async {
+      BuildContext context, ApiResponse apiResponse, isLike) async
+  {
     ItemReviewResponse? response = apiResponse.data as ItemReviewResponse?;
     setState(() {
       isLoading = false;
@@ -559,6 +546,65 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         } else {
           CustomAlert.showToast(context: context, message: apiResponse.message);
         }
+        return Center(
+          child: Text('Please try again later!!!'),
+        );
+      case Status.INITIAL:
+      default:
+        return Center(
+          child: Text(''),
+        );
+    }
+  }
+
+  void _fetchOrderStatus() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    bool isConnected = await _connectivityService.isConnected();
+    if (!isConnected) {
+      setState(() {
+        isLoading = false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+            Text('${Languages.of(context)?.labelNoInternetConnection}'),
+            duration: maxDuration,
+          ),
+        );
+      });
+    } else {
+     GetOrderDetailRequest request = GetOrderDetailRequest(orderId: order?.id);
+      await Provider.of<MainViewModel>(context, listen: false).fetchOrderStatus(
+          "api/v1/orders/get_order",request);
+      if (mounted) {
+        ApiResponse apiResponse =
+            Provider.of<MainViewModel>(context, listen: false).response;
+        getOrderStatusResponse(context, apiResponse);
+      }
+    }
+  }
+
+  Widget getOrderStatusResponse(
+      BuildContext context, ApiResponse apiResponse)
+  {
+    OrderDetails? orderStatusResponse =
+    apiResponse.data as OrderDetails?;
+    setState(() {
+      isLoading = false;
+    });
+    switch (apiResponse.status) {
+      case Status.LOADING:
+        return Center(child: CircularProgressIndicator());
+      case Status.COMPLETED:
+        CustomSnackBar.showSnackbar(context: context, message: "Order Details Fetched Successfully");
+        setState(() {
+          order = orderStatusResponse;
+        });
+        return Container();
+      case Status.ERROR:
+        CustomSnackBar.showSnackbar(context: context, message: "Error");
         return Center(
           child: Text('Please try again later!!!'),
         );

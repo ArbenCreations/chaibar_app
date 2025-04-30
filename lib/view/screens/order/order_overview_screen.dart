@@ -207,7 +207,7 @@ class _OrderOverviewScreenState extends State<OrderOverviewScreen>
                                                           SizedBox(height: 2),
                                                           _buildBillingDetail(
                                                               "Subtotal",
-                                                              "${widget.data?.order?.totalAmount}"),
+                                                              "${widget.data?.order?.payableAmount}"),
                                                           _buildBillingDetail(
                                                               "Delivery Charge",
                                                               "${widget.data?.order?.deliveryCharges}"),
@@ -223,7 +223,7 @@ class _OrderOverviewScreenState extends State<OrderOverviewScreen>
                                                           SizedBox(height: 2),
                                                           _buildBillingDetail(
                                                               "Amount Paid",
-                                                              "${widget.data?.order?.payableAmount}",
+                                                              "${widget.data?.order?.totalAmount}",
                                                               isTotal: true),
                                                         ],
                                                       ),

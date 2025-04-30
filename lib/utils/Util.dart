@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
@@ -354,6 +355,82 @@ Map<String, String> splitFullName(String? displayName) {
 String safeUrl(String? url) {
   return (url == null || url.trim().isEmpty) ? "https://thechaibar.ca/" : url;
 }
+
+
+void handleApplePaymentResponse(Map<String, dynamic> applePaymentData) {
+  try {
+    final dynamic paymentDataRaw = applePaymentData["paymentData"];
+
+    // Step 1: Decode and deeply convert to Map<String, dynamic>
+    Map<String, dynamic> parsedPaymentData = {};
+
+    if (paymentDataRaw is String) {
+      final decoded = jsonDecode(paymentDataRaw);
+      if (decoded is Map) {
+        parsedPaymentData = deepCast(decoded);
+      } else {
+        throw Exception('Decoded paymentData is not a Map');
+      }
+    } else if (paymentDataRaw is Map) {
+      parsedPaymentData = deepCast(paymentDataRaw);
+    } else {
+      throw Exception('Unexpected paymentData format');
+    }
+
+    // Step 2: Safely extract fields
+    final header = parsedPaymentData["header"] as Map<String, dynamic>? ?? {};
+
+    final String version = parsedPaymentData["version"] ?? "";
+    final String data = parsedPaymentData["data"] ?? "";
+    final String signature = parsedPaymentData["signature"] ?? "";
+    final String transactionId = header["transactionId"] ?? "";
+    final String ephemeralPublicKey = header["ephemeralPublicKey"] ?? "";
+    final String publicKeyHash = header["publicKeyHash"] ?? "";
+
+    final String transactionIdentifier = applePaymentData["transactionIdentifier"] ?? "";
+
+    // Debug output
+    print("Version: $version");
+    print("Data: $data");
+    print("Signature: $signature");
+    print("TransactionId: $transactionId");
+    print("EphemeralPublicKey: $ephemeralPublicKey");
+    print("PublicKeyHash: $publicKeyHash");
+    print("TransactionIdentifier: $transactionIdentifier");
+
+    final encryptedWallet = {
+      "version": version,
+      "data": data,
+      "signature": signature,
+      "header": {
+        "transactionId": transactionId,
+        "ephemeralPublicKey": ephemeralPublicKey,
+        "publicKeyHash": publicKeyHash,
+      },
+      "transactionIdentifier": transactionIdentifier,
+    };
+
+    print("Encrypted Wallet: $encryptedWallet");
+  } catch (e, stacktrace) {
+    print("Unexpected error: $e");
+    print(stacktrace);
+  }
+}
+
+// 👇 Deep conversion helper
+Map<String, dynamic> deepCast(Map input) {
+  return input.map((key, value) {
+    if (value is Map) {
+      return MapEntry(key.toString(), deepCast(value));
+    }
+    return MapEntry(key.toString(), value);
+  });
+}
+
+
+
+
+
 
 
 

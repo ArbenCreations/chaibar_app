@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_timer_countdown/flutter_timer_countdown.dart';
 import 'package:provider/provider.dart';
-import '../../component/CustomAlert.dart';
-import '../../component/CustomSnackbar.dart';
-import '../../component/custom_circular_progress.dart';
+
 import '/model/request/otpVerifyRequest.dart';
 import '/model/response/signUpVerifyResponse.dart';
 import '../../../../language/Languages.dart';
 import '../../../../theme/CustomAppColor.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/customNumberKeyboard.dart';
-import '../../component/toastMessage.dart';
+import '../../component/custom_circular_progress.dart';
 
 class OTPVerifyScreen extends StatefulWidget {
   final String? data; // Define the 'data' parameter here
@@ -159,7 +158,8 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
         // Navigate to the new screen after receiving the response
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
-        CustomSnackBar.showSnackbar(context: context, message: apiResponse.message);
+        CustomSnackBar.showSnackbar(
+            context: context, message: apiResponse.message);
         return Center(
           child: Text('Please try again later!!!'),
         );
@@ -183,18 +183,33 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
         children: [
           SafeArea(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Container(
-                  width: mediaWidth,
-                  height: screenHeight * 0.15,
-                  margin: EdgeInsets.zero,
-                  child: _buildLabelText(
-                      context,
-                      "${Languages.of(context)?.labelOtpVerification}",
-                      28,
-                      true),
-                  alignment: AlignmentDirectional.center,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8.0, top: 20),
+                          child: Icon(
+                            Icons.arrow_back,
+                            color: Colors.black,
+                          ),
+                        )),
+                    Container(
+                      height: screenHeight * 0.15,
+                      margin: EdgeInsets.zero,
+                      child: _buildLabelText(
+                          context,
+                          "${Languages.of(context)?.labelOtpVerification}",
+                          28,
+                          true),
+                      alignment: AlignmentDirectional.center,
+                    ),
+                    SizedBox()
+                  ],
                 ),
                 Expanded(
                   child: Container(
@@ -276,7 +291,10 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
                                   if (!isConnected) {
                                     setState(() {
                                       isLoading = false;
-                                      CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
+                                      CustomSnackBar.showSnackbar(
+                                          context: context,
+                                          message:
+                                              '${Languages.of(context)?.labelNoInternetConnection}');
                                     });
                                   } else {
                                     OtpVerifyRequest phoneRequest =
@@ -299,7 +317,10 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
                                         context, apiResponse);
                                   }
                                 } else {
-                                  CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelPleaseEnterValidPhoneNo}');
+                                  CustomSnackBar.showSnackbar(
+                                      context: context,
+                                      message:
+                                          '${Languages.of(context)?.labelPleaseEnterValidPhoneNo}');
                                 }
                               }
                             } else {
@@ -315,9 +336,7 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
               ],
             ),
           ),
-          isLoading
-              ? CustomCircularProgress()
-              : SizedBox(),
+          isLoading ? CustomCircularProgress() : SizedBox(),
         ],
       ),
     );

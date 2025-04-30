@@ -121,11 +121,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       checkedStates = List<bool>.filled(productSizeList.length, false);
       addOnList = widget.data?.getAddOnList() ?? [];
 
-      if (widget.data!.upvote_percentage != null &&
+      /* if (widget.data!.upvote_percentage != null &&
           widget.data!.upvote_percentage! > 0 == true) {
         isVoteUp = true;
       } else if (widget.data!.downvote_percentage != null &&
           widget.data!.downvote_percentage! > 0 == true) {
+        isVoteDown = true;
+      }*/
+      if (widget.data!.userVote != null && widget.data!.userVote! == "upvote") {
+        isVoteUp = true;
+      } else if (widget.data!.userVote != null &&
+          widget.data!.userVote! == "downvote") {
         isVoteDown = true;
       }
     });
@@ -657,7 +663,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                         style: TextStyle(
                                             fontSize: 22,
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.black87),
+                                            color:
+                                                CustomAppColor.PrimaryAccent),
                                       ),
                                       widget.data?.featured == false
                                           ? Row(
@@ -1002,7 +1009,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                               "Add Extra Additional",
                                               style: TextStyle(
                                                   fontSize: 14,
-                                                  fontWeight: FontWeight.w600),
+                                                  fontWeight: FontWeight.w600,
+                                                  color: CustomAppColor
+                                                      .PrimaryAccent),
                                             ),
                                             SizedBox(
                                               width: 3,
@@ -1102,6 +1111,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                                     children: [
                                                                       Row(
                                                                         children: [
+                                                                          capitalizeFirstLetter("${result.addOnCategory}") == "Tea"
+                                                                              ? Image(
+                                                                                  image: AssetImage("assets/glassIcon.png"),
+                                                                                  width: 25,
+                                                                                )
+                                                                              : SizedBox(),
                                                                           Text(
                                                                               capitalizeFirstLetter('${result.addOns?[index].name}'),
                                                                               style: TextStyle(
@@ -1148,8 +1163,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                                               () {
                                                                             result.addOns?[index].isSelected =
                                                                                 value ?? false;
-                                                                            widget.data?.addOn =
-                                                                                jsonEncode(addOnList);
+                                                                            widget.data?.addOn = jsonEncode(addOnList);
                                                                           });
                                                                         },
                                                                       ),
@@ -1197,7 +1211,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                                             image:
                                                                                 AssetImage("assets/glassIcon.png"),
                                                                             width:
-                                                                                35,
+                                                                                25,
                                                                           )
                                                                         : SizedBox(),
                                                                     Text(
@@ -1921,7 +1935,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
             for (var addOn in item.addOns!) {
               if (hasCartAddOns) {
-                final isMatch = addOnDetails.any((cartAddOn) => cartAddOn.id == addOn.id);
+                final isMatch =
+                    addOnDetails.any((cartAddOn) => cartAddOn.id == addOn.id);
                 addOn.isSelected = isMatch;
                 if (isMatch) hasAnyMatch = true;
               } else {
@@ -1934,7 +1949,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               item.addOns!.first.isSelected = true;
             }
           }
-
         }
       });
     });

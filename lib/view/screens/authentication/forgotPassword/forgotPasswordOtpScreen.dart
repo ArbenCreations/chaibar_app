@@ -159,7 +159,6 @@ class _OtpForgotPassScreenState extends State<OtpForgotPassScreen> {
                       _handleKeyTap(value);
                     }
                   })
-                  //if (isLoading) CircularProgressIndicator(),
                 ],
               ),
             ),
@@ -169,9 +168,9 @@ class _OtpForgotPassScreenState extends State<OtpForgotPassScreen> {
           ],
         ),
       ),
-      isLoading
+     /* isLoading
           ? CustomCircularProgress()
-          : SizedBox(),
+          : SizedBox(),*/
     ]);
   }
 

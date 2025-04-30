@@ -46,6 +46,7 @@ class _PastOrdersScreenState extends State<PastOrdersScreen>
   Color? secondaryColor = Colors.red[100];
   Color? lightColor = Colors.red[50];
   int _selectedIndex = 0;
+  int? _totalRows = 0;
   PageController _pageController = PageController();
 
   @override
@@ -77,12 +78,15 @@ class _PastOrdersScreenState extends State<PastOrdersScreen>
   void _activeLoadMore() async {
     if (!_isLoadingMore &&
         _scrollController.position.pixels ==
-            _scrollController.position.maxScrollExtent) {
+            _scrollController.position.maxScrollExtent &&
+        historyOrders.length < _totalRows!) {
       setState(() {
         _isLoadingMore = true;
       });
+
       _currentPage++;
       await _fetchData(_currentPage, true, selectedOrderType);
+
       setState(() {
         _isLoadingMore = false;
       });
@@ -243,7 +247,9 @@ class _PastOrdersScreenState extends State<PastOrdersScreen>
         setState(() {
           isLoading = false;
           isInternetConnected = false;
-          CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
+          CustomSnackBar.showSnackbar(
+              context: context,
+              message: '${Languages.of(context)?.labelNoInternetConnection}');
         });
       } else {
         GetHistoryRequest request = GetHistoryRequest(
@@ -276,11 +282,16 @@ class _PastOrdersScreenState extends State<PastOrdersScreen>
         return;
       case Status.COMPLETED:
         final newItems = getHistoryResponse?.orders ?? [];
+
         setState(() {
-          historyOrders.clear();
+          _totalRows = getHistoryResponse?.totalRows ?? 0;
+
+          if (pageKey == 1) {
+            historyOrders.clear();
+          }
           historyOrders.addAll(newItems);
-          print("${historyOrders.length}");
         });
+
         return;
       case Status.ERROR:
         if (nonCapitalizeString("${apiResponse.message}") ==

@@ -17,13 +17,6 @@ class CreateOrderResponse {
       order: OrderDetails.fromJson(json['data']?['order']),
     );
   }
-
-/* Map<String, dynamic> toJson() {
-    return {
-      'quantity': quantity,
-      'product': product?.toJson(),
-    };
-  }*/
 }
 
 class OrderDetails {

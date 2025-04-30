@@ -298,7 +298,6 @@ class _WelcomeScreenState extends State<GetStartedScreen> {
 
         //await Helper.savePassword(_passwordController.text);
         String? password = await Helper.getPassword();
-        print("password: ${password}");
         Navigator.pushReplacementNamed(context, "/VendorsListScreen",
             arguments: "");
 

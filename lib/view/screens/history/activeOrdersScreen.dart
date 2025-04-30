@@ -36,6 +36,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
   Future<void>? _fetchDataFuture;
   bool _isLoadingMore = false;
   int _currentPage = 1;
+  int? _totalRows = 0;
 
   List<OrderDetails> activeOrders = [];
   List<OrderDetails> upcomingOrders = [];
@@ -57,7 +58,6 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
     Helper.getVendorTheme().then((onValue) {
       setState(() {
         theme = onValue;
-        //setThemeColor();
       });
     });
     runApi();
@@ -69,24 +69,30 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
     setState(() {
       isLoading = true;
     });
-      setState(() {
-        selectedOrderType = activeType;
-        activeOrders.clear();
-      });
-      _currentPage = 1;
-      _scrollController.addListener(_activeLoadMore);
-      _fetchDataFuture = _fetchData(_currentPage, false, selectedOrderType);
+    setState(() {
+      selectedOrderType = activeType;
+      activeOrders.clear();
+    });
+    _currentPage = 1;
+    _scrollController.addListener(_activeLoadMore);
+    _fetchDataFuture = _fetchData(_currentPage, false, selectedOrderType);
   }
 
   void _activeLoadMore() async {
+    final currentList =
+        selectedOrderType == activeType ? activeOrders : upcomingOrders;
+
     if (!_isLoadingMore &&
         _scrollController.position.pixels ==
-            _scrollController.position.maxScrollExtent) {
+            _scrollController.position.maxScrollExtent &&
+        currentList.length < _totalRows!) {
       setState(() {
         _isLoadingMore = true;
       });
+
       _currentPage++;
       await _fetchData(_currentPage, true, selectedOrderType);
+
       setState(() {
         _isLoadingMore = false;
       });
@@ -141,7 +147,6 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
       ),
     );
   }
-
 
   Widget _buildActive() {
     return Container(
@@ -248,11 +253,13 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
         setState(() {
           isLoading = false;
           isInternetConnected = false;
-          CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
+          CustomSnackBar.showSnackbar(
+              context: context,
+              message: '${Languages.of(context)?.labelNoInternetConnection}');
         });
       } else {
         GetHistoryRequest request = GetHistoryRequest(
-            pageNumber: pageKey, pageSize: 8, status: selectionType);
+            pageNumber: pageKey, pageSize: 10, status: selectionType);
         await Provider.of<MainViewModel>(context, listen: false)
             .getHistoryData("/api/v1/app/orders/cust_order_history", request);
         ApiResponse apiResponse =
@@ -276,25 +283,32 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
     setState(() {
       isLoading = false;
     });
+
     switch (apiResponse.status) {
       case Status.LOADING:
         return;
+
       case Status.COMPLETED:
         final newItems = getHistoryResponse?.orders ?? [];
-        if (selectionType == activeType) {
-          setState(() {
-            activeOrders.clear();
+
+        setState(() {
+          _totalRows = getHistoryResponse?.totalRows ?? 0;
+
+          if (selectionType == activeType) {
+            if (pageKey == 1) {
+              activeOrders.clear();
+            }
             activeOrders.addAll(newItems);
-            print("${activeOrders.length}");
-          });
-        } else if (selectionType == upcomingType) {
-          setState(() {
-            upcomingOrders.clear();
+          } else if (selectionType == upcomingType) {
+            if (pageKey == 1) {
+              upcomingOrders.clear();
+            }
             upcomingOrders.addAll(newItems);
-            print("${upcomingOrders.length}");
-          });
-        }
+          }
+        });
+
         return;
+
       case Status.ERROR:
         if (nonCapitalizeString("${apiResponse.message}") ==
             nonCapitalizeString(
@@ -302,6 +316,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
           SessionExpiredDialog.showDialogBox(context: context);
         }
         return;
+
       case Status.INITIAL:
       default:
         return;

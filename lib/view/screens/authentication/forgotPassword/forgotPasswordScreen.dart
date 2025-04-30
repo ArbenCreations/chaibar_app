@@ -84,7 +84,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
         String data = "${mediaList?.email}";
-        CustomAlert.showToast(context: context, message: apiResponse.message);
+        CustomSnackBar.showSnackbar(context: context, message: apiResponse.message);
 
         Navigator.pushNamed(context, "/OtpForgotPassScreen", arguments: data);
 
@@ -99,7 +99,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 "${Languages.of(context)?.labelInvalidAccessToken}")) {
           SessionExpiredDialog.showDialogBox(context: context);
         } else {
-          CustomAlert.showToast(context: context, message: apiResponse.message);
+          CustomSnackBar.showSnackbar(context: context, message: apiResponse.message);
         }
         return Center(
           child: Text('Please try again later!!!'),
@@ -187,15 +187,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         decoration: BoxDecoration(
             image: DecorationImage(
                 image: AssetImage("assets/signUpBack.png"), fit: BoxFit.cover)),
-        child: SingleChildScrollView(
-          child: Stack(
-            children: [
-              _buildForgotPasswordWidget(),
-              isLoading
-                  ? CustomCircularProgress()
-                  : SizedBox(),
-            ],
-          ),
+        child: Stack(
+          children: [
+            _buildForgotPasswordWidget(),
+            isLoading
+                ? CustomCircularProgress()
+                : SizedBox(),
+          ],
         ),
       ),
     );
@@ -216,12 +214,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center, // Align items from top
             children: [
-              /*  Image.asset(
-                "assets/burger.jpg",
-                width: mediaWidth,
-                height: 250,
-                fit: BoxFit.fill,
-              ),*/
               SizedBox(
                 height: 20,
               ),

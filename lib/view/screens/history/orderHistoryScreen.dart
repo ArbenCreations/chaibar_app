@@ -7,17 +7,14 @@ import 'package:provider/provider.dart';
 
 import '../../../language/Languages.dart';
 import '../../../model/request/getHistoryRequest.dart';
-import '../../../model/response/bannerListResponse.dart';
 import '../../../model/response/createOrderResponse.dart';
 import '../../../model/response/getHistoryResponse.dart';
-import '../../../model/response/vendorListResponse.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../theme/CustomAppColor.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
 import '../../../utils/apiHandling/api_response.dart';
 import '../../component/CustomSnackbar.dart';
-import '../../component/ShimmerList.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/session_expired_dialog.dart';
 
@@ -44,9 +41,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
   Future<void>? _fetchDataFuture;
   bool _isLoadingMore = false;
   int _currentPage = 1;
-
-  List<OrderDetails> historyOrders = [];
-
   String? theme = "";
   Color primaryColor = CustomAppColor.Primary;
   Color? secondaryColor = Colors.red[100];
@@ -55,12 +49,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
   @override
   void initState() {
     super.initState();
-    Helper.getActiveOrderCounts().then((count) {
+   /* Helper.getActiveOrderCounts().then((count) {
       setState(() {
         activeOrderCount = count;
       });
-    });
-    historyOrders.clear();
+    });*/
     setState(() {
       isActive = true;
     });
@@ -112,17 +105,17 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         if (didPop) {
           return;
         }
-        Navigator.pushReplacementNamed(context, "/BottomNavigation", arguments: 1);
+        Navigator.pushReplacementNamed(context, "/BottomNavigation",
+            arguments: 1);
       },
       child: Scaffold(
           appBar: AppBar(
             centerTitle: true,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                bottomRight: Radius.circular(30),
-                bottomLeft: Radius.circular(30),
-              )
-            ),
+                borderRadius: BorderRadius.only(
+              bottomRight: Radius.circular(30),
+              bottomLeft: Radius.circular(30),
+            )),
             systemOverlayStyle:
                 SystemUiOverlayStyle(statusBarIconBrightness: Brightness.light),
             toolbarHeight: 50,
@@ -149,44 +142,44 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                     tabs: [
                       Tab(
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.ac_unit_sharp,
-                                size: 12,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.ac_unit_sharp,
+                            size: 12,
+                          ),
+                          SizedBox(
+                            width: 2,
+                          ),
+                          Text(
+                            "Active",
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 12),
+                          ),
+                          if (activeOrderCount! > 0)
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              margin: EdgeInsets.only(left: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
                               ),
-                              SizedBox(
-                                width: 2,
+                              constraints: const BoxConstraints(
+                                minWidth: 10,
+                                minHeight: 10,
                               ),
-                              Text(
-                                "Active",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w600, fontSize: 12),
-                              ),
-                              if (activeOrderCount! > 0)
-                                Container(
-                                  padding: const EdgeInsets.all(4),
-                                  margin: EdgeInsets.only(left: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  constraints: const BoxConstraints(
-                                    minWidth: 10,
-                                    minHeight: 10,
-                                  ),
-                                  child: Text(
-                                    '$activeOrderCount',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
+                              child: Text(
+                                '$activeOrderCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                            ],
-                          )),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                        ],
+                      )),
                       Tab(
                           child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -272,11 +265,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         setState(() {
           isLoading = false;
           isInternetConnected = false;
-          CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
+          CustomSnackBar.showSnackbar(
+              context: context,
+              message: '${Languages.of(context)?.labelNoInternetConnection}');
         });
       } else {
         GetHistoryRequest request =
-            GetHistoryRequest(pageNumber: pageKey, pageSize: 8, status: 2);
+            GetHistoryRequest(pageNumber: pageKey, pageSize: 20, status: 0);
         await Provider.of<MainViewModel>(context, listen: false)
             .getHistoryData("/api/v1/app/orders/cust_order_history", request);
         ApiResponse apiResponse =
@@ -299,12 +294,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       case Status.LOADING:
         return;
       case Status.COMPLETED:
-        final newItems = getHistoryResponse?.orders ?? [];
         setState(() {
-          historyOrders.addAll(newItems);
-          print("historyOrders.length :: ${newItems[6]?.transactionId}");
-          print(
-              "transactionStatus.length :: ${newItems[6]?.transactionStatus}");
+          activeOrderCount = 0;
+          activeOrderCount = getHistoryResponse?.totalRows;
+          Helper.saveActiveOrderCounts(
+              activeOrderCount ?? 0);
+          print("activeOrderCount :: $activeOrderCount");
         });
         return;
       case Status.ERROR:
@@ -381,7 +376,7 @@ class OrderCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '\$${order.payableAmount}',
+                          '\$${order.totalAmount}',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
