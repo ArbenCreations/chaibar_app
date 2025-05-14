@@ -1837,6 +1837,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
                 "gstTaxAmount ${roundToTwoDecimal((afterDiscountAmount * gst) / 100)}");
             taxAmount =
                 roundToTwoDecimal(gstTaxAmount + pstTaxAmount + hstTaxAmount);
+            getGrandTotal(totalPrice, taxAmount, discountAmount);
             CustomAlert.showToast(
                 context: context, message: "Points Redeemed Successfully");
           }
