@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../component/CustomSnackbar.dart';
 import '/language/Languages.dart';
 import '/model/request/markFavoriteRequest.dart';
 import '/model/response/favoriteListResponse.dart';
@@ -16,8 +15,8 @@ import '/view/component/category_component.dart';
 import '/view/component/menu_screen_category_component.dart';
 import '/view/component/no_item_available.dart';
 import '/view/component/view_cart_container.dart';
-import '../../../model/db/ChaiBarDB.dart';
 import '../../../model/db/dataBaseDao.dart';
+import '../../../model/db/db_service.dart';
 import '../../../model/request/featuredListRequest.dart';
 import '../../../model/response/categoryDataDB.dart';
 import '../../../model/response/categoryListResponse.dart';
@@ -28,13 +27,13 @@ import '../../../model/viewModel/mainViewModel.dart';
 import '../../../theme/CustomAppColor.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomAlert.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/all_category_shimmer.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/my_navigator_observer.dart';
 import '../../component/product_component.dart';
 import '../../component/product_shimmer.dart';
-import '../../component/toastMessage.dart';
-import '../../component/CustomAlert.dart';
 
 class MenuScreen extends StatefulWidget {
   final VendorData? data;
@@ -64,7 +63,6 @@ class _MenuScreenState extends State<MenuScreen>
   String selectedCategory = "";
   String selectedCategoryImage = "";
   CategoryData? selectedCategoryDetail = CategoryData();
-  late ChaiBarDB database;
   late CartDataDao cartDataDao;
   late FavoritesDataDao favoritesDataDao;
   late CategoryDataDao categoryDataDao;
@@ -97,10 +95,8 @@ class _MenuScreenState extends State<MenuScreen>
 
     Helper.getProfileDetails().then((onValue) {
       setState(() {
-        print("aaaaa${onValue?.id}");
         customerId = int.parse("${onValue?.id}"); //?? VendorData();
       });
-      // setThemeColor();
     });
 
     _controller = AnimationController(
@@ -377,9 +373,7 @@ class _MenuScreenState extends State<MenuScreen>
                                         alignment: WrapAlignment.start,
                                         runAlignment: WrapAlignment.start,
                                         spacing: 8,
-                                        // Horizontal space between items
                                         runSpacing: 5,
-                                        // Vertical space between lines
                                         children: menuItems.map((item) {
                                           //final item = menuItems[index];
                                           return ProductComponent(
@@ -524,7 +518,6 @@ class _MenuScreenState extends State<MenuScreen>
       await Provider.of<MainViewModel>(context, listen: false)
           .fetchCategoriesList(
               "/api/v1/app/products/get_products", widget.data?.id);
-      //.fetchCategoriesList("/api/v1/products/${widget.data?.id}/customer_products");
       ApiResponse apiResponse =
           Provider.of<MainViewModel>(context, listen: false).response;
       getCategoryList(context, apiResponse);
@@ -543,7 +536,6 @@ class _MenuScreenState extends State<MenuScreen>
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
         setState(() {
-          // categories = vendorListResponse!.data!.reversed.toList();
           if (selectedCategoryDetail?.id != null) {
             for (var categoryData in categories) {
               bool categoryExists =
@@ -822,14 +814,10 @@ class _MenuScreenState extends State<MenuScreen>
   }
 
   Future<void> initializeDatabase() async {
-    database = await $FloorChaiBarDB
-        .databaseBuilder('basic_structure_database.db')
-        .build();
-
-    cartDataDao = database.cartDao;
-    favoritesDataDao = database.favoritesDao;
-    categoryDataDao = database.categoryDao;
-    productsDataDao = database.productDao;
+    productsDataDao = DBService.instance.productDao;
+    cartDataDao = DBService.instance.cartDao;
+    favoritesDataDao = DBService.instance.favoritesDao;
+    categoryDataDao = DBService.instance.categoryDao;
 
     if (detailType == "menu" || detailType == "categories") {
       setState(() {
@@ -847,7 +835,6 @@ class _MenuScreenState extends State<MenuScreen>
           .getCategoriesAccToVendor(int.parse("${widget.data?.id}"));
       if (localCategoryList.isNotEmpty) {
         setState(() {
-          // Filter out null values and cast to non-nullable type
           List<CategoryData> list = [];
           localCategoryList.forEach((item) {
             if (item != null) {
@@ -881,7 +868,7 @@ class _MenuScreenState extends State<MenuScreen>
             getProductDataDB("${selectedCategoryDetail?.id}");
           }
         });
-        _fetchCategoryData();
+        //_fetchCategoryData();
       } else {
         setState(() {
           isLoading = true;

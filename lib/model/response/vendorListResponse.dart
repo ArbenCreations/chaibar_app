@@ -224,6 +224,7 @@ class PaymentSetting {
   String? appId;
   String? apiKey;
   String? paymentPlatform;
+  String? merchantId;
 
   PaymentSetting({this.appId, this.apiKey, this.paymentPlatform});
 
@@ -231,6 +232,7 @@ class PaymentSetting {
     appId = json['app_id'];
     apiKey = json['api_key'];
     paymentPlatform = json['payment_platform'];
+    merchantId = json['merchant_id'];
   }
 
   Map<String, dynamic> toJson() {
@@ -238,6 +240,7 @@ class PaymentSetting {
     data['app_id'] = this.appId;
     data['api_key'] = this.apiKey;
     data['payment_platform'] = this.paymentPlatform;
+    data['merchant_id'] = this.merchantId;
     return data;
   }
 }

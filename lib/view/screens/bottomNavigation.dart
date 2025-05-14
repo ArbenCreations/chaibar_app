@@ -40,7 +40,11 @@ class _BottomNavigationState extends State<BottomNavigation>
     _pageController = PageController(initialPage: _selectedIndex);
     _widgetOptions = <Widget>[
       OrderHistoryScreen(),
-      HomeScreen(),
+      HomeScreen(onOrderCountFetched: (count) {
+        setState(() {
+          activeOrderCount = count;
+        });
+      }),
       CouponsScreen(),
       ProfileScreen(),
     ];

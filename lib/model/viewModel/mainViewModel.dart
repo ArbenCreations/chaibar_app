@@ -4,9 +4,6 @@ import 'package:ChaiBar/model/request/deleteProfileRequest.dart';
 import 'package:ChaiBar/model/response/StoreSettingResponse.dart';
 import 'package:flutter/cupertino.dart';
 
-import '../request/EncryptedWalletRequest.dart';
-import '../request/getOrderDetailRequest.dart';
-import '../response/appleTokenDetailsResponse.dart';
 import '/model/main_repository.dart';
 import '/model/request/TransactionRequest.dart';
 import '/model/request/featuredListRequest.dart';
@@ -35,10 +32,12 @@ import '/model/response/vendorSearchResponse.dart';
 import '../../utils/apiHandling/api_response.dart';
 import '../request/CardDetailRequest.dart';
 import '../request/CreateOrderRequest.dart';
+import '../request/EncryptedWalletRequest.dart';
 import '../request/addRewardPointsRequest.dart';
 import '../request/createOtpChangePass.dart';
 import '../request/editProfileRequest.dart';
 import '../request/getCouponDetailsRequest.dart';
+import '../request/getOrderDetailRequest.dart';
 import '../request/getRewardPointsRequest.dart';
 import '../request/itemReviewRequest.dart';
 import '../request/otpVerifyRequest.dart';
@@ -49,6 +48,7 @@ import '../request/verifyOtpChangePass.dart';
 import '../response/ErrorResponse.dart';
 import '../response/PaymentDetailsResponse.dart';
 import '../response/addRewardPointsResponse.dart';
+import '../response/appleTokenDetailsResponse.dart';
 import '../response/createOrderResponse.dart';
 import '../response/createOtpChangePassResponse.dart';
 import '../response/dashboardDataResponse.dart';
@@ -65,6 +65,8 @@ import '../response/vendorListResponse.dart';
 class MainViewModel with ChangeNotifier {
   ApiResponse _apiResponse = ApiResponse.initial('Empty data');
 
+  var guestEmail = "guest@chaibar.com";
+  var guestPassword = "Isekai@123";
   ApiResponse get response {
     return _apiResponse;
   }
@@ -901,13 +903,9 @@ class MainViewModel with ChangeNotifier {
 
     notifyListeners();
     try {
-      print(createOtpChangePassRequest.email);
-
       CreateOtpChangePassResponse createOtpChangePassResponse =
           await MainRepository()
               .CreateOtpChangePass(value, createOtpChangePassRequest);
-      print("Yess" + "${createOtpChangePassResponse.email}");
-
       if (createOtpChangePassResponse.status == 200 ||
           createOtpChangePassResponse.status == 201) {
         _apiResponse = ApiResponse.completed(createOtpChangePassResponse);

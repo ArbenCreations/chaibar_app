@@ -124,7 +124,7 @@ class OrderDetails {
       phoneNumber: json['phone_number'],
       pickupDate: json['pickup_date'],
       pickupTime: json['pickup_time'],
-      redeemPoints: json['redeemPoints'],
+      redeemPoints: json['redeemPoints']?.toString(),
       pointsRedeemed: json['points_redeemed'],
       orderItems: json['order_items'] != null ? orderList : null,
     );

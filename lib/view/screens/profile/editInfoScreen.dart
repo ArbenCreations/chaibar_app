@@ -10,6 +10,7 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import '../../../model/db/DatabaseHelper.dart';
 import '../../component/CustomAlert.dart';
 import '../../../language/Languages.dart';
 import '../../../model/db/ChaiBarDB.dart';
@@ -79,12 +80,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
     email = "";
     phone = "";
     isDataLoading = true;
-    $FloorChaiBarDB
-        .databaseBuilder('basic_structure_database.db')
-        .build()
-        .then((value) async {
-      this.database = value;
-    });
+    initializeDatabase();
     Helper.getProfileDetails().then((profileDetails) {
       setState(() {
         firstName = profileDetails?.firstName;
@@ -104,6 +100,10 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
     Helper.getPassword().then((userPassword) {
       password = userPassword;
     });
+  }
+
+  Future<void> initializeDatabase() async {
+    database = await DatabaseHelper().database;
   }
 
   final maskFormatter = MaskTextInputFormatter(
@@ -649,7 +649,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                               _emailController,
                               false),
                         ),
-                        email != "guest@isekaitech.com"
+                        email != "guest@chaibar.com"
                             ? ConstrainedBox(
                                 constraints: BoxConstraints(
                                   maxWidth: mediaWidth * 0.9,
@@ -670,7 +670,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                     SizedBox(
                       height: 20,
                     ),
-                    email != "guest@isekaitech.com"
+                    email != "guest@chaibar.com"
                         ? Align(
                             alignment: Alignment.bottomCenter,
                             child: Container(
@@ -694,7 +694,7 @@ class _EditInformationScreenState extends State<EditInformationScreen> {
                             ),
                           )
                         : SizedBox(),
-                    email != "guest@isekaitech.com"
+                    email != "guest@chaibar.com"
                         ? Align(
                             alignment: Alignment.bottomCenter,
                             child: Container(

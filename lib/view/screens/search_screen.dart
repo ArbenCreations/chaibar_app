@@ -461,9 +461,6 @@ class GlobalSearchDelegate extends SearchDelegate {
 
         return globalSearchResponse?.data;
       case Status.COMPLETED:
-        print("rwrwr ${globalSearchResponse?.data?[0].product?.title}");
-        //hideKeyBoard();
-
         return globalSearchResponse?.data; // Return an empty container as you'll navigate away
       case Status.ERROR:
         return globalSearchResponse?.data;

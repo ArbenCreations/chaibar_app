@@ -544,7 +544,7 @@ class LanguageEn extends Languages {
   String get labelPleaseEnterValidPhoneNo => "Please enter valid phone number and select country code.";
 
   @override
-  String get labelResendOtp => "Resend otp";
+  String get labelResendOtp => "Resend OTP";
 
   @override
   String get labelPhoneVerification => "Phone\n Verification";

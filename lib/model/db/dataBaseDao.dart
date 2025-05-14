@@ -56,7 +56,7 @@ abstract class CategoryDataDao {
   Future<List<CategoryDataDB?>> findAllCategories();
 
 
-  @Query('SELECT * FROM CategoryDataDB WHERE vendorId = :vendorId ')
+  @Query('SELECT * FROM CategoryDataDB WHERE vendorId = :vendorId ORDER BY categoryName')
   Future<List<CategoryDataDB?>> getCategoriesAccToVendor(int vendorId);
 
   @Query('SELECT 1 FROM CategoryDataDB WHERE productCategoryId = :categoryId ')

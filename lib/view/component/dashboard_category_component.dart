@@ -91,13 +91,29 @@ class _DashboardCategoryComponentState
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Container(
-                        width: 55,
-                        height: 55,
-                        child: Image.network(
-                          currentCategoryImage,
-                          fit: BoxFit.cover,
-                        ),
+                      Stack(
+                        children: [
+                          Container(
+                            width: 55,
+                            height: 55,
+                            child: Image.network(
+                              currentCategoryImage,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Positioned(
+                            top: 10,
+                            left: 5,
+                            child: Container(
+                              width: 45,
+                              height: 45,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       Container(
                         width: widget.mediaWidth,

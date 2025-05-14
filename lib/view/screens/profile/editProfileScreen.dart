@@ -1,20 +1,21 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
-import '../../component/CustomSnackbar.dart';
-import '../../component/custom_circular_progress.dart';
 import '/model/db/ChaiBarDB.dart';
 import '/model/request/editProfileRequest.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../component/CustomAlert.dart';
 import '../../../language/Languages.dart';
-import '../../../utils/apiHandling/api_response.dart';
+import '../../../model/db/DatabaseHelper.dart';
 import '../../../model/response/profileResponse.dart';
+import '../../../model/viewModel/mainViewModel.dart';
 import '../../../theme/CustomAppColor.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
-import '../../../model/viewModel/mainViewModel.dart';
+import '../../../utils/apiHandling/api_response.dart';
+import '../../component/CustomAlert.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
+import '../../component/custom_circular_progress.dart';
 import '../../component/session_expired_dialog.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -64,6 +65,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
+    initializeDatabase();
     Helper.getVendorDetails().then((onValue) {
       setState(() {
         vendorId = "${onValue?.id}";
@@ -77,15 +79,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         selectedValue = "$appTheme" != "null" ? "$appTheme" : themeType.first;
       });
     });
-    $FloorChaiBarDB
-        .databaseBuilder('basic_structure_database.db')
-        .build()
-        .then((value) async {
-      this.database = value;
-    });
+
     isDataLoading = true;
     _fetchDataFromPref();
     _fetchData();
+  }
+
+  Future<void> initializeDatabase() async {
+    database = await DatabaseHelper().database;
   }
 
   @override

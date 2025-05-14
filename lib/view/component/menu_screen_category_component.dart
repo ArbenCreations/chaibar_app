@@ -29,9 +29,7 @@ class MenuScreenCategoryComponent extends StatelessWidget {
       child: Container(
         child: GridView.builder(
           shrinkWrap: true,
-          // Ensures it doesn't take infinite height
           physics: NeverScrollableScrollPhysics(),
-          // Disables scrolling inside the grid
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             crossAxisSpacing: 3,

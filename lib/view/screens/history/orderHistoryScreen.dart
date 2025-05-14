@@ -4,7 +4,6 @@ import 'package:ChaiBar/view/screens/history/upcomingOrdersScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-
 import '../../../language/Languages.dart';
 import '../../../model/request/getHistoryRequest.dart';
 import '../../../model/response/createOrderResponse.dart';
@@ -33,15 +32,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
   late bool isDarkMode;
   bool isLoading = true;
   var _connectivityService = ConnectivityService();
-  static const maxDuration = Duration(seconds: 2);
   final TextEditingController queryController = TextEditingController();
   late TabController _tabController;
   int? activeOrderCount = 0;
-  final _scrollController = ScrollController();
-  Future<void>? _fetchDataFuture;
-  bool _isLoadingMore = false;
-  int _currentPage = 1;
-  String? theme = "";
   Color primaryColor = CustomAppColor.Primary;
   Color? secondaryColor = Colors.red[100];
   Color? lightColor = Colors.red[50];
@@ -49,21 +42,20 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
   @override
   void initState() {
     super.initState();
-   /* Helper.getActiveOrderCounts().then((count) {
+    Helper.getActiveOrderCounts().then((count) {
       setState(() {
         activeOrderCount = count;
       });
-    });*/
+    });
     setState(() {
       isActive = true;
     });
     _tabController = TabController(length: 2, vsync: this);
-
-    _scrollController.addListener(_LoadMore);
-    _fetchDataFuture = _fetchData(_currentPage, false);
+    //_scrollController.addListener(_LoadMore);
+    //_fetchDataFuture = _fetchData(_currentPage, false);
   }
 
-  void _LoadMore() async {
+ /* void _LoadMore() async {
     if (!_isLoadingMore &&
         _scrollController.position.pixels ==
             _scrollController.position.maxScrollExtent) {
@@ -76,22 +68,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         _isLoadingMore = false;
       });
     }
-  }
+  }*/
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
-  }
-
-  void setThemeColor() {
-    if (theme == "blue") {
-      setState(() {
-        primaryColor = Colors.blue.shade900;
-        secondaryColor = Colors.blue[100];
-        lightColor = Colors.blue[50];
-      });
-    }
   }
 
   @override
@@ -134,7 +116,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
               children: [
                 Container(
                   color: CustomAppColor.Background,
-                  // Adjust background color as needed
                   child: TabBar(
                     labelColor: Colors.black,
                     dividerColor: Colors.white,
@@ -284,7 +265,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
   }
 
   Future<void> getHistoryData(BuildContext context, ApiResponse apiResponse,
-      int pageKey, bool isScroll) async {
+      int pageKey, bool isScroll) async
+  {
     GetHistoryResponse? getHistoryResponse =
         apiResponse.data as GetHistoryResponse?;
     setState(() {
@@ -294,13 +276,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       case Status.LOADING:
         return;
       case Status.COMPLETED:
-        setState(() {
-          activeOrderCount = 0;
-          activeOrderCount = getHistoryResponse?.totalRows;
-          Helper.saveActiveOrderCounts(
-              activeOrderCount ?? 0);
-          print("activeOrderCount :: $activeOrderCount");
-        });
         return;
       case Status.ERROR:
         if (nonCapitalizeString("${apiResponse.message}") ==
@@ -425,7 +400,7 @@ class OrderCard extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: order.orderItems?.isNotEmpty == true
                                   ? order.orderItems!
-                                      .take(3) // Limiting to 3 items
+                                      .take(3)
                                       .map((item) {
                                       return Text(
                                         "${item.quantity} x ${capitalizeFirstLetter("${item.product?.title}")}",
@@ -484,175 +459,6 @@ class OrderCard extends StatelessWidget {
             ),
           ),
         )
-        /*Stack(
-          children: [
-            Card(
-              margin: EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15)),
-              elevation: 5,
-              // Increased elevation for a more modern look
-              shadowColor: Colors.black.withOpacity(0.1),
-              // Subtle shadow for better depth
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                // Increased padding for spacing
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.store_mall_directory,
-                                        color: CustomAppColor.PrimaryAccent,
-                                        size: 14,
-                                      ),
-                                      SizedBox(width: 2),
-                                      Text(
-                                        capitalizeFirstLetter("${order.locality}"),
-                                        style: TextStyle(
-                                            color: Colors.green,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 11),
-                                      ),
-                                    ],
-                                  ),
-                                  Expanded(
-                                    child: Align(
-                                      alignment: Alignment.bottomRight,
-                                      child: Text(
-                                        '\$${order.payableAmount}',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: CustomAppColor.Primary,
-                                          fontStyle: FontStyle.normal,
-                                        ),
-                                      ),
-                                    ),
-                                  )
-
-                                ],
-                              ),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("Transaction", style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 12
-                                  ),),
-                                  Text("#${order.orderNo}",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                          // Slightly larger for emphasis
-                                          color: Colors.black)),
-                                ],
-                              ),
-                              SizedBox(height: 5),
-                              Text(
-                                '${convertDateTimeFormat("${order.createdAt}")}',
-                                style: TextStyle(
-                                    fontSize: 12, color: Colors.grey[600]),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    order.rejectNote != null
-                        ? Padding(
-                      padding: const EdgeInsets.only(top: 5),
-                      child: Text(
-                        "${order.rejectNote}",
-                        style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[700],
-                            fontStyle: FontStyle.italic),
-                      ),
-                    )
-                        : SizedBox(),
-                    SizedBox(height: 5),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: order.orderItems?.isNotEmpty == true
-                                  ? order.orderItems!
-                                  .take(3) // Limiting to 3 items
-                                  .map((item) {
-                                return Text(
-                                  "${item.quantity} x ${capitalizeFirstLetter("${item.product?.title}")}",
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey[600],
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                );
-                              }).toList()
-                                  : [SizedBox()],
-                            ),
-                            if (order.orderItems!.length > 3)
-                              Text(
-                                "...",
-                                style: TextStyle(
-                                    fontSize: 13, color: Colors.grey[600]),
-                              ),
-                          ],
-                        ),
-
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              top: 0,
-              left: 12,
-              child: CustomPaint(
-                painter: TagPainter(text: '${order.status}'),
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(10),
-                      topRight: Radius.circular(10),
-                      bottomRight: Radius.circular(10),
-                    ),
-                  ),
-                  child: Text(
-                    order.status == "pending_order"
-                        ? "Upcoming Order"
-                        : capitalizeFirstLetter("${order.status}"),
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        )*/
         );
   }
 
@@ -691,57 +497,24 @@ class TagPainter extends CustomPainter {
 
     const borderRadius = 4.0;
 
-    // Draw the main rounded rectangle shape with top-left, top-right, and bottom-right rounded corners
     final roundedRect = RRect.fromRectAndCorners(
       Rect.fromLTWH(0, 0, size.width, size.height),
       topLeft: Radius.circular(borderRadius),
       topRight: Radius.circular(borderRadius),
       bottomRight: Radius.circular(borderRadius),
-      bottomLeft: Radius.zero, // Keep the bottom-left corner sharp
+      bottomLeft: Radius.zero,
     );
 
-    // Draw the rounded rectangle part
     canvas.drawRRect(roundedRect, paint);
 
     final path = Path();
-    path.moveTo(13, size.height); // Start for the bottom edge of the rectangle
+    path.moveTo(13, size.height);
     path.lineTo(
-        13, size.height + 8); // Diagonal down to create the triangular tail
-    //path.lineTo(3, size.height);
-    path.close(); // Close the path
+        13, size.height + 8);
+    path.close();
 
     canvas.drawPath(path, paint);
   }
-
-/*
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.green;
-
-    const borderRadius = 5.0;
-
-    // Draw the main rounded rectangle shape with top-left, top-right, and bottom-right rounded corners
-    final roundedRect = RRect.fromRectAndCorners(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      topLeft: Radius.circular(borderRadius),
-      topRight: Radius.circular(borderRadius),
-      bottomRight: Radius.circular(borderRadius),
-      bottomLeft: Radius.zero, // Keep the bottom-left corner sharp
-    );
-
-    // Draw the rounded rectangle part
-    canvas.drawRRect(roundedRect, paint);
-
-    // Create a path for the tail
-    final path = Path();
-    path.moveTo(15, size.height);            // Start from bottom left of tail
-    path.lineTo(15, size.height + 10);       // Diagonal for the triangular tail
-    path.lineTo(5, size.height);             // Back up to create tail shape
-    path.close();
-
-    // Draw the tail path
-    canvas.drawPath(path, paint);
-  }*/
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {

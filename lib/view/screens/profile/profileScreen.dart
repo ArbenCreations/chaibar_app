@@ -1,10 +1,12 @@
 import 'package:ChaiBar/model/db/ChaiBarDB.dart';
 import 'package:flutter/material.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../language/Languages.dart';
+import '../../../model/db/DatabaseHelper.dart';
 import '../../../model/request/editProfileRequest.dart';
 import '../../../model/response/couponListResponse.dart';
 import '../../../model/response/getViewRewardPointsResponse.dart';
@@ -53,7 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _emailController = TextEditingController();
   var selectedAvatar =
       "https://icons.iconarchive.com/icons/hopstarter/superhero-avatar/256/Avengers-Captain-America-icon.png";
-
+  String _appVersion = '';
   String? theme = "";
   String? vendorId = "";
   String? domainUrl = "";
@@ -80,6 +82,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _loadAppVersion();
+    initializeDatabase();
     Helper.getProfileDetails().then((onValue) {
       setState(() {
         customerId = int.parse("${onValue?.id ?? 0}");
@@ -103,12 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         selectedValue = "$appTheme" != "null" ? "$appTheme" : themeType.first;
       });
     });
-    $FloorChaiBarDB
-        .databaseBuilder('basic_structure_database.db')
-        .build()
-        .then((value) async {
-      this.database = value;
-    });
+
     firstName = "";
     lastName = "";
     email = "";
@@ -116,6 +115,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _fetchDataFromPref();
     _fetchData();
     _getRedeemPointsData();
+  }
+
+  Future<void> initializeDatabase() async {
+    database = await DatabaseHelper().database;
+  }
+  Future<void> _loadAppVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    setState(() {
+      _appVersion = '${info.version} (${info.buildNumber})';
+    });
   }
 
   void openUrl() async {
@@ -238,6 +247,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     )
                   ],
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    margin: EdgeInsets.only(bottom: 15),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Version $_appVersion',
+                          style: TextStyle(
+                              color: Colors.grey[400], fontSize: 10),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 if (isLoading)
                   Container(

@@ -3,14 +3,18 @@
 <plist version="1.0">
 <dict>
 	<key>aps-environment</key>
-    <string>production</string>
+	<string>production</string>
 	<key>com.apple.developer.applesignin</key>
 	<array>
 		<string>Default</string>
 	</array>
 	<key>com.apple.developer.in-app-payments</key>
-    <array>
-      <string>merchant.com.chaibar</string>
-    </array>
+	<array>
+		<string>merchant.com.chaibar</string>
+		<string>merchant.com.thechaibar.edmonton</string>
+		<string>merchant.com.thechaibar.redstone</string>
+		<string>merchant.com.thechaibar.westwinds</string>
+		<string>merchant.com.thechaibar.savanna</string>
+	</array>
 </dict>
 </plist>

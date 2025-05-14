@@ -249,8 +249,6 @@ class VendorSearchDelegate extends SearchDelegate {
       case Status.LOADING:
         return vendorSearchResponse?.data;
       case Status.COMPLETED:
-        print("rwrwr ${vendorSearchResponse?.data?[0].title}");
-        //hideKeyBoard();
 
         return vendorSearchResponse
             ?.data; // Return an empty container as you'll navigate away

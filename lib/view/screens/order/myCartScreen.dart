@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:apple_pay_flutter/apple_pay_flutter.dart';
+import 'package:coupon_uikit/coupon_uikit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -15,8 +15,8 @@ import '/theme/CustomAppColor.dart';
 import '/utils/Util.dart';
 import '/view/component/cart_product_component.dart';
 import '../../../language/Languages.dart';
-import '../../../model/db/ChaiBarDB.dart';
 import '../../../model/db/dataBaseDao.dart';
+import '../../../model/db/db_service.dart';
 import '../../../model/request/getCouponListRequest.dart';
 import '../../../model/request/getRewardPointsRequest.dart';
 import '../../../model/response/couponListResponse.dart';
@@ -45,8 +45,11 @@ class _MyCartScreenState extends State<MyCartScreen> {
   late double mediaWidth;
   late double screenHeight;
   bool isDarkMode = false;
-  late ChaiBarDB database;
   late CartDataDao cartDataDao;
+  late FavoritesDataDao favoritesDataDao;
+  late CategoryDataDao categoryDataDao;
+  late ProductsDataDao productsDataDao;
+  late DashboardDao dashboardDao;
   List<ProductData?> cartList = [];
   int? discountPercent = 0;
   late int vendorId;
@@ -56,6 +59,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
   int pst = 0;
   double grandTotal = 0;
   double totalPrice = 0;
+  double afterDiscountAmount = 0;
   double taxAmount = 0;
   double gstTaxAmount = 0;
   double pstTaxAmount = 0;
@@ -77,7 +81,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
   String? email = "";
   String? pickupDate = "";
   String? pickupTime = "";
-  String? storeStatus = "";
+  String? storeStatus = "online";
   CouponDetailsResponse? couponDetails = CouponDetailsResponse();
   final ConnectivityService _connectivityService = ConnectivityService();
   static const maxDuration = Duration(seconds: 2);
@@ -103,6 +107,13 @@ class _MyCartScreenState extends State<MyCartScreen> {
       pickupTime =
           "${DateFormat('hh:mm a').format(DateTime.now().add(Duration(minutes: 20)))}";
     });
+    Helper.getVendorDetails().then((data) {
+      setState(() {
+        vendorId = int.parse("${data?.id}");
+        storeStatus = data?.status ?? "online";
+        isStoreOnline = true;
+      });
+    });
     Helper.getAddress().then((value) {
       setState(() {
         if (value != null) _addressController.text = "$value";
@@ -118,16 +129,10 @@ class _MyCartScreenState extends State<MyCartScreen> {
     });
     _getCouponDetails();
     _getRedeemPointsData();
-    Helper.getVendorDetails().then((data) {
-      setState(() {
-        vendorId = int.parse("${data?.id}");
-        storeStatus = data?.status ?? "online";
-        isStoreOnline = storeStatus == "offline" ? false : true;
-      });
-    });
+
     Helper.getStoreSettingDetails().then((data) {
       setState(() {
-        gst = int.parse("${data?.gst ?? 0}");
+        gst = int.parse("${data?.gst ?? 5}");
         pst = int.parse("${data?.pst ?? 0}");
         hst = int.parse("${data?.hst ?? 0}");
         IsUpcomingAllowed = data?.upcomingOrReserveDay ?? false;
@@ -136,7 +141,6 @@ class _MyCartScreenState extends State<MyCartScreen> {
     Helper.getApiKey().then((data) {
       setState(() {
         apiKey = "12c12489-fc5f-253d-af89-270d4b68b87e"; //"${data ?? ""}";
-        print("apiKey:$apiKey");
       });
     });
     Helper.getProfileDetails().then((profileDetails) {
@@ -194,12 +198,11 @@ class _MyCartScreenState extends State<MyCartScreen> {
     isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return PopScope(
-      canPop: false, // Disable back navigation on this page
+      canPop: false,
       onPopInvokedWithResult: (bool didPop, Object? result) async {
         if (didPop) {
           return;
         }
-        // Navigate to the home view when back navigation is attempted
         Navigator.pushReplacementNamed(context, "/BottomNavigation",
             arguments: 1);
       },
@@ -212,27 +215,12 @@ class _MyCartScreenState extends State<MyCartScreen> {
           backgroundColor: CustomAppColor.PrimaryAccent,
           systemOverlayStyle:
               SystemUiOverlayStyle(statusBarIconBrightness: Brightness.light),
-          title: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                firstName == null && firstName?.isEmpty == true
-                    ? 'Check out'
-                    : "$firstName $lastName",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14),
-              ),
-              Text(
-                email ?? '',
-                style: TextStyle(
-                    color: Colors.white54,
-                    fontWeight: FontWeight.normal,
-                    fontSize: 11),
-              ),
-            ],
+          title: Text(
+            firstName == null && firstName?.isEmpty == true
+                ? 'Check out'
+                : "${firstName?.toUpperCase()} ${lastName?.toUpperCase()}",
+            style: TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
           ),
           leading: GestureDetector(
               onTap: () {
@@ -381,13 +369,13 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                 primaryColor: primaryColor,
                                                 onAddTap: () {
                                                   setState(() {
-                                                    if (item?.addOn?.isEmpty ==
+                                                    /*if (item?.addOn?.isEmpty ==
                                                             true ||
                                                         item?.addOn == "[]" ||
-                                                        item?.addOn == null) {
-                                                      if (item?.isBuy1Get1 ==
-                                                          false) {
-                                                        if (int.parse(
+                                                        item?.addOn == null) {*/
+                                                    if (item?.isBuy1Get1 ==
+                                                        false) {
+                                                      if (int.parse(
                                                                 "${item?.quantity}") <
                                                             int.parse(
                                                                 "${item?.qtyLimit}")) {
@@ -409,23 +397,24 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                               as ProductData);
                                                         }
                                                       }
-                                                    } else {
+                                                    //}
+                                                    /*else {
                                                       Navigator.pushNamed(
                                                           context,
                                                           "/ProductDetailScreen",
                                                           arguments: item);
-                                                    }
+                                                    }*/
                                                   });
                                                 },
                                                 onMinusTap: () {
                                                   setState(() {
-                                                    if (item?.addOn?.isEmpty ==
+                                                    /* if (item?.addOn?.isEmpty ==
                                                             true ||
                                                         item?.addOn == "[]" ||
-                                                        item?.addOn == null) {
-                                                      if (item?.isBuy1Get1 ==
-                                                          false) {
-                                                        if (int.parse(
+                                                        item?.addOn == null) {*/
+                                                    if (item?.isBuy1Get1 ==
+                                                        false) {
+                                                      if (int.parse(
                                                                     "${item?.quantity}") <=
                                                                 int.parse(
                                                                     "${item?.qtyLimit}") &&
@@ -453,12 +442,12 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                               item);
                                                         }
                                                       }
-                                                    } else {
+                                                    /*  } else {
                                                       Navigator.pushNamed(
                                                           context,
                                                           "/ProductDetailScreen",
                                                           arguments: item);
-                                                    }
+                                                    }*/
                                                   });
                                                 },
                                                 onRemoveTap: () {
@@ -917,7 +906,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                       ),
                                       GestureDetector(
                                         onTap: () {
-                                          rewardPoints! > 99 &&
+                                          rewardPoints! > 100 &&
                                                   redeemAmount == 0
                                               ? _fetchRedeemPointsData()
                                               : CustomSnackBar.showSnackbar(
@@ -1120,6 +1109,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                       discountPercent != null &&
                                               discountPercent! > 0
                                           ? Container(
+                                              width: mediaWidth * 0.95,
                                               decoration: BoxDecoration(
                                                   color: Colors.black,
                                                   borderRadius:
@@ -1128,6 +1118,8 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                               padding: EdgeInsets.symmetric(
                                                   vertical: 8, horizontal: 20),
                                               child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
                                                 children: [
                                                   Icon(
                                                     Icons.local_offer_outlined,
@@ -1162,7 +1154,8 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                         apiKey != "null"
                                                     ? GestureDetector(
                                                         onTap: () {
-                                                          email == "guest@isekaitech.com"
+                                                          email ==
+                                                                  "guest@chaibar.com"
                                                               ? showGuestUserAlert(
                                                                   context)
                                                               : isLoading == false && firstName?.isNotEmpty == true
@@ -1222,7 +1215,8 @@ class _MyCartScreenState extends State<MyCartScreen> {
                                                           ),
                                                         ),
                                                       )
-                                                    : !isStoreOnline
+                                                    : !isStoreOnline &&
+                                                            !isLoading
                                                         ? Container(
                                                             margin:
                                                                 EdgeInsets.only(
@@ -1376,10 +1370,17 @@ class _MyCartScreenState extends State<MyCartScreen> {
   }
 
   double getTaxAmount(double totalPrice) {
+    print("totalPrice $totalPrice");
+    print("afterDiscountAmount $afterDiscountAmount");
     setState(() {
-      gstTaxAmount = roundToTwoDecimal((totalPrice * gst) / 100);
-      pstTaxAmount = roundToTwoDecimal((totalPrice * pst) / 100);
-      hstTaxAmount = roundToTwoDecimal((totalPrice * hst) / 100);
+      //totalPrice > 0 ? afterDiscountAmount = 0 : SizedBox();
+      afterDiscountAmount =
+          afterDiscountAmount == 0 ? totalPrice : afterDiscountAmount;
+      gstTaxAmount = roundToTwoDecimal((afterDiscountAmount * gst) / 100);
+      pstTaxAmount = roundToTwoDecimal((afterDiscountAmount * pst) / 100);
+      hstTaxAmount = roundToTwoDecimal((afterDiscountAmount * hst) / 100);
+      print(
+          "gstTaxAmount ${roundToTwoDecimal((afterDiscountAmount * gst) / 100)}");
       taxAmount = roundToTwoDecimal(gstTaxAmount + pstTaxAmount + hstTaxAmount);
     });
     return taxAmount;
@@ -1454,11 +1455,12 @@ class _MyCartScreenState extends State<MyCartScreen> {
   }
 
   Future<void> initializeDatabase() async {
-    database = await $FloorChaiBarDB
-        .databaseBuilder('basic_structure_database.db')
-        .build();
+    productsDataDao = DBService.instance.productDao;
+    cartDataDao = DBService.instance.cartDao;
+    favoritesDataDao = DBService.instance.favoritesDao;
+    categoryDataDao = DBService.instance.categoryDao;
+    dashboardDao = DBService.instance.dashboardDao;
 
-    cartDataDao = database.cartDao;
     getCartData();
     getCartTotal();
   }
@@ -1594,10 +1596,15 @@ class _MyCartScreenState extends State<MyCartScreen> {
 
     setState(() {
       totalPrice = totalAmount;
+      print("Total price $totalAmount");
+      print("Total price $discountAmount");
+      print("RedeemAmount $redeemAmount");
+      // afterDiscountAmount = totalPrice - discountAmount;
     });
 
-    getTaxAmount(totalPrice);
     getDiscountAmt();
+    getTaxAmount(totalPrice);
+
     getGrandTotal(totalPrice, taxAmount, discountAmount);
   }
 
@@ -1682,7 +1689,6 @@ class _MyCartScreenState extends State<MyCartScreen> {
       case Status.LOADING:
         return Center(child: CustomCircularProgress());
       case Status.COMPLETED:
-        print("rwrwr ${couponDetailsResponse?.discount}");
         if (isSheet) {
           Navigator.pop(context);
         }
@@ -1699,8 +1705,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
           setState(() {
             couponDetails = couponDetailsResponse;
             discountPercent = couponDetailsResponse?.discount;
-            discountAmount =
-                double.parse("${couponDetailsResponse?.discount ?? 0}");
+            //discountAmount = double.parse("${couponDetailsResponse?.discount ?? 0}");
             isCouponApplied = true;
             _couponController.text = "";
           });
@@ -1809,27 +1814,35 @@ class _MyCartScreenState extends State<MyCartScreen> {
       case Status.LOADING:
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
-        print("rwrwr ${response?.totalPoints}");
         setState(() {
           int pointsToRedeem = int.parse("${response?.pointsRedeemed}");
           double redeemedAmount = double.parse("${response?.discountAmount}");
-          // Calculate the new grand total first
           double newGrandTotal = grandTotal - redeemedAmount;
-          if (newGrandTotal < 0) {
+          if (newGrandTotal <= 0) {
             CustomAlert.showToast(
                 context: context,
                 message: "Insufficient total amount to redeem points.");
           } else {
-            // Only update values if the new grand total is valid
             redeemAmount = double.parse("${response?.discountAmount}");
             rewardPoints -= pointsToRedeem;
             grandTotal = grandTotal - redeemAmount;
+            afterDiscountAmount = totalPrice - discountAmount - (redeemAmount);
+            //totalPrice > 0 ? afterDiscountAmount = 0 : SizedBox();
+            afterDiscountAmount =
+                afterDiscountAmount == 0 ? totalPrice : afterDiscountAmount;
+            gstTaxAmount = roundToTwoDecimal((afterDiscountAmount * gst) / 100);
+            pstTaxAmount = roundToTwoDecimal((afterDiscountAmount * pst) / 100);
+            hstTaxAmount = roundToTwoDecimal((afterDiscountAmount * hst) / 100);
+            print(
+                "gstTaxAmount ${roundToTwoDecimal((afterDiscountAmount * gst) / 100)}");
+            taxAmount =
+                roundToTwoDecimal(gstTaxAmount + pstTaxAmount + hstTaxAmount);
             CustomAlert.showToast(
                 context: context, message: "Points Redeemed Successfully");
           }
         });
-
-        return Container(); // Return an empty container as you'll navigate away
+        //getTaxAmount(totalPrice - discountAmount - redeemAmount);
+        return Container();
       case Status.ERROR:
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text("${message}")));
@@ -1925,6 +1938,9 @@ class _MyCartScreenState extends State<MyCartScreen> {
     } else {
       discountAmount = 0;
     }
+    setState(() {
+      afterDiscountAmount = totalPrice - discountAmount - redeemAmount;
+    });
     return discountAmount;
   }
 
@@ -2059,7 +2075,13 @@ class _MyCartScreenState extends State<MyCartScreen> {
                   couponDetails = CouponDetailsResponse();
                   discountPercent = 0;
                   discountAmount = 0;
+                  afterDiscountAmount = 0;
                 });
+                if (redeemAmount > 0) {
+                  getTaxAmount(totalPrice - redeemAmount);
+                } else {
+                  getTaxAmount(totalPrice);
+                }
                 getGrandTotal(totalPrice, taxAmount, discountAmount);
               },
               child: Container(
@@ -2083,7 +2105,9 @@ class _MyCartScreenState extends State<MyCartScreen> {
           "Value ${(double.tryParse("${couponDetails?.maxDiscountAmt}") ?? 0) >= discountValue}");
       setState(() {
         discountAmount = discountValue;
+        afterDiscountAmount = totalPrice - discountAmount - redeemAmount;
       });
+      print("afterDiscountAmount ${afterDiscountAmount.toStringAsFixed(2)}");
       await Future.delayed(Duration(milliseconds: 2));
       getGrandTotal(totalPrice, taxAmount, discountAmount);
     } else {
@@ -2100,80 +2124,10 @@ class _MyCartScreenState extends State<MyCartScreen> {
     DateFormat inputFormat = DateFormat("hh:mm a");
     DateFormat outputFormat = DateFormat("HH:mm");
     DateTime dateTime = inputFormat.parse(time);
-
-    // Convert the DateTime object to a 24-hour format string
     String time24Hour = outputFormat.format(dateTime);
 
     return time24Hour;
   }
-
-  //Api Call
-/*  Future<void> _getApiAccessKey() async {
-    hideKeyBoard();
-    const maxDuration = Duration(seconds: 2);
-    setState(() {
-      isLoading = true;
-    });
-    bool isConnected = await _connectivityService.isConnected();
-    if (!isConnected) {
-      setState(() {
-        isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
-      });
-    } else {
-      await Provider.of<MainViewModel>(context, listen: false)
-          .getApiAccessKey("https://api.clover.com/pakms/apikey", "$apiKey");
-      //.getApiAccessKey("https://scl-sandbox.dev.clover.com/pakms/apikey","f2240939-d0fa-ccfd-88ff-2f14e160dc6a");
-      // .getApiAccessKey("https://api.clover.com/pakms/apikey", "$apiKey");
-      ApiResponse apiResponse =
-          Provider.of<MainViewModel>(context, listen: false).response;
-      getApiAccessKeyResponse(context, apiResponse);
-    }
-  }*/
-
-  /* Future<Widget> getApiAccessKeyResponse(
-      BuildContext context, ApiResponse apiResponse) async
-  {
-    GetApiAccessKeyResponse? getApiAccessKeyResponse =
-        apiResponse.data as GetApiAccessKeyResponse?;
-    setState(() {
-      isLoading = false;
-    });
-    switch (apiResponse.status) {
-      case Status.LOADING:
-        return Center(child: CircularProgressIndicator());
-      case Status.COMPLETED:
-        print("GetSignInResponse : ${getApiAccessKeyResponse}");
-        //_getApiToken(getApiAccessKeyResponse?.apiAccessKey);
-        _createOrder(getApiAccessKeyResponse);
-
-        // Check if the token was saved successfully
-        if (getApiAccessKeyResponse?.active == true) {
-          print('Token saved successfully.');
-        } else {
-          print('Failed to save token.');
-        }
-
-        return Container(); // Return an empty container as you'll navigate away
-      case Status.ERROR:
-        print(
-            "message : ${apiResponse.message?.contains("FormatException") == true ? "Something went wrong" : "${apiResponse.message}"}");
-        CustomAlert.showToast(
-            context: context,
-            message:
-                "${apiResponse.message?.contains("FormatException") == true ? "Something went wrong, Please contact admin." : "${apiResponse.message}"}");
-        return Center();
-      case Status.INITIAL:
-      default:
-        return Center();
-    }
-  }*/
 
   void showCouponBottomSheet(BuildContext context) {
     showModalBottomSheet(
@@ -2185,7 +2139,6 @@ class _MyCartScreenState extends State<MyCartScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            // Optionally, you can pass a function here to update setState when data changes externally
             return Container(
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
               constraints: BoxConstraints(
@@ -2228,81 +2181,70 @@ class _MyCartScreenState extends State<MyCartScreen> {
   }
 
   Widget newCouponWidget(PrivateCouponDetailsResponse couponsResponse) {
-    return Container(
-      width: 340,
-      height: 120,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(width: 0.1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black54.withOpacity(0.2),
-            blurRadius: 2,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 6),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 10),
-                          color: Colors.black,
-                          child: Text(
-                            "${couponsResponse.discount}% OFF",
-                            style: TextStyle(
-                                fontSize: 20,
-                                color: Colors.amber,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        SizedBox(height: 5),
-                        Text(
-                          "Valid until ${couponsResponse.createdAt?.toLocal().toString().split(' ')[0]}",
-                          style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 1),
-                        ),
-                        SizedBox(height: 5),
-                        Text(
-                            "\$${couponsResponse.minCartAmt} min - \$${couponsResponse.maxDiscountAmt} max order amount required",
-                            style: TextStyle(
-                                fontSize: 8,
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: 1)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+    return Padding(
+      padding: const EdgeInsets.only(top: 4.0),
+      child: CouponCard(
+        height: 140,
+        backgroundColor: CustomAppColor.PrimaryAccent.withOpacity(0.2),
+        curvePosition: 80,
+        curveRadius: 30,
+        curveAxis: Axis.vertical,
+        clockwise: true,
+        borderRadius: 10,
+        firstChild: Container(
+          alignment: Alignment.center,
+          color: CustomAppColor.ButtonBackColor.withOpacity(0.8),
+          child: Text(
+            "${couponsResponse.discount}% OFF",
+            style: const TextStyle(
+              fontSize: 15,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          MaterialButton(
-            color: Colors.green,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(
-              6,
-            )),
-            onPressed: () {
-              _fetchCouponData("${couponsResponse.couponCode}", true);
-            },
-            child: Text("Redeem",
+        ),
+        secondChild: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 5),
+            Text(
+              "Use code: ${couponsResponse.couponCode}",
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              "Valid until: ${convertDateTimeFormat("${couponsResponse.expireAt}")}",
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              "Min. Amount: \$${couponsResponse.minCartAmt}",
+              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              onPressed: () {
+                _fetchCouponData("${couponsResponse.couponCode}", true);
+              },
+              child: const Text(
+                "Redeem",
                 style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold)),
-          ),
-        ],
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2511,42 +2453,6 @@ class _MyCartScreenState extends State<MyCartScreen> {
     }
   }
 
-  Future<void> makePayment() async {
-    // To store apple payment data
-    dynamic applePaymentData;
-
-    // List of items with label & price
-    List<PaymentItem> paymentItems = [
-      PaymentItem(label: 'Label', amount: 1.00, shippingcharge: 2.00)
-    ];
-
-    try {
-      // initiate payment
-      applePaymentData = await ApplePayFlutter.makePayment(
-        countryCode: "CA",
-        // Canada country code
-        currencyCode: "CAD",
-        // Canadian Dollar
-        paymentNetworks: [
-          PaymentNetwork.visa,
-          PaymentNetwork.mastercard,
-          PaymentNetwork.amex,
-          // Remove mada, as it's not supported in Canada
-        ],
-        merchantIdentifier: "merchant.com.chaibar",
-        // Make sure this merchant ID is registered for Canada
-        paymentItems: paymentItems,
-        customerEmail: "demo.user@business.com",
-        customerName: "Demo User",
-        companyName: "Concerto Soft",
-      );
-      // This logs the Apple Pay response data
-      print(applePaymentData.toString());
-    } on PlatformException {
-      print('Failed payment');
-    }
-  }
-
   void showGuestUserAlert(BuildContext context) {
     showDialog(
       context: context,
@@ -2568,11 +2474,11 @@ class _MyCartScreenState extends State<MyCartScreen> {
               onPressed: () {
                 Navigator.of(context).pop(); // Dismiss the dialog
                 Helper.clearAllSharedPreferences();
-                database.favoritesDao.clearAllFavoritesProduct();
-                database.cartDao.clearAllCartProduct();
-                database.categoryDao.clearAllCategories();
-                database.productDao.clearAllProducts();
-                database.cartDao.clearAllCartProduct();
+                favoritesDataDao.clearAllFavoritesProduct();
+                cartDataDao.clearAllCartProduct();
+                categoryDataDao.clearAllCategories();
+                productsDataDao.clearAllProducts();
+                dashboardDao.clearAllData();
                 Navigator.pushNamed(
                     context, '/RegisterScreen'); // Change route as needed
               },

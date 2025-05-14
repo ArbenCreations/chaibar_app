@@ -7,9 +7,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_credit_card/flutter_credit_card.dart';
 import 'package:provider/provider.dart';
 
+import '../../../model/db/db_service.dart';
 import '/model/request/successCallbackRequest.dart';
 import '../../../language/Languages.dart';
-import '../../../model/db/ChaiBarDB.dart';
 import '../../../model/db/dataBaseDao.dart';
 import '../../../model/request/CardDetailRequest.dart';
 import '../../../model/request/EncryptedWalletRequest.dart';
@@ -77,12 +77,11 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
   String responseMessage = '';
   String apiKey = "";
   String appId = "";
+  String merchantId = "";
   bool phoneNumberValid = false;
   int? customerId = 0;
-  late ChaiBarDB database;
   late CartDataDao cartDataDao;
   final _formKey = GlobalKey<FormState>();
-  static const maxDuration = Duration(seconds: 2);
 
   var _connectivityService = ConnectivityService();
   bool isInternetConnected = true;
@@ -100,13 +99,16 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
     Helper.getApiKey().then((data) {
       setState(() {
         apiKey = "${data ?? ""}";
-        print("apiKey:$apiKey");
       });
     });
     Helper.getAppId().then((data) {
       setState(() {
         appId = "${data ?? ""}";
-        print("appId:$appId");
+      });
+    });
+    Helper.getMerchantId().then((data) {
+      setState(() {
+        merchantId = "${data ?? ""}";
       });
     });
 
@@ -118,11 +120,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
   }
 
   Future<void> initializeDatabase() async {
-    database = await $FloorChaiBarDB
-        .databaseBuilder('basic_structure_database.db')
-        .build();
-
-    cartDataDao = database.cartDao;
+    cartDataDao =  DBService.instance.cartDao;
   }
 
   @override
@@ -355,7 +353,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
           PaymentNetwork.mastercard,
           PaymentNetwork.amex,
         ],
-        merchantIdentifier: "merchant.com.chaibar",
+        merchantIdentifier: "$merchantId",
         paymentItems: paymentItems,
         customerEmail: "${widget.orderData?.order?.customerEmail ?? ''}",
         customerName: "${widget.orderData?.order?.customerName ?? ''}",
@@ -451,6 +449,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
     return await showDialog(
           context: context,
           builder: (context) => AlertDialog(
+            shape: Border(),
             title: Text("Exit"),
             content: Text("Are you sure you want to leave?"),
             actions: [
@@ -801,7 +800,6 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
       case Status.LOADING:
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
-        print("rwrwr ${response?.totalPoints}");
         _addRedeemPointsData("${successCallbackResponse?.order?.totalPrice}",
             successCallbackResponse);
 
@@ -837,6 +835,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
       AddRewardPointsRequest request = AddRewardPointsRequest(
           amountSpent: double.parse("${widget.orderData?.order?.totalAmount}"),
           orderId: int.parse("${widget.orderData?.order?.id}"),
+          couponId: int.parse("${widget.orderData?.order?.couponId}"),
           couponCode: "${widget.orderData?.order?.couponCode}");
 
       await Provider.of<MainViewModel>(context, listen: false)
@@ -861,7 +860,6 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
       case Status.LOADING:
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
-        print("rwrwr ${response?.totalPoints}");
         Navigator.pushNamed(
           context,
           "/OrderSuccessfulScreen",

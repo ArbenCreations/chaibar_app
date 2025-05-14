@@ -201,7 +201,7 @@ class _WelcomeScreenState extends State<GetStartedScreen> {
                               SignInRequest request = SignInRequest(
                                   customer: CustomerSignIn(
                                 deviceToken: "${deviceToken}",
-                                email: "guest@isekaitech.com",
+                                email: "guest@chaibar.com",
                                 password: "Isekai@123",
                               ));
 

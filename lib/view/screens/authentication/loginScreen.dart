@@ -225,7 +225,7 @@ class _SigninScreenState extends State<SigninScreen> {
                                                 SignInRequest(
                                                     customer: CustomerSignIn(
                                               deviceToken: "${deviceToken}",
-                                              email: "guest@isekaitech.com",
+                                              email: "guest@chaibar.com",
                                               password: "Isekai@123",
                                             ));
 
@@ -1246,8 +1246,8 @@ class _SignUpFormState extends State<SignUpForm> {
                       : null,*/
                 ) : SizedBox(),
                 SizedBox(height: 8),
-                firstNameController.text.isNotEmpty ? Text("Last Name") : SizedBox(),
-                firstNameController.text.isNotEmpty ? TextFormField(
+                lastNameController.text.isNotEmpty ? Text("Last Name") : SizedBox(),
+                lastNameController.text.isNotEmpty ? TextFormField(
                   controller: lastNameController,
                   decoration: InputDecoration(
                     hintText: "Required",
@@ -1306,7 +1306,7 @@ class _SignUpFormState extends State<SignUpForm> {
                     :*/
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
+                    backgroundColor: CustomAppColor.Primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(50),
                     ),

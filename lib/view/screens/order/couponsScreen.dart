@@ -162,9 +162,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Text("Min. Amount: ${couponsResponse.minCartAmt}",
-                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
-                Text("Max. Amount: ${couponsResponse.maxDiscountAmt}",
+                Text("Min. Amount: \$${couponsResponse.minCartAmt}",
                     style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
               ],
             )

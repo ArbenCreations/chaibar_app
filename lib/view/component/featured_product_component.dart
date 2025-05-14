@@ -37,13 +37,13 @@ class FeaturedProductComponent extends StatelessWidget {
           Navigator.pushNamed(context, "/ProductDetailScreen", arguments: data),
       child: Container(
         width: MediaQuery.of(context).size.width * 0.6,
-        padding: const EdgeInsets.symmetric(vertical: 0.0), // Merged Padding
-        decoration: BoxDecoration(
+          padding: const EdgeInsets.symmetric(vertical: 0.0),
+          decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
-          color: Colors.white, // Add a color to avoid unnecessary rebuilds
-        ),
-        clipBehavior: Clip.hardEdge, // Ensures content follows borderRadius
-        child: Column(
+            color: Colors.white,
+          ),
+          clipBehavior: Clip.hardEdge,
+          child: Column(
           children: [
             _buildImageSection(data, context),
             _buildInfoSection(data),
@@ -149,18 +149,11 @@ class FeaturedProductComponent extends StatelessWidget {
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 ),
               ),
-            /*  Row(
-                children: const [
-                  Icon(Icons.thumb_up, size: 14),
-                  SizedBox(width: 2),
-                  Text("10%", style: TextStyle(fontSize: 10)),
-                ],
-              ),*/
             ],
           ),
           const SizedBox(height: 3), // Added spacing
           Text(
-            "Get your food from Chai bar, we are happy to serve you",
+            "${data.shortDescription}",
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(

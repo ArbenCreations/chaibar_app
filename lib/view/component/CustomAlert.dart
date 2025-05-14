@@ -4,7 +4,7 @@ class CustomAlert {
   static void showToast({
     required BuildContext context,
     required String? message,
-    Duration duration = const Duration(seconds: 5),
+    Duration duration = const Duration(seconds: 10),
   }) {
     if (message != null && message.isNotEmpty && message != "null") {
       // Run after current frame to make sure context is stable

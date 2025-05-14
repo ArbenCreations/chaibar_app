@@ -1,13 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:ChaiBar/model/response/StoreSettingResponse.dart';
-
-import '/model/response/vendorListResponse.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '/model/response/vendorListResponse.dart';
 import '../model/response/profileResponse.dart';
 
 class Helper {
@@ -35,6 +32,7 @@ class Helper {
   static const String prefRecentDocument = "RecentDocument";
   static String appThemePref = 'appThemePref';
   static String api_key = 'apikey';
+  static String merchant_id = 'merchantId';
   static String app_id = 'appId';
   static String order_count_key = 'OrderCountKey';
 
@@ -276,6 +274,17 @@ class Helper {
   static Future<String?> getApiKey() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     return sharedPreferences.getString(api_key);
+  }
+
+  // Merchant Id
+  static Future<String?> getMerchantId() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    return sharedPreferences.getString(merchant_id);
+  }
+
+  static Future<bool> saveMerchantId(merchantId) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    return await sharedPreferences.setString(merchant_id, merchantId);
   }
 
   static Future<bool> saveAppId(token) async {

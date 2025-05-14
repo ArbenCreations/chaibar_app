@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../component/CustomSnackbar.dart';
-import '../component/custom_circular_progress.dart';
 import '/language/Languages.dart';
 import '/model/request/vendorSearchRequest.dart';
 import '/model/response/productListResponse.dart';
@@ -14,7 +12,9 @@ import '../../model/response/vendorListResponse.dart';
 import '../../model/viewModel/mainViewModel.dart';
 import '../../utils/Helper.dart';
 import '../../utils/apiHandling/api_response.dart';
+import '../component/CustomSnackbar.dart';
 import '../component/connectivity_service.dart';
+import '../component/custom_circular_progress.dart';
 
 class ItemSearchScreen extends SearchDelegate {
   late String initialQuery;
@@ -36,7 +36,6 @@ class ItemSearchScreen extends SearchDelegate {
   final ConnectivityService _connectivityService = ConnectivityService();
   static const maxDuration = Duration(seconds: 2);
 
-  // This method is called when the user submits a search query.
   @override
   List<Widget> buildActions(BuildContext context) {
     return [
@@ -45,7 +44,7 @@ class ItemSearchScreen extends SearchDelegate {
         onPressed: () {
           FocusScope.of(context).unfocus();
           query = '';
-          showSuggestions(context); // Clear the search field
+          showSuggestions(context);
         },
       ),
     ];
@@ -82,7 +81,6 @@ class ItemSearchScreen extends SearchDelegate {
     if (query.isNotEmpty && query.length >= 3) {
       return FutureBuilder<List<dynamic>>(
         future: fetchSearchResults(query, context),
-        // Hit the API when query is more than 4 characters
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CustomCircularProgress());
@@ -168,15 +166,16 @@ class ItemSearchScreen extends SearchDelegate {
   }
 
   Widget _buildProductCard(dynamic result, BuildContext context) {
-    String? imageUrl = result?.imageUrl;
-
     return Padding(
       padding: const EdgeInsets.all(5.0),
       child: GestureDetector(
         onTap: () {
           hideKeyBoard();
-          Navigator.pushReplacementNamed(context, "/ProductDetailScreen",
-              arguments: result);
+          Future.delayed(Duration(milliseconds: 150), () {
+            Navigator.pushReplacementNamed(context, "/ProductDetailScreen",
+                arguments: result);
+          });
+
         },
         child: ProductComponent(
             item: result,
@@ -269,7 +268,6 @@ class ItemSearchScreen extends SearchDelegate {
       case Status.LOADING:
         return vendorSearchResponse?.data;
       case Status.COMPLETED:
-        print("rwrwr ${vendorSearchResponse?.data?[0].title}");
         return vendorSearchResponse
             ?.data; // Return an empty container as you'll navigate away
       case Status.ERROR:

@@ -14,7 +14,7 @@ import 'listConverter.dart';
 part 'ChaiBarDB.g.dart'; // the generated code will be there
 
 @TypeConverters([ListConverter, ProductSizeListConverter])
-@Database(version: 1, entities: [
+@Database(version: 3, entities: [
   CategoryDataDB,
   ProductDataDB,
   ProductData,

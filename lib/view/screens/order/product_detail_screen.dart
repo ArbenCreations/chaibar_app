@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../model/db/DatabaseHelper.dart';
+import '../../../model/db/db_service.dart';
 import '/model/db/dataBaseDao.dart';
 import '/model/response/productDataDB.dart';
 import '/model/response/productListResponse.dart';
@@ -28,6 +30,7 @@ import '../../component/CustomAlert.dart';
 import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/custom_circular_progress.dart';
+import '../../component/product_component.dart';
 import '../../component/session_expired_dialog.dart';
 import '../../component/view_cart_container.dart';
 
@@ -53,9 +56,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   late List<CategoryData?> categories = [];
   late List<ProductData?> featuredProduct = [];
   late List<ProductData> menuItems = [];
-  late ChaiBarDB database;
   late CartDataDao cartDataDao;
-  late FavoritesDataDao favoritesDataDao;
   late CategoryDataDao categoryDataDao;
   late ProductsDataDao productsDataDao;
   int cartItemCount = 0;
@@ -93,20 +94,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   @override
   void initState() {
     super.initState();
-    //print("vendor : ${widget.data?.vendorId}");
 
     Helper.getVendorDetails().then((onValue) {
       setState(() {
         vendorData = onValue;
         vendorId = int.parse("${onValue?.id}"); //?? VendorData();
       });
-      // setThemeColor();
     });
     Helper.getProfileDetails().then((onValue) {
       setState(() {
         customerId = int.parse("${onValue?.id}"); //?? VendorData();
       });
-      // setThemeColor();
     });
 
     imageUrl = "";
@@ -115,7 +113,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       vsync: this,
     );
     initializeDatabase();
-    //print("${widget.data?.description}");
     setState(() {
       productSizeList = widget.data?.getProductSizeList() ?? [];
       checkedStates = List<bool>.filled(productSizeList.length, false);
@@ -1111,7 +1108,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                                     children: [
                                                                       Row(
                                                                         children: [
-                                                                          capitalizeFirstLetter("${result.addOnCategory}") == "Tea"
+                                                                          capitalizeFirstLetter("${result.addOnCategory}").contains("Tea") || capitalizeFirstLetter("${result.addOnCategory}").contains("Select Size")
                                                                               ? Image(
                                                                                   image: AssetImage("assets/glassIcon.png"),
                                                                                   width: 25,
@@ -1275,7 +1272,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                 vertical: 10,
                               ),
                             ),
-                            /*   Align(
+                         /*   Align(
                               alignment: Alignment.topLeft,
                               child: Container(
                                 margin: EdgeInsets.only(left: 20),
@@ -1352,9 +1349,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                       screenHeight:
                                                           screenHeight,
                                                       onAddTap: () {
-                                                        if (*/ /*(item.productSizesList == "[]" ||
-                                                                  item.productSizesList ==
-                                                                      null) &&*/ /*
+                                                        if ((item.productSizesList ==
+                                                                    "[]" ||
+                                                                item.productSizesList ==
+                                                                    null) &&
                                                             (item.addOn ==
                                                                         "[]" ||
                                                                     item.addOn ==
@@ -1378,9 +1376,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                         }
                                                       },
                                                       onMinusTap: () {
-                                                        if (*/ /*(item.productSizesList == "[]" ||
-                                                                  item.productSizesList ==
-                                                                      null) &&*/ /*
+                                                        if ((item.productSizesList ==
+                                                                    "[]" ||
+                                                                item.productSizesList ==
+                                                                    null) &&
                                                             (item.addOn ==
                                                                         "[]" ||
                                                                     item.addOn ==
@@ -1403,9 +1402,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                         }
                                                       },
                                                       onPlusTap: () {
-                                                        if (*/ /*(item.productSizesList == "[]" ||
-                                                                  item.productSizesList ==
-                                                                      null) &&*/ /*
+                                                        if ((item.productSizesList ==
+                                                                    "[]" ||
+                                                                item.productSizesList ==
+                                                                    null) &&
                                                             (item.addOn ==
                                                                         "[]" ||
                                                                     item.addOn ==
@@ -1839,14 +1839,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   Future<void> initializeDatabase() async {
-    database = await $FloorChaiBarDB
-        .databaseBuilder('basic_structure_database.db')
-        .build();
-
-    cartDataDao = database.cartDao;
-    favoritesDataDao = database.favoritesDao;
-    categoryDataDao = database.categoryDao;
-    productsDataDao = database.productDao;
+    productsDataDao = DBService.instance.productDao;
+    cartDataDao = DBService.instance.cartDao;
+    categoryDataDao = DBService.instance.categoryDao;
 
     //_fetchCategoryData();
     getCartData();
@@ -1857,77 +1852,68 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   Future<void> getCartData() async {
     List<ProductDataDB?> productsList = await cartDataDao.findAllCartProducts();
     print("getCartData");
+
+    List<ProductData> list = [];
+
+    for (var item in productsList) {
+      if (item != null) {
+        list.add(ProductData(
+          quantity: int.parse("${item.quantity}"),
+          vendorId: vendorId,
+          franchiseId: item.franchiseId,
+          title: item.title,
+          status: item.status,
+          shortDescription: item.shortDescription,
+          salePrice: item.salePrice,
+          qtyLimit: item.qtyLimit,
+          isBuy1Get1: item.isBuy1Get1,
+          productCategoryId: item.productCategoryId,
+          price: item.price,
+          deposit: item.deposit,
+          categoryName: item.categoryName,
+          addOn: item.addOn,
+          imageUrl: item.imageUrl,
+          description: item.description,
+          createdAt: "",
+          environmentalFee: "",
+          featured: false,
+          gst: null,
+          id: item.productId,
+          theme: item.theme,
+          vendorName: item.vendorName,
+          pst: null,
+          updatedAt: "",
+          vpt: null,
+          addOnIdsList: '',
+          productSizesList: item.productSizesList,
+        ));
+      }
+    }
+
     setState(() {
-      List<ProductData> list = [];
-      productsList.forEach((item) {
-        if (item != null) {
-          list.add(ProductData(
-              quantity: int.parse("${item.quantity}"),
-              vendorId: vendorId,
-              franchiseId: item.franchiseId,
-              title: item.title,
-              status: item.status,
-              shortDescription: item.shortDescription,
-              salePrice: item.salePrice,
-              qtyLimit: item.qtyLimit,
-              isBuy1Get1: item.isBuy1Get1,
-              productCategoryId: item.productCategoryId,
-              price: item.price,
-              deposit: item.deposit,
-              // addOnType: [],
-              categoryName: item.categoryName,
-              // addOnIds: [],
-              addOn: item.addOn,
-              imageUrl: item.imageUrl,
-              description: item.description,
-              createdAt: "",
-              environmentalFee: "",
-              featured: false,
-              gst: null,
-              id: item.productId,
-              theme: item.theme,
-              vendorName: item.vendorName,
-              pst: null,
-              updatedAt: "",
-              vpt: null,
-              addOnIdsList: '',
-              productSizesList: item.productSizesList));
-          cartDBList = list;
-          print("##${cartDBList.first.addOn}");
-          //addOnList.addAll(cartDBList.first.getAddOnList());
-        }
-      });
-      cartDBList.forEach((cart) {
-        cartAddOnList = cart.getAddOnList();
-      });
+      cartDBList = list;
+
+      cartAddOnList = cartDBList.expand((cart) => cart.getAddOnList()).toList();
+
       cartAddOnList.forEach((item) {
         if (item.addOnCategoryType == "single") {
           item.selectedAddOnIdInSingleType = item.addOns?.first.id;
-          /*  item.addOns?.forEach((addOn){
-            addOnDetails.add(addOn);
-            //addOn.isSelected = true;
-          });*/
         } else {
-          print("CartAddon:::${"${item.addOns?.length}"}");
           item.addOns?.forEach((addOn) {
             addOnDetails.add(addOn);
-            //addOn.isSelected = true;
           });
         }
       });
+
       addOnList.forEach((item) {
-        print("CartAddon:::${"${item.addOnCategoryType}"}");
         if (item.addOnCategoryType == "single") {
-          print("AddOnCategoryType:::${"${item.addOnCategoryType}"}");
-          if (cartAddOnList.length > 0) {
+          if (cartAddOnList.isNotEmpty) {
             cartAddOnList.forEach((addOn) {
-              print("CartAddOnList:::${"${addOn.addOns?.first.id}"}");
               item.selectedAddOnIdInSingleType = addOn.addOns?.first.id;
             });
           } else {
-            item.selectedAddOnIdInSingleType = addOnList[0].addOns?.first.id;
+            item.selectedAddOnIdInSingleType = item.addOns?.first.id;
           }
-          //item.selectedAddOnIdInSingleType = item.addOns?[0].id;
         } else {
           if (item.addOns != null && item.addOns!.isNotEmpty) {
             final hasCartAddOns = cartAddOnList.isNotEmpty;
@@ -1935,8 +1921,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
             for (var addOn in item.addOns!) {
               if (hasCartAddOns) {
-                final isMatch =
-                    addOnDetails.any((cartAddOn) => cartAddOn.id == addOn.id);
+                addOnDetails.clear();
+                final isMatch = addOnDetails.any((cartAddOn) => cartAddOn.id == addOn.id);
                 addOn.isSelected = isMatch;
                 if (isMatch) hasAnyMatch = true;
               } else {
@@ -1944,7 +1930,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               }
             }
 
-            // If no matches found or cart list is empty, select the first add-on
             if (!hasAnyMatch) {
               item.addOns!.first.isSelected = true;
             }
@@ -1952,8 +1937,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         }
       });
     });
+
     updateQuantity();
   }
+
 
   Future<void> getCategoryDataDB() async {
     try {
@@ -1980,7 +1967,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           isCategoryLoading = false;
           getProductDataDB("${widget.data?.productCategoryId}");
         });
-        //_fetchCategoryData();
+        _fetchCategoryData();
       } else {
         setState(() {
           isLoading = true;
@@ -2000,7 +1987,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       setState(() {
         isProductAvailable = true;
         menuItems = [];
-        // Filter out null values and cast to non-nullable type
         menuItems.addAll(
             localProductList.where((item) => item != null).cast<ProductData>());
 
@@ -2008,15 +1994,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         updateQuantity();
         isProductsLoading = false;
       });
-      //_fetchProductData(categoryId);
     } else {
       setState(() {
         isProductAvailable = false;
         menuItems = [];
-        //isLoading = true;
-        //isProductsLoading = true;
       });
-      //_fetchCategoryData();
     }
   }
 
@@ -2027,13 +2009,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             item.productCategoryId == dbItem.productCategoryId &&
             vendorId == dbItem.vendorId) {
           setState(() {
-            item.quantity = dbItem.quantity;
-            addOnList.addAll(dbItem.getAddOnList());
+          //item.quantity = dbItem.quantity;
+            widget.data?.quantity = dbItem.quantity;
+            //addOnList.addAll(dbItem.getAddOnList());
           });
         }
       });
     });
-
     getCartItemCountDB();
   }
 
@@ -2130,59 +2112,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     } else {
       _removeFavorite(item.id);
     }
-    /* FavoritesDataDb data = FavoritesDataDb(
-        description: item.description,
-        imageUrl: item.imageUrl,
-        //addOnIds: [],
-        categoryName: item.categoryName,
-        //addOnType: item.addOnType,
-        deposit: item.deposit,
-        price: item.price,
-        productCategoryId: item.productCategoryId,
-        productId: item.id,
-        qtyLimit: item.qtyLimit,
-        salePrice: "",
-        shortDescription: item.shortDescription,
-        status: item.status,
-        title: item.title,
-        vendorId: item.vendorId,
-        quantity: item.quantity,
-        vendorName: widget.data?.vendorName,
-        theme: widget.data?.theme,
-        addedToFavoritesAt: "${DateFormat('yyyy-MM-dd').format(DateTime.now())}",
-        addOnIdsList: '',
-        productSizesList: item.productSizesList);
-    data.theme = widget.data?.theme;
-    data.vendorName = widget.data?.vendorName;
-    final product = await favoritesDataDao.getSpecificFavoritesProduct(
-        "${item.vendorId}", "${item.productCategoryId}", "${item.id}");
-
-    if (product == null) {
-      List<FavoritesDataDb?> favoritesList =
-      await favoritesDataDao.findAllFavoritesProducts();
-      favoritesList.add(data);
-
-      if (mounted) {
-        if (favoritesList.isNotEmpty) {
-          // Use forEach instead of map to perform an action
-          favoritesList.forEach((item) {
-            if (item != null) {
-              print("Inserting item: $item");
-              favoritesDataDao.insertFavoritesProduct(item);
-            }
-          });
-        } else {
-          print("Inserting single product: $data");
-          favoritesDataDao.clearAllFavoritesProduct();
-          await favoritesDataDao.insertFavoritesProduct(data);
-        }
-      }
-      return null;
-    } else {
-      print("Product exists: $product");
-      await favoritesDataDao.deleteFavoritesProduct(data); // Update the existing product
-    }
-    return product;*/
   }
 
   void setThemeColor() {

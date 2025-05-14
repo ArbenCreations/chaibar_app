@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-import '../../component/CustomSnackbar.dart';
-import '../../component/custom_circular_progress.dart';
-import '../../component/shimmer_card.dart';
 import '/language/Languages.dart';
 import '/utils/Helper.dart';
 import '/utils/Util.dart';
@@ -15,10 +12,13 @@ import '../../../model/viewModel/mainViewModel.dart';
 import '../../../theme/CustomAppColor.dart';
 import '../../../utils/apiHandling/api_response.dart';
 import '../../component/CustomAlert.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
+import '../../component/custom_circular_progress.dart';
+import '../../component/shimmer_card.dart';
 
 class VendorsListScreen extends StatefulWidget {
-  final String? data; // Define the 'data' parameter here
+  final String? data;
 
   VendorsListScreen({Key? key, this.data}) : super(key: key);
 
@@ -28,20 +28,14 @@ class VendorsListScreen extends StatefulWidget {
 
 class _VendorsListScreenState extends State<VendorsListScreen> {
   int franchiseId = 1;
-
-  //int franchiseId = 38;
-
   late double mediaWidth;
   late double screenHeight;
   bool isLoading = false;
   bool isDarkMode = false;
   final ConnectivityService _connectivityService = ConnectivityService();
-  static const maxDuration = Duration(seconds: 2);
   List<VendorData> vendorList = [];
   String selectedLocality = "";
   VendorData selectedLocalityData = VendorData();
-  var placeholderImage =
-      'https://upload.wikimedia.org/wikipedia/commons/c/cd/Portrait_Placeholder_Square.png';
   String? selectedItem;
   List<String> items = List<String>.generate(10, (index) => "Item $index");
   var currentSelectedItem = VendorData();
@@ -96,7 +90,7 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
             width: mediaWidth,
             decoration: BoxDecoration(
                 image: DecorationImage(
-                    image: AssetImage("assets/chai_back.jpg"),
+                    image: AssetImage("assets/chai_back.png"),
                     opacity: 0.7,
                     fit: BoxFit.cover)),
             child: SafeArea(
@@ -137,82 +131,121 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
                                           ),
                                         ),
                                       ),
-
-                                      // 📝 Filtered list display
                                       SizedBox(height: 20),
                                       Align(
                                         alignment: Alignment.center,
                                         child: SingleChildScrollView(
                                           scrollDirection: Axis.vertical,
                                           child: Column(
-                                            children:
-                                                filteredVendorList.map((item) {
-                                              return GestureDetector(
-                                                onTap: () {
-                                                  setState(() {
-                                                    isLoading == true;
-                                                    selectedLocality =
-                                                        selectedLocality.isEmpty
-                                                            ? "${item.localityName}"
-                                                            : "";
-                                                    selectedLocalityData = item;
-                                                  });
+                                            children: filteredVendorList
+                                                    .isNotEmpty
+                                                ? filteredVendorList
+                                                    .map((item) {
+                                                    return GestureDetector(
+                                                      onTap: () {
+                                                        setState(() {
+                                                          isLoading == true;
+                                                          selectedLocality =
+                                                              selectedLocality
+                                                                      .isEmpty
+                                                                  ? "${item.localityName}"
+                                                                  : "";
+                                                          selectedLocalityData =
+                                                              item;
+                                                        });
 
-                                                  if (selectedLocality
-                                                              .isNotEmpty &&
-                                                          selectedLocalityData
-                                                                  .status
-                                                                  ?.contains(
-                                                                      "online") ==
-                                                              true ||
+                                                        if ((selectedLocality
+                                                      .isNotEmpty &&
                                                       selectedLocalityData
-                                                              .status
-                                                              ?.contains(
-                                                                  "offline") ==
-                                                          true) {
-                                                    setState(() {
-                                                      isLoading = false;
-                                                    });
-                                                    Helper.saveVendorData(
-                                                        selectedLocalityData);
-                                                    Helper.saveApiKey(
-                                                        selectedLocalityData
-                                                            .paymentSetting
-                                                            ?.apiKey);
-                                                    Helper.saveAppId(
-                                                        selectedLocalityData
-                                                            .paymentSetting
-                                                            ?.appId);
-                                                    _getStoreSettingData(
-                                                        selectedLocalityData);
-                                                  } else if (selectedLocalityData
                                                           .status
                                                           ?.contains(
-                                                              "offline") ==
-                                                      true) {
+                                                          "online") ==
+                                                          true) ||
+                                                      selectedLocalityData
+                                                                    .status
+                                                                    ?.contains(
+                                                                        "offline") ==
+                                                                true) {
                                                     setState(() {
                                                       isLoading = false;
                                                     });
+                                                          Helper.saveVendorData(
+                                                              selectedLocalityData);
+                                                          print("selectedLocalityData::: ${ selectedLocalityData
+                                                              .paymentSetting
+                                                              ?.merchantId}");
+                                                          Helper.saveApiKey(
+                                                              selectedLocalityData
+                                                                  .paymentSetting
+                                                                  ?.apiKey);
+                                                          Helper.saveMerchantId(
+                                                              selectedLocalityData
+                                                                  .paymentSetting
+                                                                  ?.merchantId);
+                                                          Helper.saveAppId(
+                                                              selectedLocalityData
+                                                                  .paymentSetting
+                                                                  ?.appId);
+                                                          _getStoreSettingData(
+                                                              selectedLocalityData);
+                                                        } else if (selectedLocalityData
+                                                                .status
+                                                                ?.contains(
+                                                                    "offline") ==
+                                                            true) {
+                                                          setState(() {
+                                                            isLoading = false;
+                                                          });
                                                     CustomAlert.showToast(
                                                         context: context,
-                                                        message:
-                                                            "This store is closed at the moment.");
-                                                  } else {
-                                                    setState(() {
-                                                      isLoading = false;
-                                                    });
+                                                              message:
+                                                                  "This store is closed at the moment.");
+                                                        } else {
+                                                          setState(() {
+                                                            isLoading = false;
+                                                          });
                                                     CustomAlert.showToast(
-                                                        context: context,
-                                                        message:
-                                                            "Select location.");
-                                                  }
-                                                },
-                                                child: _buildVendorCard(item),
-                                              );
-                                            }).toList(),
+                                                              context: context,
+                                                              message:
+                                                                  "Select location.");
+                                                        }
+                                                      },
+                                                      child: _buildVendorCard(
+                                                          item),
+                                                    );
+                                                  }).toList()
+                                                : [
+                                                    Center(
+                                                      child: Container(
+                                                        padding: EdgeInsets
+                                                            .symmetric(
+                                                                horizontal: 24,
+                                                                vertical: 12),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors.black
+                                                              .withOpacity(0.5),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(12),
+                                                        ),
+                                                        child: Text(
+                                                          "No store available.",
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: Colors.white,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    )
+                                                  ],
                                           ),
                                         ),
-                                      ),
+                                      )
                                     ],
                                   )
                                 : ShimmerList(),
@@ -452,7 +485,6 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
       case Status.LOADING:
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
-        print("rwrwr ${storeSettingResponse?.gst}");
         Helper.saveStoreSettingData(storeSettingResponse);
         if (mounted) {
           Navigator.pushReplacementNamed(context, "/BottomNavigation",

@@ -6,6 +6,7 @@ import '/model/request/otpVerifyRequest.dart';
 import '/model/response/signUpVerifyResponse.dart';
 import '../../../../language/Languages.dart';
 import '../../../../theme/CustomAppColor.dart';
+import '../../../model/request/signUpRequest.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../utils/apiHandling/api_response.dart';
 import '../../component/CustomSnackbar.dart';
@@ -35,6 +36,8 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
   late double mediaWidth;
   bool isLoading = false;
   List<String> _inputValues = ['', '', '', '', '', ''];
+  late DateTime otpEndTime;
+
   final ConnectivityService _connectivityService = ConnectivityService();
 
   @override
@@ -42,10 +45,10 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
     super.initState();
     isValid = false;
     resendOtp = false;
+    otpEndTime = DateTime.now().add(Duration(minutes: 1, seconds: 30));
     for (var i = 0; i < _focusNodes.length; i++) {
       _focusNodes[i].addListener(() {
         if (_focusNodes[i].hasFocus && _controllers[i].text.isEmpty) {
-          // Automatically select all text when the field gains focus
           _controllers[i].selection = TextSelection(
               baseOffset: 0, extentOffset: _controllers[i].text.length);
         }
@@ -112,19 +115,6 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
         print("OtpVerify ${signUpVerifyResponse?.token}");
-        //Helper.saveProfileDetails(data);
-
-        //CustomAlert.showToast(context: context, message: message);
-        //String token = "${signUpVerifyResponse?.token}";
-        // Save the token
-        //bool isSaved = await Helper.saveUserToken(token);
-
-        // Check if the token was saved successfully
-        //Helper.getUserToken();
-        // Retrieve the token
-        //String? retrievedToken = await Helper.getUserToken();
-        //print('Retrieved Token: $retrievedToken');
-
         CustomSnackBar.showSnackbar(
             context: context,
             message: "Signup completed. Please Login to continue.");
@@ -153,10 +143,14 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
       case Status.LOADING:
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
-        //Call Toast
         CustomSnackBar.showSnackbar(context: context, message: message);
-        // Navigate to the new screen after receiving the response
-        return Container(); // Return an empty container as you'll navigate away
+        // Restart the timer
+        setState(() {
+          otpEndTime = DateTime.now()
+              .add(Duration(minutes: 1, seconds: 30)); // reset timer
+          resendOtp = false;
+        });
+        return Container();
       case Status.ERROR:
         CustomSnackBar.showSnackbar(
             context: context, message: apiResponse.message);
@@ -176,7 +170,6 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
     mediaWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    ApiResponse apiResponse = Provider.of<MainViewModel>(context).response;
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: Stack(
@@ -257,14 +250,16 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
                                 vertical: 8.0, horizontal: 24),
                             child: Row(
                               children: [
-                                _buildLabelText(
-                                    context,
-                                    "${Languages.of(context)!.labelResendCode} ",
+                                !resendOtp
+                                    ? _buildLabelText(
+                                        context,
+                                        "${Languages.of(context)!.labelResendCode} ",
                                     14,
-                                    true),
+                                        true)
+                                    : SizedBox(),
                                 _countdownTimer(),
                                 Spacer(),
-                                // if (resendOtp) _resendOtpButton(context)
+                                if (resendOtp) _resendOtpButton(context)
                               ],
                             ),
                           ),
@@ -273,14 +268,10 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
                             if (value == "clear") {
                               _handleBackspace();
                             } else if (value == "submit") {
-                              // Navigator.pushReplacementNamed(context, "/VendorsListScreen" ,arguments : "");
                               String otp = _inputValues
                                   .map((controller) => controller)
                                   .join();
-                              print("$otp");
                               if (otp.isNotEmpty && otp.length == 6) {
-                                const maxDuration = Duration(seconds: 2);
-                                print("otp $otp");
                                 if (otp.isNotEmpty && otp.length == 6) {
                                   setState(() {
                                     isLoading = true;
@@ -343,20 +334,36 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
   }
 
   Widget _countdownTimer() {
-    return TimerCountdown(
-      endTime: DateTime.now().add(const Duration(minutes: 1, seconds: 0)),
-      format: CountDownTimerFormat.minutesSeconds,
-      enableDescriptions: false,
-      spacerWidth: 2,
-      timeTextStyle: TextStyle(fontWeight: FontWeight.w600),
-      onEnd: () {
-        setState(() {
-          resendOtp = true;
-        });
-      },
-    );
+    return resendOtp
+        ? SizedBox()
+        : Row(
+            children: [
+              Icon(
+                Icons.timer,
+                size: 18,
+                color: Colors.black54,
+              ),
+              SizedBox(
+                width: 3,
+              ),
+              TimerCountdown(
+                endTime: otpEndTime,
+                format: CountDownTimerFormat.minutesSeconds,
+                enableDescriptions: false,
+                spacerWidth: 1,
+                timeTextStyle: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: Colors.black54),
+                onEnd: () {
+                  setState(() {
+                    resendOtp = true;
+                  });
+                },
+              ),
+            ],
+          );
   }
-
   Widget _buildOtpInput(
       BuildContext context, double mediaWidth, bool isDarkMode) {
     return Center(
@@ -402,12 +409,18 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
     return GestureDetector(
         onTap: () async {
           phoneNo = widget.data as String;
-          // PhoneRequest phoneRequest = PhoneRequest(
-          //     customer: Customer(
-          //         phoneNumber: phoneNo, mobileOtp: "", countryId: null));
-          /*  await Provider.of<MainViewModel>(context, listen: false)
-              .PhoneVerifyData(
-                  "/api/v1/app/temp_customers/initiate_customer", phoneRequest); */
+
+          SignUpRequest request = SignUpRequest(
+              customer: CustomerSignUp(
+            email: "",
+            password: "",
+            firstName: "",
+            lastName: "",
+            phoneNumber: phoneNo,
+          ));
+
+          await Provider.of<MainViewModel>(context, listen: false).signUpData(
+              "api/v1/app/temp_customers/initiate_temp_customer", request);
           ApiResponse apiResponse =
               Provider.of<MainViewModel>(context, listen: false).response;
           getResendOtpResponse(context, apiResponse);
@@ -420,8 +433,4 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
           ),
         ));
   }
-/*void restartTimer() {
-    countDownTimer.cancel();
-    startTimer();
-  }*/
 }

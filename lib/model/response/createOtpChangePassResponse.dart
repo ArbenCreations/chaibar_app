@@ -1,14 +1,12 @@
-
-
 class CreateOtpChangePassResponse {
-  int? status;
-  String? email;
-  String? message;
+  final int? status;
+  final String? email;
+  final String? message;
 
   CreateOtpChangePassResponse({
-    required this.status,
-    required this.email,
-    required this.message,
+    this.status,
+    this.email,
+    this.message,
   });
 
   factory CreateOtpChangePassResponse.fromJson(Map<String, dynamic> json) {
@@ -16,7 +14,6 @@ class CreateOtpChangePassResponse {
       message: json["message"] as String?,
       status: json["status"] as int?,
       email: json['data']?["email"] as String?,
-
     );
   }
 }

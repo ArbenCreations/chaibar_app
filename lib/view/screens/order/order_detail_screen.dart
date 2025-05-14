@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-import '../../../model/request/getOrderDetailRequest.dart';
-import '../../component/connectivity_service.dart';
-import '../../component/custom_circular_progress.dart';
+import '../../../model/db/DatabaseHelper.dart';
 import '/model/db/ChaiBarDB.dart';
 import '../../../language/Languages.dart';
+import '../../../model/request/getOrderDetailRequest.dart';
 import '../../../model/request/itemReviewRequest.dart';
 import '../../../model/response/createOrderResponse.dart';
 import '../../../model/response/itemReviewResponse.dart';
@@ -16,6 +15,8 @@ import '../../../theme/CustomAppColor.dart';
 import '../../../utils/Util.dart';
 import '../../../utils/apiHandling/api_response.dart';
 import '../../component/CustomAlert.dart';
+import '../../component/connectivity_service.dart';
+import '../../component/custom_circular_progress.dart';
 import '../../component/session_expired_dialog.dart';
 
 class OrderDetailScreen extends StatefulWidget {
@@ -56,6 +57,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   @override
   void initState() {
     super.initState();
+    initializeDatabase();
     setState(() {
       order = widget.order;
       orderItems = widget.order.orderItems ?? [];
@@ -71,13 +73,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     });
     print("id ${order?.id}");
 
-    $FloorChaiBarDB
-        .databaseBuilder('basic_structure_database.db')
-        .build()
-        .then((value) async {
-      this.database = value;
-    });
     isDataLoading = true;
+  }
+
+  Future<void> initializeDatabase() async {
+    database = await DatabaseHelper().database;
   }
 
   @override
@@ -165,10 +165,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                     ),
                                   ],
                                 ),
-                                IconButton(
+                                /* IconButton(
                                   onPressed: () => _fetchOrderStatus(),
                                   icon: Icon(Icons.refresh, color: Colors.white,),
-                                )
+                                )*/
                               ],
                             ),
                           ),
@@ -280,7 +280,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                                       "accepted"
                                                   ? order?.preparationTime ==
                                                           null
-                                                      ? "Preparing Order"
+                                                      ? "Ready for Pickup"
                                                       : "Your order will be ready by ${order?.preparationTime}"
                                                   : 'Order was completed at ${convertDateTimeFormat("${order?.updatedAt}")}',
                                               isActive:

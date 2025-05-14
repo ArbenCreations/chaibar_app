@@ -34,11 +34,8 @@ class ProductData {
   @primaryKey
   int? id;
   String? title;
-
   String? shortDescription;
-
   String? description;
-
   int? gst;
   String? createdAt;
   String? updatedAt;
@@ -53,7 +50,6 @@ class ProductData {
   bool? status;
   bool? isBuy1Get1;
   bool? favorite;
-  String? userVote;
   String? environmentalFee;
   String? addOnIdsList;
   String? salePrice;
@@ -69,6 +65,7 @@ class ProductData {
   String? theme;
   //String? review;
   String? productSizesList;
+  String? userVote;
 
   ProductData({
     this.id,
@@ -77,7 +74,6 @@ class ProductData {
     this.description,
     this.gst,
     this.favorite,
-    this.userVote,
     this.price,
     this.productCategoryId,
     this.createdAt,
@@ -105,6 +101,7 @@ class ProductData {
     this.vendorName,
     //this.review,
     this.theme,
+    this.userVote,
   });
 
   factory ProductData.fromJson(Map<String, dynamic> json) {
@@ -126,7 +123,7 @@ class ProductData {
       addOnIdsList: _convertToString(json["add_on_ids"]),
       featured: json["featured"] as bool?,
       favorite: json["favourite"] as bool?,
-      userVote: json["user_vote"] as String?,
+
       isBuy1Get1: json["is_buy_1_get_1"] as bool?,
       price: (json["price"] is int) ? (json["price"] as int).toDouble() : json["price"] as double?,
       upvote_percentage: (json["upvote_percentage"] is int) ? (json["upvote_percentage"] as int).toDouble() : json["upvote_percentage"] as double?,
@@ -144,6 +141,7 @@ class ProductData {
       //review: _convertReviewString(json["review"]),
       theme: json["theme"] as String?,
       productSizesList: _convertToString(json['product_sizes']),
+      userVote: json["user_vote"] as String?,
     );
   }
 
@@ -167,7 +165,7 @@ class ProductData {
     data['add_on_ids'] = this.addOnIdsList;
     data['featured'] = this.featured;
     data['favourite'] = this.favorite;
-    data['user_vote'] = this.userVote;
+
     data['is_buy_1_get_1'] = this.isBuy1Get1;
     data['upvote_percentage'] = this.upvote_percentage;
     data['downvote_percentage'] = this.downvote_percentage;
@@ -181,7 +179,7 @@ class ProductData {
     data['vendor_name'] = this.vendorName;
     data['theme'] = this.theme;
     data['product_sizes'] = this.productSizesList;
-    //data['review'] = this.review;
+    data['user_vote'] = this.userVote;
 
     return data;
   }
@@ -208,15 +206,6 @@ class ProductData {
       return [];
   }
 
-/*  ReviewProduct getProductReview() {
-    if (review != null && review!.isNotEmpty) {
-      final decoded = jsonDecode(review!) as Map<String, dynamic>;
-      return ReviewProduct.fromJson(decoded); // ✅ Correct way to convert a Map to Review
-    } else {
-      return ReviewProduct(); // ✅ Return an empty Review object if null
-    }
-  }*/
-
   List<AddOnCategory> getAddOnList() {
     if (addOn?.length != 0) {
       if (jsonDecode("${addOn}") != null) {
@@ -240,19 +229,6 @@ class ProductData {
     } else {
       throw Exception("Invalid type for intList or productSizeList: ${value
           .runtimeType}. Expected String or List.");
-    }
-  }
-
-  static String? _convertReviewString(dynamic value) {
-    if (value == null) {
-      return '{}'; // Return an empty JSON object as a string for single objects like Review
-    } else if (value is String) {
-      return value; // Return as is if already a JSON string
-    } else if (value is Map<String, dynamic>) {
-      return jsonEncode(value); // Convert Map (JSON object) to JSON string
-    } else {
-      throw Exception(
-          "Invalid type for Review: ${value.runtimeType}. Expected String or Map.");
     }
   }
 

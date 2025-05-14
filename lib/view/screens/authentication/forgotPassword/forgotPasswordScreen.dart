@@ -4,8 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../component/custom_circular_progress.dart';
 import '/utils/Util.dart';
-import '/view/component/toastMessage.dart';
-import '/view/component/CustomAlert.dart';
 import '/view/screens/authentication/loginScreen.dart';
 import '../../../../language/Languages.dart';
 import '../../../../model/request/createOtpChangePass.dart';
@@ -84,14 +82,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
         String data = "${mediaList?.email}";
-        CustomSnackBar.showSnackbar(context: context, message: apiResponse.message);
-
-        Navigator.pushNamed(context, "/OtpForgotPassScreen", arguments: data);
-
+        CustomSnackBar.showSnackbar(context: context, message: mediaList?.message);
+        Future.delayed(Duration(milliseconds: 150), () {
+          Navigator.pushNamed(context, "/OtpForgotPassScreen", arguments: data);
+        });
         setState(() {
           isOtpBoxVisible = true;
         });
-
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
         if (nonCapitalizeString("${apiResponse.message}") ==
@@ -122,9 +119,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       case Status.LOADING:
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
-        print("rwrwr ");
-        //Navigator.pushNamed(context, '/ProfileScreen');
-        CustomAlert.showToast(context: context, message: apiResponse.message);
+        CustomSnackBar.showSnackbar(context: context, message: apiResponse.message);
         Helper.clearAllSharedPreferences();
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => SigninScreen()),
@@ -150,11 +145,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get screen height and width
     screenHeight = MediaQuery.of(context).size.height;
     mediaWidth = MediaQuery.of(context).size.width;
-
-    // Check if dark mode is enabled
     isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -181,20 +173,27 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ),
       ),
-      body: Container(
-        height: screenHeight,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-            image: DecorationImage(
-                image: AssetImage("assets/signUpBack.png"), fit: BoxFit.cover)),
-        child: Stack(
-          children: [
-            _buildForgotPasswordWidget(),
-            isLoading
-                ? CustomCircularProgress()
-                : SizedBox(),
-          ],
-        ),
+      body: Stack(
+        children: [
+          Container(
+            height: screenHeight,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+                image: DecorationImage(
+                    image: AssetImage("assets/signUpBack.png"), fit: BoxFit.cover)),
+            child: Stack(
+              children: [
+                _buildForgotPasswordWidget(),
+                isLoading
+                    ? CustomCircularProgress()
+                    : SizedBox(),
+              ],
+            ),
+          ),
+          isLoading
+              ? CustomCircularProgress()
+              : SizedBox(),
+        ],
       ),
     );
   }
@@ -300,11 +299,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget _buildResetPasswordButton() {
     return MaterialButton(
       minWidth: mediaWidth * 0.7,
-      // Slightly wider button
       elevation: 5,
-      // Added elevation for depth effect
       padding: EdgeInsets.symmetric(vertical: 14),
-
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
@@ -354,6 +350,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   void _onResetPasswordPressed() async {
+    hideKeyBoard();
     if (_emailController.text.isNotEmpty) {
       setState(() {
         isLoading = true;
@@ -371,27 +368,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     } else {
       CustomSnackBar.showSnackbar(context: context, message: "Please enter email!");
     }
-  }
-
-  Widget _buildLabelText(
-      BuildContext context, String text, int size, bool isBold) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: size.toDouble(),
-        color: Colors.black,
-        fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
-      ),
-    );
-  }
-
-  Widget _buildLoadingIndicator() {
-    return Stack(
-      children: [
-        ModalBarrier(dismissible: false, color: Colors.transparent),
-        Center(child: CircularProgressIndicator()),
-      ],
-    );
   }
 
   void isInputValid() {

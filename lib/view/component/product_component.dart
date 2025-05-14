@@ -5,6 +5,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../model/response/productListResponse.dart';
 import '../../theme/CustomAppColor.dart';
 import '../../utils/Util.dart';
+import 'CircleDecorator.dart';
 
 class ProductComponent extends StatelessWidget {
   final ProductData item;

@@ -1,3 +1,4 @@
+import 'package:ChaiBar/view/component/CustomAlert.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -56,11 +57,9 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
     phoneNumberValid = false;
     newPasswordVisible = true;
     confirmPasswordVisible = true;
-    //_fetchData();
     for (var i = 0; i < _focusNodes.length; i++) {
       _focusNodes[i].addListener(() {
         if (_focusNodes[i].hasFocus && _controllers[i].text.isEmpty) {
-          // Automatically select all text when the field gains focus
           _controllers[i].selection = TextSelection(
               baseOffset: 0, extentOffset: _controllers[i].text.length);
         }
@@ -87,17 +86,16 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
       case Status.LOADING:
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
-        print("rwrwr ");
-        //Navigator.pushNamed(context, '/ProfileScreen');
         CustomSnackBar.showSnackbar(
             context: context, message: mediaList?.message ?? "Successful!!");
         Helper.clearAllSharedPreferences();
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => SigninScreen()),
-          (Route<dynamic> route) => false,
-        );
-
-        return Container(); // Return an empty container as you'll navigate away
+        Future.delayed(Duration(milliseconds: 150), () {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => SigninScreen()),
+            (Route<dynamic> route) => false,
+          );
+        });
+        return Container();
       case Status.ERROR:
         if (nonCapitalizeString("${apiResponse.message}") ==
             nonCapitalizeString(
@@ -107,8 +105,7 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
           CustomSnackBar.showSnackbar(
               context: context, message: "Invalid OTP, please try again !");
         } else {
-          CustomSnackBar.showSnackbar(
-              context: context, message: apiResponse.message);
+          CustomAlert.showToast(context: context, message: apiResponse.message);
         }
         return Center();
       case Status.INITIAL:
@@ -137,7 +134,10 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
             color: Colors.white,
           ),
           onPressed: () {
-            Navigator.pop(context);
+            hideKeyBoard();
+            Future.delayed(Duration(milliseconds: 150), () {
+              Navigator.pop(context);
+            });
           },
         ),
         shape: RoundedRectangleBorder(
@@ -165,6 +165,22 @@ class _NewPassForgotPassScreenState extends State<NewPassForgotPassScreen> {
                       fit: BoxFit.fitWidth,
                     ),
                   ),
+                  SizedBox(height: 10),
+
+                  // Descriptive text
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Text(
+                      "Please enter your new password below to reset your current password. Make sure it's strong and secure.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDarkMode ? Colors.white70 : Colors.black87,
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 20),
                   _buildPasswordTextFields(isDarkMode),
                   SizedBox(height: 15),
                   _buildSubmitButton(),

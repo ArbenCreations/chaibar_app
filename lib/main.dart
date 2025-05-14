@@ -17,6 +17,7 @@ import 'package:provider/provider.dart';
 
 import 'language/AppLocalizationsDelegate.dart';
 import 'language/LanguageList.dart';
+import 'model/db/db_service.dart';
 import 'model/request/verifyOtpChangePass.dart';
 import 'model/response/createOrderResponse.dart';
 import 'model/response/productListResponse.dart';
@@ -88,6 +89,8 @@ void main() async {
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await setupFlutterNotifications();
+  // Initialize your local Floor DB service
+  await DBService.instance.init();
   // Clear all notifications when app is resumed or opened
   WidgetsBinding.instance.addPostFrameCallback((_) {
     FlutterLocalNotificationsPlugin().cancelAll();
