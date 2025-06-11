@@ -1,11 +1,12 @@
+import 'package:ChaiBar/theme/CustomAppColor.dart';
+import 'package:ChaiBar/utils/Util.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../component/custom_circular_progress.dart';
 import '/model/request/verifyOtpChangePass.dart';
-import 'package:flutter/material.dart';
-
 import '../../../../../language/Languages.dart';
-import '../../../component/customNumberKeyboard.dart';
+import '../../../component/CustomSnackbar.dart';
+import '../../../component/custom_circular_progress.dart';
 
 class OtpForgotPassScreen extends StatefulWidget {
   final String? data;
@@ -28,14 +29,14 @@ class _OtpForgotPassScreenState extends State<OtpForgotPassScreen> {
   String otp = '';
   bool phoneNumberValid = false;
   bool isDarkMode = false;
-  List<String> _inputValues = ['', '', '', '', '', ''];
 
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
-  List<TextEditingController> _controllers =
-      List.generate(6, (index) => TextEditingController());
+  List<TextEditingController> _otpControllers =
+      List.generate(6, (_) => TextEditingController());
+  List<String> _inputValues = List.generate(6, (_) => '');
 
   void _handleKeyTap(String value) {
     setState(() {
@@ -66,13 +67,14 @@ class _OtpForgotPassScreenState extends State<OtpForgotPassScreen> {
     phoneNumberValid = false;
     newPasswordVisible = true;
     confirmPasswordVisible = true;
+    _focusNodes[0].requestFocus();
     //_fetchData();
     for (var i = 0; i < _focusNodes.length; i++) {
       _focusNodes[i].addListener(() {
-        if (_focusNodes[i].hasFocus && _controllers[i].text.isEmpty) {
+        if (_focusNodes[i].hasFocus && _otpControllers[i].text.isEmpty) {
           // Automatically select all text when the field gains focus
-          _controllers[i].selection = TextSelection(
-              baseOffset: 0, extentOffset: _controllers[i].text.length);
+          _otpControllers[i].selection = TextSelection(
+              baseOffset: 0, extentOffset: _otpControllers[i].text.length);
         }
       });
     }
@@ -80,7 +82,7 @@ class _OtpForgotPassScreenState extends State<OtpForgotPassScreen> {
 
   @override
   void dispose() {
-    for (var controller in _controllers) {
+    for (var controller in _otpControllers) {
       controller.dispose();
     }
     super.dispose();
@@ -117,93 +119,106 @@ class _OtpForgotPassScreenState extends State<OtpForgotPassScreen> {
             style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w600, color: Colors.white),
           ),
         ),
-        body: Stack(
-          children: [
-            SafeArea(
-              child: Column(
-                children: [
-                  Center(
-                    child: Image(
-                      alignment: Alignment.topLeft,
-                      height: screenHeight * 0.25,
-                      image: AssetImage("assets/forgot_pass_img.png"),
-                      fit: BoxFit.fitWidth,
+        body: GestureDetector(
+          onTap: () => {hideKeyBoard()},
+          child: SafeArea(
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    Center(
+                      child: Image(
+                        alignment: Alignment.topLeft,
+                        height: screenHeight * 0.25,
+                        image: AssetImage("assets/forgot_pass_img.png"),
+                        fit: BoxFit.fitWidth,
+                      ),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 8),
+                        child: Text(
+                          "Enter the 6-digit otp sent to your email address.",
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ),
+                    _buildOtpInput(context, mediaWidth, isDarkMode),
+                  ],
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: MaterialButton(
+                    onPressed: () => _submitOtp(),
+                    color: CustomAppColor.Primary,
+                    minWidth: mediaWidth * 0.6,
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    child: Text(
+                      "Submit",
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
-                  SizedBox(height: 10,),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0,vertical: 8),
-                      child: Text("Enter the 6-digit otp sent to your email address.",style: TextStyle(fontSize: 12),),
-                    ),
-                  ),
-                  _buildOtpInput(context, mediaWidth, isDarkMode),
-                  Spacer(),
-                  CustomNumberKeyboard(onKeyTap: (value) async {
-                    if (value == "clear") {
-                      _handleBackspace();
-                    } else if (value == "submit") {
-                      String otp = _inputValues
-                          .map((controller) => controller)
-                          .join();
-                      print("${widget.data}");
-                      VerifyOtChangePassRequest data =
-                      VerifyOtChangePassRequest(email: "${widget.data}", mobileOtp: otp , );
-                      if (otp.isNotEmpty && otp.length == 6) {
-                        Navigator.pushNamed(
-                            context, "/NewPassForgotPassScreen",
-                            arguments: data);
-                      }
-                    } else {
-                      _handleKeyTap(value);
-                    }
-                  })
-                ],
-              ),
+                ),
+                isLoading ? CustomCircularProgress() : SizedBox(),
+              ],
             ),
-            isLoading
-                ? CustomCircularProgress()
-                : SizedBox(),
-          ],
+          ),
         ),
       ),
-     /* isLoading
-          ? CustomCircularProgress()
-          : SizedBox(),*/
     ]);
   }
 
   Widget _buildOtpInput(
-      BuildContext context, double mediaWidth, bool isDarkMode) {
+      BuildContext context, double mediaWidth, bool isDarkMode)
+  {
     return Center(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(
           6,
-          (index) => GestureDetector(
-            onTap: () {
-              setState(() {
-                isKeypadVisible = true;
-              });
-            },
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 5.0),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                border: Border.all(
+          (index) => Container(
+            margin: EdgeInsets.symmetric(horizontal: 5.0),
+            width: mediaWidth / 7.68,
+            height: 68.0,
+            child: TextField(
+              focusNode: _focusNodes[index],
+              controller: _otpControllers[index],
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              maxLength: 1,
+              textInputAction:
+                  index == 5 ? TextInputAction.done : TextInputAction.next,
+              style: TextStyle(fontSize: 20),
+              decoration: InputDecoration(
+                counterText: '',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide(
                     color: isDarkMode ? Colors.grey : Colors.black54,
-                    width: 0.4),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              width: mediaWidth / 7.68,
-              height: 68.0,
-              child: Center(
-                child: Text(
-                  _inputValues[index],
-                  style: TextStyle(fontSize: 20),
+                    width: 0.4,
+                  ),
                 ),
               ),
+              onChanged: (value) {
+                if (value.length == 1) {
+                  if (index < 5) {
+                    FocusScope.of(context).nextFocus();
+                  } else {
+                    FocusScope.of(context).unfocus(); // Hide keyboard
+                  }
+                } else if (value.isEmpty && index > 0) {
+                  FocusScope.of(context).previousFocus();
+                }
+                _inputValues[index] = value;
+              },
             ),
           ),
         ),
@@ -212,7 +227,7 @@ class _OtpForgotPassScreenState extends State<OtpForgotPassScreen> {
   }
 
   void isInputValid() {
-    String otp = _controllers.map((controller) => controller.text).join();
+    String otp = _otpControllers.map((controller) => controller.text).join();
     if (otp.isNotEmpty &&
         otp.length == 6 &&
         _newPasswordController.text.isNotEmpty &&
@@ -222,6 +237,29 @@ class _OtpForgotPassScreenState extends State<OtpForgotPassScreen> {
       isValid = true;
     } else {
       isValid = false;
+    }
+  }
+
+  void _submitOtp() {
+    String otp = _inputValues.join();
+
+    print("${widget.data}");
+
+    VerifyOtChangePassRequest data = VerifyOtChangePassRequest(
+      email: "${widget.data}",
+      mobileOtp: otp,
+    );
+
+    if (otp.isNotEmpty && otp.length == 6) {
+      hideKeyBoard();
+      Navigator.pushNamed(
+        context,
+        "/NewPassForgotPassScreen",
+        arguments: data,
+      );
+    } else {
+      CustomSnackBar.showSnackbar(
+          context: context, message: "Please enter all 6 digits");
     }
   }
 }

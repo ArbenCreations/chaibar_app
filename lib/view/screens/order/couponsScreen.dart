@@ -36,7 +36,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
   bool isDataLoading = false;
   late ChaiBarDB database;
   var _connectivityService = ConnectivityService();
-
+  late MainViewModel _mainViewModel;
   String? theme = "";
   String? vendorId = "";
   Color primaryColor = CustomAppColor.PrimaryAccent;
@@ -67,6 +67,12 @@ class _CouponsScreenState extends State<CouponsScreen> {
 
     isDataLoading = true;
     _getCouponDetails();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _mainViewModel = Provider.of<MainViewModel>(context, listen: false);
   }
 
   @override
@@ -173,10 +179,6 @@ class _CouponsScreenState extends State<CouponsScreen> {
   }
 
   Future<void> _getCouponDetails() async {
-    if (!mounted) return;
-
-    final BuildContext currentContext = context;
-
     final bool isConnected = await _connectivityService.isConnected();
     print("isConnected - $isConnected");
 
@@ -187,8 +189,8 @@ class _CouponsScreenState extends State<CouponsScreen> {
       });
 
       CustomSnackBar.showSnackbar(
-        context: currentContext,
-        message: '${Languages.of(currentContext)?.labelNoInternetConnection}',
+        context: context,
+        message: '${Languages.of(context)?.labelNoInternetConnection}',
       );
       return;
     }
@@ -198,15 +200,13 @@ class _CouponsScreenState extends State<CouponsScreen> {
       customerId: customerId,
     );
 
-    await Provider.of<MainViewModel>(currentContext, listen: false)
-        .fetchCouponList("api/v1/app/customers/get_customer_coupons", request);
+    await _mainViewModel.fetchCouponList("api/v1/app/customers/get_customer_coupons", request);
 
     if (!mounted) return;
 
-    final ApiResponse apiResponse =
-        Provider.of<MainViewModel>(currentContext, listen: false).response;
+    final ApiResponse apiResponse = _mainViewModel.response;
 
-    getCouponResponse(currentContext, apiResponse);
+    getCouponResponse(context, apiResponse);
   }
 
   Future<Widget> getCouponResponse(

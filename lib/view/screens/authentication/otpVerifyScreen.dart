@@ -25,8 +25,6 @@ class OTPVerifyScreen extends StatefulWidget {
 
 class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
   List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
-  List<TextEditingController> _controllers =
-      List.generate(6, (index) => TextEditingController());
   final List<String> _otp = List.generate(6, (_) => '');
 
   String dropdownValue = "";
@@ -35,8 +33,11 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
   String phoneNo = "";
   late double mediaWidth;
   bool isLoading = false;
-  List<String> _inputValues = ['', '', '', '', '', ''];
   late DateTime otpEndTime;
+
+  List<TextEditingController> _otpControllers =
+  List.generate(6, (_) => TextEditingController());
+  List<String> _inputValues = List.generate(6, (_) => '');
 
   final ConnectivityService _connectivityService = ConnectivityService();
 
@@ -45,12 +46,13 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
     super.initState();
     isValid = false;
     resendOtp = false;
+    _focusNodes[0].requestFocus();
     otpEndTime = DateTime.now().add(Duration(minutes: 1, seconds: 30));
     for (var i = 0; i < _focusNodes.length; i++) {
       _focusNodes[i].addListener(() {
-        if (_focusNodes[i].hasFocus && _controllers[i].text.isEmpty) {
-          _controllers[i].selection = TextSelection(
-              baseOffset: 0, extentOffset: _controllers[i].text.length);
+        if (_focusNodes[i].hasFocus && _otpControllers[i].text.isEmpty) {
+          _otpControllers[i].selection = TextSelection(
+              baseOffset: 0, extentOffset: _otpControllers[i].text.length);
         }
       });
     }
@@ -80,7 +82,7 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
 
   @override
   void dispose() {
-    for (var controller in _controllers) {
+    for (var controller in _otpControllers) {
       controller.dispose();
     }
     for (var focusNode in _focusNodes) {
@@ -171,11 +173,11 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
     double screenHeight = MediaQuery.of(context).size.height;
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Column(
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Row(
@@ -264,7 +266,7 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
                             ),
                           ),
                           Spacer(),
-                          CustomNumberKeyboard(onKeyTap: (value) async {
+                        /*  CustomNumberKeyboard(onKeyTap: (value) async {
                             if (value == "clear") {
                               _handleBackspace();
                             } else if (value == "submit") {
@@ -317,7 +319,7 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
                             } else {
                               _handleKeyTap(value);
                             }
-                          }),
+                          }),*/
                           //_buildFooter(context),
                         ],
                       ),
@@ -326,9 +328,23 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
                 ),
               ],
             ),
-          ),
-          isLoading ? CustomCircularProgress() : SizedBox(),
-        ],
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: MaterialButton(
+                onPressed: () => _submitOtp(),
+                color: CustomAppColor.Primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                minWidth: mediaWidth * 0.65,
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  "Submit",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+            isLoading ? CustomCircularProgress() : SizedBox(),
+          ],
+        ),
       ),
     );
   }
@@ -365,28 +381,51 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
           );
   }
   Widget _buildOtpInput(
-      BuildContext context, double mediaWidth, bool isDarkMode) {
+      BuildContext context, double mediaWidth, bool isDarkMode)
+  {
     return Center(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(
           6,
-          (index) => Container(
+              (index) => Container(
             margin: EdgeInsets.symmetric(horizontal: 5.0),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(
-                  color: isDarkMode ? Colors.grey : Colors.black54, width: 0.4),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            width: mediaWidth / 8.1,
-            height: 50.0,
-            child: Center(
-              child: Text(
-                _inputValues[index],
-                style: TextStyle(fontSize: 20),
+            width: mediaWidth / 7.68,
+            height: 68.0,
+            child: TextField(
+              focusNode: _focusNodes[index],
+              controller: _otpControllers[index],
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              maxLength: 1,
+              textInputAction:
+              index == 5 ? TextInputAction.done : TextInputAction.next,
+              style: TextStyle(fontSize: 20),
+              decoration: InputDecoration(
+                counterText: '',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide(
+                    color: isDarkMode ? Colors.grey : Colors.black54,
+                    width: 0.4,
+                  ),
+                ),
               ),
+              onChanged: (value) {
+                if (value.length == 1) {
+                  if (index < 5) {
+                    FocusScope.of(context).nextFocus();
+                  } else {
+                    FocusScope.of(context).unfocus(); // Hide keyboard
+                  }
+                } else if (value.isEmpty && index > 0) {
+                  FocusScope.of(context).previousFocus();
+                }
+                _inputValues[index] = value;
+              },
             ),
           ),
         ),
@@ -432,5 +471,55 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
             decoration: TextDecoration.underline,
           ),
         ));
+  }
+
+  Future<void> _submitOtp() async {
+    String otp = _inputValues.join();
+    if (otp.isNotEmpty && otp.length == 6) {
+      if (otp.isNotEmpty && otp.length == 6) {
+        setState(() {
+          isLoading = true;
+        });
+
+        bool isConnected =
+            await _connectivityService.isConnected();
+        if (!isConnected) {
+          setState(() {
+            isLoading = false;
+            CustomSnackBar.showSnackbar(
+                context: context,
+                message:
+                '${Languages.of(context)?.labelNoInternetConnection}');
+          });
+        } else {
+          OtpVerifyRequest phoneRequest =
+          OtpVerifyRequest(
+              customer: CustomerOtpVerify(
+                phoneNumber: "${widget.data}",
+                mobileOtp: otp,
+              ));
+          await Provider.of<MainViewModel>(context,
+              listen: false)
+              .signUpOtpVerifyData(
+              "/api/v1/app/temp_customers/verify_customer_signup",
+              phoneRequest);
+
+          ApiResponse apiResponse =
+              Provider.of<MainViewModel>(context,
+                  listen: false)
+                  .response;
+          getOtpResponseDataWidget(
+              context, apiResponse);
+        }
+      } else {
+        CustomSnackBar.showSnackbar(
+            context: context,
+            message:
+            '${Languages.of(context)?.labelPleaseEnterValidPhoneNo}');
+      }
+    }else {
+      CustomSnackBar.showSnackbar(
+          context: context, message: "Please enter all 6 digits");
+    }
   }
 }

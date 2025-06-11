@@ -80,7 +80,7 @@ class _DashboardCategoryComponentState
             child: Column(
               children: [
                 Container(
-                  width: 80,
+                  width: 90,
                   height: 80,
                   margin: EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
@@ -122,7 +122,7 @@ class _DashboardCategoryComponentState
                         child: Text(
                           "$currentCategoryName",
                           textAlign: TextAlign.center,
-                          maxLines: 2,
+                          maxLines: 1,
                           style: TextStyle(
                             color: isSelected ? Colors.white : Colors.black54,
                             fontSize: 11,

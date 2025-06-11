@@ -8,7 +8,6 @@ import '/model/response/vendorSearchResponse.dart';
 import '/theme/CustomAppColor.dart';
 import '/utils/Util.dart';
 import '/view/component/product_component.dart';
-import '../../model/response/vendorListResponse.dart';
 import '../../model/viewModel/mainViewModel.dart';
 import '../../utils/Helper.dart';
 import '../../utils/apiHandling/api_response.dart';
@@ -28,13 +27,14 @@ class ItemSearchScreen extends SearchDelegate {
     query = initialQuery; // Set the initial query
   }
 
-  List<dynamic> _productResults = [];
+  List<ProductData> _productResults = [];
   List<dynamic> _vendorResults = [];
   int vendorId = 0;
 
   List<dynamic> _searchResults = [];
   final ConnectivityService _connectivityService = ConnectivityService();
   static const maxDuration = Duration(seconds: 2);
+  String? _lastQuery;
 
   @override
   List<Widget> buildActions(BuildContext context) {
@@ -92,7 +92,8 @@ class ItemSearchScreen extends SearchDelegate {
 
             snapshot.data!.forEach((result) {
               if (result != null) {
-                _productResults.add(result);
+                ProductData productData = result;
+                _productResults.add(productData);
               }
             });
 
@@ -165,13 +166,14 @@ class ItemSearchScreen extends SearchDelegate {
     );
   }
 
-  Widget _buildProductCard(dynamic result, BuildContext context) {
+  Widget _buildProductCard(ProductData result, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(5.0),
       child: GestureDetector(
         onTap: () {
           hideKeyBoard();
           Future.delayed(Duration(milliseconds: 150), () {
+            result.vendorId = vendorId;
             Navigator.pushReplacementNamed(context, "/ProductDetailScreen",
                 arguments: result);
           });
@@ -184,76 +186,47 @@ class ItemSearchScreen extends SearchDelegate {
             screenHeight: MediaQuery.of(context).size.height,
             showFavIcon: true,
             onAddTap: () {
-              Navigator.pushNamed(context, "/ProductDetailScreen",
-                  arguments: result);
+              jumpToNewPage(context, result);
             },
             onMinusTap: () {
-              Navigator.pushNamed(context, "/ProductDetailScreen",
-                  arguments: result);
+              jumpToNewPage(context, result);
             },
             onPlusTap: () {
-              Navigator.pushNamed(context, "/ProductDetailScreen",
-                  arguments: result);
+              jumpToNewPage(context, result);
             },
             onFavoriteTap: () {
-              Navigator.pushNamed(context, "/ProductDetailScreen",
-                  arguments: result);
+              jumpToNewPage(context, result);
             },
             primaryColor: CustomAppColor.Primary),
       ),
     );
-    /* },
-    );*/
   }
 
-  Widget _buildResultTile(dynamic result, BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        VendorData data = result?.vendor;
-        hideKeyBoard();
-        Navigator.pushReplacementNamed(context, "/HomeScreen", arguments: data);
-      },
-      child: ProductComponent(
-          item: result,
-          mediaWidth: MediaQuery.of(context).size.width,
-          screenHeight: MediaQuery.of(context).size.height,
-          showFavIcon: true,
-          isDarkMode: isDarkMode,
-          onAddTap: () {
-            Navigator.pushNamed(context, "/ProductDetailScreen",
-                arguments: result);
-          },
-          onMinusTap: () {
-            Navigator.pushNamed(context, "/ProductDetailScreen",
-                arguments: result);
-          },
-          onPlusTap: () {
-            Navigator.pushNamed(context, "/ProductDetailScreen",
-                arguments: result);
-          },
-          onFavoriteTap: () {
-            Navigator.pushNamed(context, "/ProductDetailScreen",
-                arguments: result);
-          },
-          primaryColor: CustomAppColor.Primary),
-    );
+  void jumpToNewPage(BuildContext context, ProductData result) {
+    hideKeyBoard();
+    Future.delayed(Duration(milliseconds: 150), () {
+      result.vendorId = vendorId;
+      Navigator.pushReplacementNamed(context, "/ProductDetailScreen",
+          arguments: result);
+    });
   }
-
   Future<List<ProductData>> fetchSearchResults(
       String query, BuildContext context) async {
+    if (query == _lastQuery) return _productResults;
+    _lastQuery = query;
     bool isConnected = await _connectivityService.isConnected();
     if (!isConnected) {
       CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       return [];
     } else {
-      await Future.delayed(Duration(milliseconds: 2));
-      VendorSearchRequest request =
-          VendorSearchRequest(query: query, vendorId: vendorId);
-      await Provider.of<MainViewModel>(context, listen: false)
-          .fetchVendorSearchResults(
-              "/api/v1/app/products/search_filter", request);
-      ApiResponse apiResponse =
-          Provider.of<MainViewModel>(context, listen: false).response;
+      final request = VendorSearchRequest(query: query, vendorId: vendorId!);
+      final viewModel = Provider.of<MainViewModel>(context, listen: false);
+      await viewModel.fetchVendorSearchResults(
+        "/api/v1/app/products/search_filter",
+        request,
+      );
+
+      final apiResponse = viewModel.response;
       return getProductList(context, apiResponse) ?? [];
     }
   }
@@ -263,7 +236,6 @@ class ItemSearchScreen extends SearchDelegate {
     VendorSearchResponse? vendorSearchResponse =
         apiResponse.data as VendorSearchResponse?;
     var message = apiResponse.message.toString();
-
     switch (apiResponse.status) {
       case Status.LOADING:
         return vendorSearchResponse?.data;

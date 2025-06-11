@@ -3,13 +3,13 @@ import 'dart:convert';
 
 class SuccessCallbackResponse {
   OrderData? order;
-  String message;
-  int status;
+  String? message;
+  int? status;
 
   SuccessCallbackResponse({
-    required this.order,
-    required this.message,
-    required this.status,
+    this.order,
+    this.message,
+    this.status,
   });
 
   factory SuccessCallbackResponse.fromJson(Map<String, dynamic> json) {

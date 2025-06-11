@@ -46,7 +46,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool isLoading = false;
   final ConnectivityService _connectivityService = ConnectivityService();
   static const maxDuration = Duration(seconds: 2);
-
+  late MainViewModel _mainViewModel;
   bool inputValid = false;
   bool isDarkMode = false;
   String? deviceToken;
@@ -67,6 +67,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     sheetConfirmPasswordVisible = true;
     inputValid = false;
     isDarkMode = false;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _mainViewModel = Provider.of<MainViewModel>(context, listen: false);
   }
 
   final maskFormatter = MaskTextInputFormatter(
@@ -905,10 +911,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           phoneNumber: cleanPhone,
         ));
 
-        await Provider.of<MainViewModel>(context, listen: false).signUpData(
+        await _mainViewModel.signUpData(
             "api/v1/app/temp_customers/initiate_temp_customer", request);
         ApiResponse apiResponse =
-            Provider.of<MainViewModel>(context, listen: false).response;
+            _mainViewModel.response;
         getSignUpResponse(context, apiResponse, request);
       }
     }
@@ -927,10 +933,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       phoneNumber: phoneNo,
     ));
 
-    await Provider.of<MainViewModel>(context, listen: false).signUpData(
+    await _mainViewModel.signUpData(
         "api/v1/app/temp_customers/initiate_temp_customer", request);
     ApiResponse apiResponse =
-        Provider.of<MainViewModel>(context, listen: false).response;
+        _mainViewModel.response;
     getSignUpResponse(context, apiResponse, request);
   }
 
@@ -1209,11 +1215,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               message: '${Languages.of(context)?.labelNoInternetConnection}');
         });
       } else {
-        await Provider.of<MainViewModel>(context, listen: false)
+        await _mainViewModel
             .signInWithPass("/api/v1/app/customers/sign_in", signInRequest);
 
         ApiResponse apiResponse =
-            Provider.of<MainViewModel>(context, listen: false).response;
+            _mainViewModel.response;
         getAppleSignInResponse(context, apiResponse, user);
       }
     }

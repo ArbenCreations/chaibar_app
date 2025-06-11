@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../../model/db/DatabaseHelper.dart';
 import '../../../model/db/db_service.dart';
 import '/model/db/dataBaseDao.dart';
 import '/model/response/productDataDB.dart';
@@ -14,7 +13,6 @@ import '/model/response/productListResponse.dart';
 import '/utils/Helper.dart';
 import '/utils/Util.dart';
 import '../../../language/Languages.dart';
-import '../../../model/db/ChaiBarDB.dart';
 import '../../../model/request/itemReviewRequest.dart';
 import '../../../model/request/markFavoriteRequest.dart';
 import '../../../model/response/bannerListResponse.dart';
@@ -30,12 +28,11 @@ import '../../component/CustomAlert.dart';
 import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
 import '../../component/custom_circular_progress.dart';
-import '../../component/product_component.dart';
 import '../../component/session_expired_dialog.dart';
 import '../../component/view_cart_container.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  final ProductData? data; // Define the 'data' parameter here
+  final ProductData? data;
 
   ProductDetailScreen({Key? key, this.data}) : super(key: key);
 
@@ -73,7 +70,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   List<AddOnCategory> addOnList = [];
   List<AddOnCategory> cartAddOnList = [];
   List<AddOnDetails> addOnDetails = [];
-
+  ProductData? selectedProduct;
   bool isLoading = false;
   bool? isVoteUp = false;
   bool? isVoteDown = false;
@@ -85,7 +82,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   final ConnectivityService _connectivityService = ConnectivityService();
   static const maxDuration = Duration(seconds: 2);
   late AnimationController _controller;
-
+  late MainViewModel _mainViewModel;
   Color primaryColor = CustomAppColor.Primary;
   Color? secondaryColor = Colors.red[100];
   Color? lightColor = Colors.red[50];
@@ -94,16 +91,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   @override
   void initState() {
     super.initState();
-
+    if (widget.data != null) {
+      selectedProduct = widget.data!;
+    }
     Helper.getVendorDetails().then((onValue) {
       setState(() {
         vendorData = onValue;
-        vendorId = int.parse("${onValue?.id}"); //?? VendorData();
+        vendorId = int.parse("${onValue?.id}");
       });
     });
     Helper.getProfileDetails().then((onValue) {
       setState(() {
-        customerId = int.parse("${onValue?.id}"); //?? VendorData();
+        customerId = int.parse("${onValue?.id}");
       });
     });
 
@@ -113,38 +112,40 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       vsync: this,
     );
     initializeDatabase();
-    setState(() {
-      productSizeList = widget.data?.getProductSizeList() ?? [];
+     setState(() {
+      productSizeList = selectedProduct?.getProductSizeList() ?? [];
       checkedStates = List<bool>.filled(productSizeList.length, false);
-      addOnList = widget.data?.getAddOnList() ?? [];
-
-      /* if (widget.data!.upvote_percentage != null &&
-          widget.data!.upvote_percentage! > 0 == true) {
+      addOnList = selectedProduct?.getAddOnList() ?? [];
+      if (selectedProduct!.userVote != null && selectedProduct!.userVote! == "upvote") {
         isVoteUp = true;
-      } else if (widget.data!.downvote_percentage != null &&
-          widget.data!.downvote_percentage! > 0 == true) {
-        isVoteDown = true;
-      }*/
-      if (widget.data!.userVote != null && widget.data!.userVote! == "upvote") {
-        isVoteUp = true;
-      } else if (widget.data!.userVote != null &&
-          widget.data!.userVote! == "downvote") {
+      } else if (selectedProduct!.userVote != null &&
+          selectedProduct!.userVote! == "downvote") {
         isVoteDown = true;
       }
     });
+  }
 
-    print("getProductReview : ${widget.data?.downvote_percentage}");
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _mainViewModel = Provider.of<MainViewModel>(context, listen: false);
   }
 
   void _toggleContainer() {
     setState(() {
       if (_isVisible) {
-        _controller.forward(); // Play the animation forward
+        _controller.forward();
       } else {
-        _controller.reverse(); // Play the animation in reverse
+        _controller.reverse();
       }
     });
   }
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -170,8 +171,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 children: [
                   Stack(
                     children: [
-                      widget.data?.imageUrl == "" ||
-                              widget.data?.imageUrl == null
+                      selectedProduct?.imageUrl == "" ||
+                              selectedProduct?.imageUrl == null
                           ? Container(
                               decoration: BoxDecoration(color: primaryColor),
                               child: Image.asset(
@@ -187,8 +188,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                               ),
                               child: ClipRRect(
                                 child: CachedNetworkImage(
-                                  imageUrl: widget.data?.imageUrl ?? "",
-                                  // Prevents null errors
+                                  imageUrl: selectedProduct?.imageUrl ?? "",
                                   height: screenHeight * 0.4,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
@@ -238,7 +238,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                 ),
                               ),
                             ),
-                            widget.data?.featured == true
+                            selectedProduct?.featured == true
                                 ? Container(
                                     padding:
                                         EdgeInsets.symmetric(horizontal: 4),
@@ -260,7 +260,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                           ],
                         ),
                       ),
-                      widget.data?.upvote_percentage == "null"
+                      selectedProduct?.upvote_percentage == "null"
                           ? Positioned(
                               bottom: 6,
                               right: 8,
@@ -282,7 +282,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                               Icon(Icons.thumb_up, size: 14),
                                               SizedBox(width: 2),
                                               Text(
-                                                  "${widget.data?.upvote_percentage ?? 0}%",
+                                                  "${selectedProduct?.upvote_percentage ?? 0}%",
                                                   style:
                                                       TextStyle(fontSize: 12)),
                                             ],
@@ -292,29 +292,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                     ),
                                   ),
                                   SizedBox(height: 5),
-                                  /* Container(
-                              padding: EdgeInsets.symmetric(horizontal: 4),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(4),
-                                color: Colors.white,
-                              ),
-                              child: Align(
-                                alignment: Alignment.bottomRight,
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(Icons.thumb_down, size: 14),
-                                        SizedBox(width: 2),
-                                        Text(
-                                            "${widget.data?.downvote_percentage}%",
-                                            style: TextStyle(fontSize: 12)),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),*/
                                 ],
                               ),
                             )
@@ -356,7 +333,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                   SizedBox(
                                     height: 8,
                                   ),
-                                  widget.data?.isBuy1Get1 == true
+                                  selectedProduct?.isBuy1Get1 == true
                                       ? Text(
                                           "BUY 1 GET 1",
                                           style: TextStyle(
@@ -381,7 +358,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                             //width: 200,
                                             child: Text(
                                               capitalizeFirstLetter(
-                                                  "${widget.data?.title}"),
+                                                  "${selectedProduct?.title}"),
                                               maxLines: 2,
                                               style: TextStyle(
                                                   fontSize: 18,
@@ -403,7 +380,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                               child: Card(
                                                 shape: RoundedRectangleBorder(
                                                     side: BorderSide(
-                                                      color: widget.data
+                                                      color: selectedProduct
                                                                   ?.quantity ==
                                                               0
                                                           ? Colors.grey
@@ -420,9 +397,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                   child: Icon(
                                                     Icons.remove,
                                                     size: 20,
-                                                    color:
-                                                        widget.data?.quantity ==
-                                                                0
+                                                    color: selectedProduct
+                                                                ?.quantity ==
+                                                            0
                                                             ? Colors.grey
                                                             : CustomAppColor
                                                                 .PrimaryAccent,
@@ -432,26 +409,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                               onTap: () {
                                                 setState(() {
                                                   if (int.parse(
-                                                          "${widget.data?.quantity}") >
+                                                          "${selectedProduct?.quantity}") >
                                                       0) {
-                                                    if (widget.data
+                                                    if (selectedProduct
                                                                 ?.isBuy1Get1 !=
                                                             null &&
-                                                        widget.data
+                                                        selectedProduct
                                                                 ?.isBuy1Get1 ==
                                                             true) {
-                                                      widget.data
+                                                      selectedProduct
                                                           ?.quantity = int.parse(
-                                                              "${widget.data?.quantity}") -
+                                                              "${selectedProduct?.quantity}") -
                                                           2;
-                                                      _updateCart(widget.data
-                                                          as ProductData);
+                                                      _updateCart(
+                                                          selectedProduct
+                                                              as ProductData);
                                                       deleteProductInDb(widget
                                                           .data as ProductData);
                                                     } else {
-                                                      widget.data?.quantity--;
-                                                      _updateCart(widget.data
-                                                          as ProductData);
+                                                      selectedProduct
+                                                          ?.quantity--;
+                                                      _updateCart(
+                                                          selectedProduct
+                                                              as ProductData);
                                                       deleteProductInDb(widget
                                                           .data as ProductData);
                                                     }
@@ -463,7 +443,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                               width: 5,
                                             ),
                                             Text(
-                                              "${widget.data?.quantity}",
+                                              "${selectedProduct?.quantity}",
                                               style: TextStyle(
                                                   fontSize: 18,
                                                   color: Colors.black54),
@@ -495,18 +475,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                 ),
                                               ),
                                               onTap: () {
-                                                // if(addOnList.)
                                                 setState(() {
-                                                  if (widget.data?.isBuy1Get1 ==
+                                                  if (selectedProduct
+                                                              ?.isBuy1Get1 ==
                                                           null ||
-                                                      widget.data?.isBuy1Get1 ==
+                                                      selectedProduct
+                                                              ?.isBuy1Get1 ==
                                                           false) {
                                                     if (int.parse(
-                                                            "${widget.data?.quantity}") <
+                                                            "${selectedProduct?.quantity}") <
                                                         int.parse(
-                                                            "${widget.data?.qtyLimit}")) {
-                                                      widget.data?.quantity++;
-                                                      if (widget.data?.addOn
+                                                            "${selectedProduct?.qtyLimit}")) {
+                                                      selectedProduct
+                                                          ?.quantity++;
+                                                      if (selectedProduct?.addOn
                                                               ?.isNotEmpty ==
                                                           true) {
                                                         List<AddOnCategory>
@@ -559,26 +541,28 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                           print(
                                                               "addOnCategories :: ${jsonEncode(addOnCategories)}");
                                                         });
-                                                        widget.data?.addOn =
+                                                        selectedProduct?.addOn =
                                                             jsonEncode(
                                                                 addOnCategories);
                                                       }
-                                                      _updateCart(widget.data
-                                                          as ProductData);
-                                                      addProductInDb(widget.data
-                                                          as ProductData);
+                                                      _updateCart(
+                                                          selectedProduct
+                                                              as ProductData);
+                                                      addProductInDb(
+                                                          selectedProduct
+                                                              as ProductData);
                                                     }
                                                   } else {
                                                     if (int.parse(
-                                                            "${widget.data?.quantity}") <
+                                                            "${selectedProduct?.quantity}") <
                                                         2 *
                                                             int.parse(
-                                                                "${widget.data?.qtyLimit}")) {
-                                                      widget.data
+                                                                "${selectedProduct?.qtyLimit}")) {
+                                                      selectedProduct
                                                           ?.quantity = int.parse(
-                                                              "${widget.data?.quantity}") +
+                                                              "${selectedProduct?.quantity}") +
                                                           2;
-                                                      if (widget.data?.addOn
+                                                      if (selectedProduct?.addOn
                                                               ?.isNotEmpty ==
                                                           true) {
                                                         List<AddOnCategory>
@@ -631,14 +615,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                           print(
                                                               "addOnCategories :: ${jsonEncode(addOnCategories)}");
                                                         });
-                                                        widget.data?.addOn =
+                                                        selectedProduct?.addOn =
                                                             jsonEncode(
                                                                 addOnCategories);
                                                       }
-                                                      _updateCart(widget.data
-                                                          as ProductData);
-                                                      addProductInDb(widget.data
-                                                          as ProductData);
+                                                      _updateCart(
+                                                          selectedProduct
+                                                              as ProductData);
+                                                      addProductInDb(
+                                                          selectedProduct
+                                                              as ProductData);
                                                     }
                                                   }
                                                 });
@@ -656,14 +642,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        "\$${widget.data?.price}",
+                                        "\$${selectedProduct?.price}",
                                         style: TextStyle(
                                             fontSize: 22,
                                             fontWeight: FontWeight.bold,
                                             color:
                                                 CustomAppColor.PrimaryAccent),
                                       ),
-                                      widget.data?.featured == false
+                                      selectedProduct?.featured == false
                                           ? Row(
                                               children: [
                                                 GestureDetector(
@@ -725,7 +711,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                               children: [
                                                 Text(
                                                   capitalizeFirstLetter(
-                                                      "${widget.data?.shortDescription}"),
+                                                      "${selectedProduct?.shortDescription}"),
                                                   style: TextStyle(
                                                       fontSize: 14,
                                                       fontWeight:
@@ -742,7 +728,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                 ),
                                                 Text(
                                                   capitalizeFirstLetter(
-                                                      "${widget.data?.description}"),
+                                                      "${selectedProduct?.description}"),
                                                   style: TextStyle(
                                                       fontSize: 13,
                                                       color: isDarkMode
@@ -762,243 +748,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                   SizedBox(
                                     height: 20,
                                   ),
-                                  /*productSizeList.isNotEmpty
-                                            ? Text(
-                                                "SELECT SIZE",
-                                                style: TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.bold),
-                                              )
-                                            : SizedBox(),
-                                        productSizeList.isNotEmpty
-                                            ? Container(
-                                                padding: EdgeInsets.symmetric(
-                                                    vertical: 4),
-                                                child: Wrap(
-                                                  spacing: 5,
-                                                  // Horizontal space between items
-                                                  children: List.generate(
-                                                      productSizeList.length,
-                                                      (index) {
-                                                    return CheckboxListTile(
-                                                      checkboxShape: CircleBorder(),
-                                                      controlAffinity:
-                                                          ListTileControlAffinity
-                                                              .leading,
-                                                      visualDensity: VisualDensity(
-                                                          vertical: -2,
-                                                          horizontal: -4),
-                                                      secondary: Container(
-                                                        margin: EdgeInsets.all(6),
-                                                        padding:
-                                                            EdgeInsets.symmetric(
-                                                                horizontal: 4,
-                                                                vertical: 2),
-                                                        decoration: BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                  12),
-                                                        ),
-                                                        child: Row(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          children: [
-                                                            GestureDetector(
-                                                                child: Card(
-                                                                  shape:
-                                                                      RoundedRectangleBorder(
-                                                                          side:
-                                                                              BorderSide(
-                                                                            color:
-                                                                                primaryColor,
-                                                                            width:
-                                                                                0.8,
-                                                                          ),
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(
-                                                                                  8)),
-                                                                  child: Padding(
-                                                                    padding:
-                                                                        const EdgeInsets
-                                                                            .all(
-                                                                            4.0),
-                                                                    child: Icon(
-                                                                      Icons.remove,
-                                                                      size: 16,
-                                                                      color:
-                                                                          primaryColor,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                onTap: () {
-                                                                  if (checkedStates[
-                                                                      index]) {
-                                                                    setState(() {
-                                                                      if (int.parse(
-                                                                              "${productSizeList[index].quantity}") >
-                                                                          0) {
-                                                                        productSizeList[
-                                                                                index]
-                                                                            .quantity--;
-                                                                        widget.data
-                                                                            ?.quantity--;
-                                                                        setState(
-                                                                            () {
-                                                                          widget.data
-                                                                                  ?.productSizesList =
-                                                                              jsonEncode(
-                                                                                  productSizeList);
-                                                                        });
-                                                                        _updateCart(
-                                                                            widget.data
-                                                                                as ProductData);
-                                                                        deleteProductInDb(
-                                                                            widget.data
-                                                                                as ProductData);
-                                                                      }
-                                                                    });
-                                                                  }
-                                                                }),
-                                                            SizedBox(
-                                                              width: 5,
-                                                            ),
-                                                            Text(
-                                                              "${productSizeList[index].quantity}",
-                                                              style: TextStyle(
-                                                                  fontSize: 12),
-                                                            ),
-                                                            SizedBox(
-                                                              width: 4,
-                                                            ),
-                                                            GestureDetector(
-                                                                child: Card(
-                                                                  shape:
-                                                                      RoundedRectangleBorder(
-                                                                          side:
-                                                                              BorderSide(
-                                                                            color:
-                                                                                primaryColor,
-                                                                            width:
-                                                                                0.8,
-                                                                          ),
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(
-                                                                                  8)),
-                                                                  color:
-                                                                      primaryColor,
-                                                                  child: Padding(
-                                                                    padding:
-                                                                        const EdgeInsets
-                                                                            .all(
-                                                                            4.0),
-                                                                    child: Center(
-                                                                      child: Icon(
-                                                                        Icons.add,
-                                                                        size: 16,
-                                                                        color: Colors
-                                                                            .white,
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                onTap: () {
-                                                                  if (checkedStates[
-                                                                      index]) {
-                                                                    setState(() {
-                                                                      if (int.parse(
-                                                                              "${widget.data?.quantity}") <
-                                                                          int.parse(
-                                                                              "${widget.data?.qtyLimit}")) {
-                                                                        productSizeList[
-                                                                                index]
-                                                                            .quantity++;
-                                                                        widget.data
-                                                                            ?.quantity++;
-                                                                        setState(
-                                                                            () {
-                                                                          widget.data
-                                                                                  ?.productSizesList =
-                                                                              jsonEncode(
-                                                                                  productSizeList);
-                                                                        });
-                                                                        _updateCart(
-                                                                            widget.data
-                                                                                as ProductData);
-                                                                        addProductInDb(
-                                                                            widget.data
-                                                                                as ProductData);
-                                                                      }
-                                                                    });
-                                                                  }
-                                                                }),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                      title: Row(
-                                                        children: [
-                                                          Text(
-                                                            capitalizeFirstLetter(
-                                                                '${productSizeList[index].size}'),
-                                                            style: TextStyle(
-                                                                fontSize: 14),
-                                                          ),
-                                                          Spacer(),
-                                                          Text(
-                                                            '\$${productSizeList[index].price}',
-                                                            style: TextStyle(
-                                                                fontSize: 13),
-                                                          )
-                                                        ],
-                                                      ),
-                                                      contentPadding:
-                                                          EdgeInsets.symmetric(
-                                                              horizontal: 6,
-                                                              vertical: 0),
-                                                      onChanged: (bool? value) {
-                                                        setState(() {
-                                                          checkedStates[index] =
-                                                              value ?? false;
-                                                          if (!checkedStates[
-                                                              index]) {
-                                                            setState(() {
-                                                              widget.data
-                                                                  ?.quantity = int
-                                                                      .parse(
-                                                                          "${widget.data?.quantity}") -
-                                                                  productSizeList[
-                                                                          index]
-                                                                      .quantity;
-                                                              if (int.parse(
-                                                                      "${widget.data?.quantity}") <
-                                                                  0) {
-                                                                widget.data
-                                                                    ?.quantity = 0;
-                                                              }
-                                                              productSizeList[index]
-                                                                  .quantity = 0;
-                                                              widget.data
-                                                                      ?.productSizesList =
-                                                                  jsonEncode(
-                                                                      productSizeList);
-                                                              _updateCart(widget
-                                                                      .data
-                                                                  as ProductData);
-                                                              deleteProductInDb(
-                                                                  widget.data
-                                                                      as ProductData);
-                                                            });
-                                                          }
-                                                        });
-                                                      },
-                                                      value: productSizeList[index]
-                                                                  .quantity >
-                                                              0
-                                                          ? true
-                                                          : checkedStates[index],
-                                                    );
-                                                  }).toList(),
-                                                ))
-                                            : SizedBox(),*/
                                   addOnList.isNotEmpty
                                       ? Row(
                                           children: [
@@ -1160,7 +909,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                                               () {
                                                                             result.addOns?[index].isSelected =
                                                                                 value ?? false;
-                                                                            widget.data?.addOn = jsonEncode(addOnList);
+                                                                            selectedProduct?.addOn =
+                                                                                jsonEncode(addOnList);
                                                                           });
                                                                         },
                                                                       ),
@@ -1245,7 +995,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                                                   setState(() {
                                                                     result.selectedAddOnIdInSingleType =
                                                                         newValue;
-                                                                    widget.data
+                                                                    selectedProduct
                                                                             ?.addOn =
                                                                         jsonEncode(
                                                                             addOnList);
@@ -1340,7 +1090,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                             runSpacing: 5,
                                             children: menuItems.map((item) {
                                               //final item = menuItems[index];
-                                              return item.id != widget.data?.id
+                                              return item.id != selectedProduct?.id
                                                   ? ProductComponent(
                                                       isDarkMode: isDarkMode,
                                                       item: item,
@@ -1459,7 +1209,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               alignment: Alignment.bottomCenter,
               child: ViewCartContainer(
                   cartItemCount: cartItemCount,
-                  theme: "${widget.data?.theme}",
+                  theme: "${selectedProduct?.theme}",
                   controller: _controller,
                   primaryColor: primaryColor),
             ),
@@ -1501,11 +1251,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       });
     } else {
       await Future.delayed(Duration(milliseconds: 2));
-      await Provider.of<MainViewModel>(context, listen: false)
+      await _mainViewModel
           .fetchCategoriesList("/api/v1/app/products/get_products", vendorId);
-      //.fetchCategoriesList("/api/v1/products/${widget.data?.vendorId}/customer_products");
       ApiResponse apiResponse =
-          Provider.of<MainViewModel>(context, listen: false).response;
+          _mainViewModel.response;
       getCategoryList(context, apiResponse);
     }
   }
@@ -1534,10 +1283,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           productId: productId ?? 0,
           vendorId: vendorId);
       await Future.delayed(Duration(milliseconds: 2));
-      await Provider.of<MainViewModel>(context, listen: false)
+      await _mainViewModel
           .markFavoriteData("/api/v1/app/products/mark_favourites", request);
       ApiResponse apiResponse =
-          Provider.of<MainViewModel>(context, listen: false).response;
+          _mainViewModel.response;
       getMarkFavoriteResponse(context, apiResponse);
     }
   }
@@ -1566,11 +1315,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           productId: int.parse("${productId}"),
           vendorId: vendorId);
       await Future.delayed(Duration(milliseconds: 2));
-      await Provider.of<MainViewModel>(context, listen: false)
+      await _mainViewModel
           .removeFavoriteData(
               "/api/v1/app/products/remove_favourites", request);
       ApiResponse apiResponse =
-          Provider.of<MainViewModel>(context, listen: false).response;
+          _mainViewModel.response;
       getRemoveFavoriteResponse(context, apiResponse);
     }
   }
@@ -1593,7 +1342,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               vendorListResponse.data?[0] ?? CategoryData();
         });
         updateCategoriesDetails(vendorListResponse?.data);
-        getProductDataDB("${widget.data?.productCategoryId}");
+        getProductDataDB("${selectedProduct?.productCategoryId}");
 
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
@@ -1621,7 +1370,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
         setState(() {
-          widget.data?.favorite = true;
+          selectedProduct?.favorite = true;
         });
         // _fetchFavoritesData();
         return Container(); // Return an empty container as you'll navigate away
@@ -1650,7 +1399,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
         setState(() {
-          widget.data?.favorite = false;
+          selectedProduct?.favorite = false;
         });
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
@@ -1735,8 +1484,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         vendorId: vendorId,
         franchiseId: item.franchiseId,
         quantity: item.quantity,
-        vendorName: widget.data?.vendorName,
-        theme: widget.data?.theme,
+        vendorName: selectedProduct?.vendorName,
+        theme: selectedProduct?.theme,
         addedToCartAt: "${DateFormat('yyyy-MM-dd').format(DateTime.now())}",
         addOnIdsList: '',
         productSizesList: item.productSizesList);
@@ -1755,8 +1504,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       String productId,
       CartDataDao cartDataDao,
       ProductDataDB data) async {
-    data.theme = widget.data?.theme;
-    data.vendorName = widget.data?.vendorName;
+    data.theme = selectedProduct?.theme;
+    data.vendorName = selectedProduct?.vendorName;
     final product = await cartDataDao.getSpecificCartProduct(
         vendorId, categoryId, productId);
 
@@ -1842,11 +1591,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     productsDataDao = DBService.instance.productDao;
     cartDataDao = DBService.instance.cartDao;
     categoryDataDao = DBService.instance.categoryDao;
-
-    //_fetchCategoryData();
-    getCartData();
-    //getProductDataDB("${widget.data?.productCategoryId}");
-    //getCategoryDataDB();
+    getProductDataDB("${selectedProduct?.productCategoryId}");
   }
 
   Future<void> getCartData() async {
@@ -1965,7 +1710,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             }
           });
           isCategoryLoading = false;
-          getProductDataDB("${widget.data?.productCategoryId}");
+          getProductDataDB("${selectedProduct?.productCategoryId}");
         });
         _fetchCategoryData();
       } else {
@@ -1989,9 +1734,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         menuItems = [];
         menuItems.addAll(
             localProductList.where((item) => item != null).cast<ProductData>());
-
         getCartData();
-        updateQuantity();
         isProductsLoading = false;
       });
     } else {
@@ -2003,19 +1746,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   Future<void> updateQuantity() async {
-    menuItems.forEach((item) {
-      cartDBList.forEach((dbItem) {
+    outerLoop:
+    for (var item in menuItems) {
+      for (var dbItem in cartDBList) {
         if (item.id == dbItem.id &&
             item.productCategoryId == dbItem.productCategoryId &&
-            vendorId == dbItem.vendorId) {
+            dbItem.vendorId == vendorId &&
+            selectedProduct?.title == dbItem.title) {
           setState(() {
-          //item.quantity = dbItem.quantity;
-            widget.data?.quantity = dbItem.quantity;
-            //addOnList.addAll(dbItem.getAddOnList());
+            selectedProduct?.quantity = dbItem.quantity;
           });
+
+          break outerLoop;
         }
-      });
-    });
+      }
+    }
+
     getCartItemCountDB();
   }
 
@@ -2114,16 +1860,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     }
   }
 
-  void setThemeColor() {
-    if (theme == "blue") {
-      setState(() {
-        primaryColor = Colors.blue.shade900;
-        secondaryColor = Colors.blue[100];
-        lightColor = Colors.blue[50];
-      });
-    }
-  }
-
   void _onItemReviewPressed(isLike, itemId) async {
     setState(() {
       isLoading = true;
@@ -2131,17 +1867,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     ItemReviewRequest request =
         ItemReviewRequest(review: Review(isUpvote: isLike), productId: itemId);
 
-    await Provider.of<MainViewModel>(context, listen: false)
+    await _mainViewModel
         .itemReviewRequestApi("api/v1/app/reviews", request);
     ApiResponse apiResponse =
-        Provider.of<MainViewModel>(context, listen: false).response;
+        _mainViewModel.response;
     getItemReviewResponse(context, apiResponse, isLike);
   }
 
   Future<Widget> getItemReviewResponse(
-      BuildContext context, ApiResponse apiResponse, isLike) async {
+      BuildContext context, ApiResponse apiResponse, isLike) async
+  {
     ItemReviewResponse? response = apiResponse.data as ItemReviewResponse?;
-    setState(() {
+    setState(()
+    {
       isLoading = false;
     });
     switch (apiResponse.status) {

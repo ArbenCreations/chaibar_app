@@ -18,7 +18,7 @@ class BottomNavigation extends StatefulWidget {
 }
 
 class _BottomNavigationState extends State<BottomNavigation>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+    with SingleTickerProviderStateMixin {
   int _selectedIndex = 1;
   final LocalAuthentication auth = LocalAuthentication();
   late AnimationController _animationController;
@@ -34,7 +34,6 @@ class _BottomNavigationState extends State<BottomNavigation>
 
   @override
   void initState() {
-    //_initializeBiometrics();
     super.initState();
     _selectedIndex = widget.data ?? 1;
     _pageController = PageController(initialPage: _selectedIndex);
@@ -59,20 +58,12 @@ class _BottomNavigationState extends State<BottomNavigation>
       parent: _animationController,
       curve: Curves.bounceIn,
     );
-
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
-    super.didChangeAppLifecycleState(state);
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     _animationController.dispose();
-    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 

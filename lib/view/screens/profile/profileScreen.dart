@@ -7,7 +7,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../language/Languages.dart';
 import '../../../model/db/DatabaseHelper.dart';
-import '../../../model/request/editProfileRequest.dart';
 import '../../../model/response/couponListResponse.dart';
 import '../../../model/response/getViewRewardPointsResponse.dart';
 import '../../../model/response/profileResponse.dart';
@@ -50,9 +49,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool isDataLoading = false;
   late ChaiBarDB database;
   var _connectivityService = ConnectivityService();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _lastNameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
   var selectedAvatar =
       "https://icons.iconarchive.com/icons/hopstarter/superhero-avatar/256/Avengers-Captain-America-icon.png";
   String _appVersion = '';
@@ -64,8 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Color primaryColor = CustomAppColor.PrimaryAccent;
   Color? secondaryColor = Colors.red[100];
   Color? lightColor = Colors.red[50];
-
-  final GlobalKey _buttonKey = GlobalKey();
+  late MainViewModel _mainViewModel;
   bool mExpanded = false;
   String mSelectedText = "";
   final List<String> themeType = ["Light", "Dark", "Default"];
@@ -115,6 +110,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _fetchDataFromPref();
     _fetchData();
     _getRedeemPointsData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _mainViewModel = Provider.of<MainViewModel>(context, listen: false);
   }
 
   Future<void> initializeDatabase() async {
@@ -364,11 +365,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           isLoading = false;
         });
         await Future.delayed(Duration(milliseconds: 2));
-        await Provider.of<MainViewModel>(context, listen: false)
+        await _mainViewModel
             .fetchProfile("/api/v1/app/customers/$vendorId/get_profile");
         if (mounted) {
           ApiResponse apiResponse =
-              Provider.of<MainViewModel>(context, listen: false).response;
+              _mainViewModel.response;
           getProfileResponse(context, apiResponse);
         }
       }
@@ -382,53 +383,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         isLoading = false;
         isInternetConnected = false;
-        CustomSnackBar.showSnackbar(
-            context: context,
-            message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
+      CustomSnackBar.showSnackbar(
+          context: context,
+          message: '${Languages.of(context)?.labelNoInternetConnection}');
     } else {
       hideKeyBoard();
       if (mounted) {
         setState(() {
           isLoading = false;
         });
-        await Future.delayed(Duration(milliseconds: 2));
-        await Provider.of<MainViewModel>(context, listen: false)
+        await _mainViewModel
             .fetchRedeemPointsApi("api/v1/app/rewards/view_points");
         ApiResponse apiResponse =
-            Provider.of<MainViewModel>(context, listen: false).response;
+            _mainViewModel.response;
         getRedeemPointResponse(context, apiResponse);
-      }
-    }
-  }
-
-  Future<void> _saveChanges() async {
-    bool isConnected = await _connectivityService.isConnected();
-    print(("isConnected - ${isConnected}"));
-    if (!isConnected) {
-      setState(() {
-        isLoading = false;
-        isInternetConnected = false;
-        CustomSnackBar.showSnackbar(
-            context: context,
-            message: '${Languages.of(context)?.labelNoInternetConnection}');
-      });
-    } else {
-      hideKeyBoard();
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-        EditProfileRequest request = EditProfileRequest(
-            email: _emailController.text,
-            firstName: _nameController.text,
-            lastName: _lastNameController.text);
-        await Future.delayed(Duration(milliseconds: 2));
-        await Provider.of<MainViewModel>(context, listen: false).editProfile(
-            "/api/v1/app/customers/$userId/update_profile", request);
-        ApiResponse apiResponse =
-            Provider.of<MainViewModel>(context, listen: false).response;
-        getProfileResponse(context, apiResponse);
       }
     }
   }
@@ -454,9 +423,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         _fetchDataFromPref();
 
-        return Container(); // Return an empty container as you'll navigate away
+        return Container();
       case Status.ERROR:
-        // _fetchDataFromPref();
         print("Message : ${apiResponse.message}");
         if (nonCapitalizeString("${apiResponse.message}") ==
             nonCapitalizeString(

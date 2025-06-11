@@ -48,7 +48,7 @@ class _PastOrdersScreenState extends State<PastOrdersScreen>
   int _selectedIndex = 0;
   int? _totalRows = 0;
   PageController _pageController = PageController();
-
+  late MainViewModel _mainViewModel;
   @override
   void initState() {
     super.initState();
@@ -91,6 +91,12 @@ class _PastOrdersScreenState extends State<PastOrdersScreen>
         _isLoadingMore = false;
       });
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _mainViewModel = Provider.of<MainViewModel>(context, listen: false);
   }
 
   @override
@@ -254,10 +260,8 @@ class _PastOrdersScreenState extends State<PastOrdersScreen>
       } else {
         GetHistoryRequest request = GetHistoryRequest(
             pageNumber: pageKey, pageSize: 8, status: selectionType);
-        await Provider.of<MainViewModel>(context, listen: false)
-            .getHistoryData("/api/v1/app/orders/cust_order_history", request);
-        ApiResponse apiResponse =
-            Provider.of<MainViewModel>(context, listen: false).response;
+        await _mainViewModel.getHistoryData("/api/v1/app/orders/cust_order_history", request);
+        ApiResponse apiResponse = _mainViewModel.response;
         await getHistoryData(
           context,
           apiResponse,

@@ -60,6 +60,7 @@ class _CategoryComponentState extends State<CategoryComponent> {
                     child: Text(
                       capitalizeFirstLetter("${currentCategoryName}"),
                       overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                       style: TextStyle(
                         fontSize: widget.selectedCategory == currentCategoryName
                             ? 16

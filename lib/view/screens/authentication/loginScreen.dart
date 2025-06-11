@@ -43,7 +43,7 @@ class _SigninScreenState extends State<SigninScreen> {
   late bool isDarkMode;
   String? deviceToken;
   String _appVersion = '';
-
+  late MainViewModel _mainViewModel;
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -57,6 +57,12 @@ class _SigninScreenState extends State<SigninScreen> {
         deviceToken = token;
       });
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _mainViewModel = Provider.of<MainViewModel>(context, listen: false);
   }
 
   Future<void> _loadAppVersion() async {
@@ -610,11 +616,10 @@ class _SigninScreenState extends State<SigninScreen> {
               message: '${Languages.of(context)?.labelNoInternetConnection}');
         });
       } else {
-        await Provider.of<MainViewModel>(context, listen: false)
-            .signInWithPass("/api/v1/app/customers/sign_in", signInRequest);
+        await _mainViewModel.signInWithPass(
+            "/api/v1/app/customers/sign_in", signInRequest);
 
-        ApiResponse apiResponse =
-            Provider.of<MainViewModel>(context, listen: false).response;
+        ApiResponse apiResponse = _mainViewModel.response;
         getSignInResponse(context, apiResponse);
       }
     }
@@ -641,11 +646,10 @@ class _SigninScreenState extends State<SigninScreen> {
               message: '${Languages.of(context)?.labelNoInternetConnection}');
         });
       } else {
-        await Provider.of<MainViewModel>(context, listen: false)
-            .signInWithPass("/api/v1/app/customers/sign_in", signInRequest);
+        await _mainViewModel.signInWithPass(
+            "/api/v1/app/customers/sign_in", signInRequest);
 
-        ApiResponse apiResponse =
-            Provider.of<MainViewModel>(context, listen: false).response;
+        ApiResponse apiResponse = _mainViewModel.response;
         getAppleSignInResponse(context, apiResponse, user);
       }
     }
@@ -992,10 +996,9 @@ class _SigninScreenState extends State<SigninScreen> {
       phoneNumber: phoneNo,
     ));
 
-    await Provider.of<MainViewModel>(context, listen: false).signUpData(
+    await _mainViewModel.signUpData(
         "api/v1/app/temp_customers/initiate_temp_customer", request);
-    ApiResponse apiResponse =
-        Provider.of<MainViewModel>(context, listen: false).response;
+    ApiResponse apiResponse = _mainViewModel.response;
     getSignUpResponse(context, apiResponse, request);
   }
 

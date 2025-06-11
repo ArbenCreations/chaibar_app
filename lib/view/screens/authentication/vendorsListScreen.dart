@@ -26,7 +26,8 @@ class VendorsListScreen extends StatefulWidget {
   _VendorsListScreenState createState() => _VendorsListScreenState();
 }
 
-class _VendorsListScreenState extends State<VendorsListScreen> {
+class _VendorsListScreenState extends State<VendorsListScreen>
+    with WidgetsBindingObserver {
   int franchiseId = 1;
   late double mediaWidth;
   late double screenHeight;
@@ -41,10 +42,12 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
   var currentSelectedItem = VendorData();
   TextEditingController searchController = TextEditingController();
   List<VendorData> filteredVendorList = [];
+  late MainViewModel _mainViewModel;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _fetchData();
     searchController.addListener(_filterVendors);
   }
@@ -56,6 +59,29 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
         return vendor.localityName?.toLowerCase().contains(query) ?? false;
       }).toList();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _mainViewModel = Provider.of<MainViewModel>(context, listen: false);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      print('App resumed!');
+      _fetchData();
+      searchController.addListener(_filterVendors);
+    } else if (state == AppLifecycleState.paused) {
+      print('App paused');
+    }
   }
 
   @override
@@ -85,6 +111,7 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
         },
         child: Scaffold(
           backgroundColor: Colors.white,
+          resizeToAvoidBottomInset: false,
           body: Container(
             height: screenHeight,
             width: mediaWidth,
@@ -96,170 +123,24 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
             child: SafeArea(
               child: Stack(
                 children: [
-                  Column(
-                    children: [
-                      Container(
-                        width: mediaWidth,
-                        margin: EdgeInsets.only(top: 10),
+                  Positioned.fill(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 100, top: 10),
+                        // Space for keyboard
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             vendorList.isNotEmpty
-                                ? Column(
-                                    children: [
-                                      // 🔍 Add the search bar
-                                      Container(
-                                        width: mediaWidth * 0.85,
-                                        height: 45,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(20.0),
-                                        ),
-                                        child: TextField(
-                                          controller: searchController,
-                                          decoration: InputDecoration(
-                                            hintText: "Search location...",
-                                            prefixIcon: Icon(Icons.location_on,
-                                                color: CustomAppColor.Primary),
-                                            border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(20.0),
-                                                borderSide: BorderSide(
-                                                    color: Colors.white,
-                                                    width: 0.1)),
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(height: 20),
-                                      Align(
-                                        alignment: Alignment.center,
-                                        child: SingleChildScrollView(
-                                          scrollDirection: Axis.vertical,
-                                          child: Column(
-                                            children: filteredVendorList
-                                                    .isNotEmpty
-                                                ? filteredVendorList
-                                                    .map((item) {
-                                                    return GestureDetector(
-                                                      onTap: () {
-                                                        setState(() {
-                                                          isLoading == true;
-                                                          selectedLocality =
-                                                              selectedLocality
-                                                                      .isEmpty
-                                                                  ? "${item.localityName}"
-                                                                  : "";
-                                                          selectedLocalityData =
-                                                              item;
-                                                        });
-
-                                                        if ((selectedLocality
-                                                      .isNotEmpty &&
-                                                      selectedLocalityData
-                                                          .status
-                                                          ?.contains(
-                                                          "online") ==
-                                                          true) ||
-                                                      selectedLocalityData
-                                                                    .status
-                                                                    ?.contains(
-                                                                        "offline") ==
-                                                                true) {
-                                                    setState(() {
-                                                      isLoading = false;
-                                                    });
-                                                          Helper.saveVendorData(
-                                                              selectedLocalityData);
-                                                          print("selectedLocalityData::: ${ selectedLocalityData
-                                                              .paymentSetting
-                                                              ?.merchantId}");
-                                                          Helper.saveApiKey(
-                                                              selectedLocalityData
-                                                                  .paymentSetting
-                                                                  ?.apiKey);
-                                                          Helper.saveMerchantId(
-                                                              selectedLocalityData
-                                                                  .paymentSetting
-                                                                  ?.merchantId);
-                                                          Helper.saveAppId(
-                                                              selectedLocalityData
-                                                                  .paymentSetting
-                                                                  ?.appId);
-                                                          _getStoreSettingData(
-                                                              selectedLocalityData);
-                                                        } else if (selectedLocalityData
-                                                                .status
-                                                                ?.contains(
-                                                                    "offline") ==
-                                                            true) {
-                                                          setState(() {
-                                                            isLoading = false;
-                                                          });
-                                                    CustomAlert.showToast(
-                                                        context: context,
-                                                              message:
-                                                                  "This store is closed at the moment.");
-                                                        } else {
-                                                          setState(() {
-                                                            isLoading = false;
-                                                          });
-                                                    CustomAlert.showToast(
-                                                              context: context,
-                                                              message:
-                                                                  "Select location.");
-                                                        }
-                                                      },
-                                                      child: _buildVendorCard(
-                                                          item),
-                                                    );
-                                                  }).toList()
-                                                : [
-                                                    Center(
-                                                      child: Container(
-                                                        padding: EdgeInsets
-                                                            .symmetric(
-                                                                horizontal: 24,
-                                                                vertical: 12),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: Colors.black
-                                                              .withOpacity(0.5),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(12),
-                                                        ),
-                                                        child: Text(
-                                                          "No store available.",
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          style: TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                            color: Colors.white,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    )
-                                                  ],
-                                          ),
-                                        ),
-                                      )
-                                    ],
-                                  )
+                                ? _buildVendorSection()
                                 : ShimmerList(),
-                            SizedBox(
-                              height: 50,
-                            )
+                            const SizedBox(height: 40),
                           ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                  isLoading
-                      ? CustomCircularProgress()
-                      : SizedBox(),
+                  isLoading ? CustomCircularProgress() : SizedBox(),
                 ],
               ),
             ),
@@ -267,130 +148,131 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
         ));
   }
 
-  /// Vendor Card
   Widget _buildVendorCard(item) {
     return Center(
       child: Container(
-        margin: EdgeInsets.symmetric(vertical: 5),
+        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
           color: Colors.white,
-        ),
-        child: Stack(
-          children: [
-            Container(
-              width: mediaWidth * 0.9,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Store Image
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: SizedBox(
-                      height: 55,
-                      width: 55,
-                      child: item.storeImage?.isNotEmpty == true
-                          ? Image.network(
-                              item.storeImage!,
-                              fit: BoxFit.cover,
-                              loadingBuilder:
-                                  (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Center(
-                                    child: ShimmerCard());
-                              },
-                              errorBuilder: (_, __, ___) =>
-                                  Container(color: Colors.black54),
-                            )
-                          : Image.asset("assets/vendorLoc.png",
-                              fit: BoxFit.cover),
-                    ),
-                  ),
-
-                  // Business Name & Description
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Text(
-                            capitalizeFirstLetter(item.businessName ?? "N/A"),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.location_on,
-                                size: 16,
-                              ),
-                              SizedBox(
-                                width: 2,
-                              ),
-                              Text(
-                                capitalizeFirstLetter("${item.localityName}"),
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            capitalizeFirstLetter(item.description ?? ""),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.black),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Status Badge
-                  _buildStatusBadge(
-                    item.status?.contains("online") == true ? "Open" : "Closed",
-                    item.status?.contains("online") == true
-                        ? Colors.brown
-                        : Colors.red,
-                  ),
-                ],
-              ),
-            )
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  /// Status Badge Widget
-  Widget _buildStatusBadge(String status, Color color) {
-    return Align(
-      alignment: Alignment.topLeft,
-      child: IntrinsicWidth(
-        child: Container(
-          margin: EdgeInsets.only(top: 10, right: 10),
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20), color: color),
-          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(status,
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold)),
+              // Store Image
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  height: 65,
+                  width: 65,
+                  child: item.storeImage?.isNotEmpty == true
+                      ? Image.network(
+                          item.storeImage!,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(child: ShimmerCard());
+                          },
+                          errorBuilder: (_, __, ___) =>
+                              Container(color: Colors.grey[400]),
+                        )
+                      : Image.asset("assets/vendorLoc.png", fit: BoxFit.cover),
+                ),
+              ),
+
+              const SizedBox(width: 14),
+
+              // Business Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Business Name
+                    Text(
+                      capitalizeFirstLetter(item.businessName ?? "N/A"),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    // Location
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on,
+                            size: 16, color: Colors.brown),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            capitalizeFirstLetter(
+                                item.localityName ?? "Unknown"),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    // Description
+                   /* Text(
+                      capitalizeFirstLetter(item.description ?? ""),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.black87,
+                      ),
+                    ),*/
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                capitalizeFirstLetter(item.description ?? ""),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.black87,
+                ),
+              ),
+            /*  const SizedBox(width: 8),
+
+              // Status Badge
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  StatusBadgeWidget(
+                    status: item.status?.contains("online") == true
+                        ? "Open"
+                        : "Closed",
+                    color: item.status?.contains("online") == true
+                        ? Colors.green
+                        : Colors.redAccent,
+                  )
+                ],
+              ),*/
             ],
           ),
         ),
@@ -398,9 +280,118 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
     );
   }
 
+  Widget _buildVendorSection() {
+    return Column(
+      children: [
+        Container(
+          width: mediaWidth * 0.85,
+          height: 45,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          child: TextField(
+            controller: searchController,
+            decoration: InputDecoration(
+              hintText: "Search location...",
+              prefixIcon:
+                  Icon(Icons.location_on, color: CustomAppColor.Primary),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20.0),
+                  borderSide: BorderSide(color: Colors.white, width: 0.1)),
+            ),
+          ),
+        ),
+        SizedBox(height: 20),
+        Align(
+          alignment: Alignment.center,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: Column(
+              children: filteredVendorList.isNotEmpty
+                  ? filteredVendorList.map((item) {
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            isLoading == true;
+                            selectedLocality = selectedLocality.isEmpty
+                                ? "${item.localityName}"
+                                : "";
+                            selectedLocalityData = item;
+                          });
+
+                          if ((selectedLocality.isNotEmpty &&
+                        selectedLocalityData.status
+                            ?.contains("online") ==
+                            true) ||
+                        selectedLocalityData.status
+                            ?.contains("offline") ==
+                            true) {
+                      setState(() {
+                        isLoading = false;
+                      });
+                      Helper.saveVendorData(selectedLocalityData);
+                      print(
+                          "selectedLocalityData::: ${selectedLocalityData
+                              .paymentSetting?.merchantId}");
+                      Helper.saveApiKey(
+                          selectedLocalityData.paymentSetting?.apiKey);
+                      Helper.saveMerchantId(selectedLocalityData
+                          .paymentSetting?.merchantId);
+                      Helper.saveAppId(
+                          selectedLocalityData.paymentSetting?.appId);
+                      _getStoreSettingData(selectedLocalityData);
+                    } else if (selectedLocalityData.status
+                        ?.contains("offline") ==
+                        true) {
+                      setState(() {
+                        isLoading = false;
+                      });
+                      CustomAlert.showToast(
+                          context: context,
+                          message: "This store is closed at the moment.");
+                    } else {
+                      setState(() {
+                        isLoading = false;
+                      });
+                      CustomAlert.showToast(
+                          context: context, message: "Select location.");
+                    }
+                  },
+                  child: _buildVendorCard(item),
+                );
+              }).toList()
+                  : [
+                Center(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      "No store available.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+        )
+      ],
+    );
+  }
+
   void _fetchData() async {
     setState(() {
-      isLoading = false;
+      isLoading = true;
     });
 
     bool isConnected = await _connectivityService.isConnected();
@@ -410,11 +401,9 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
         CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
-      await Future.delayed(Duration(milliseconds: 2));
-      await Provider.of<MainViewModel>(context, listen: false)
+      await _mainViewModel
           .fetchVendors("/api/v1/vendors/${franchiseId}/get_stores");
-      ApiResponse apiResponse =
-          Provider.of<MainViewModel>(context, listen: false).response;
+      ApiResponse apiResponse = _mainViewModel.response;
       getVendorList(context, apiResponse);
     }
   }
@@ -431,13 +420,12 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
         return Center(child: CircularProgressIndicator());
       case Status.COMPLETED:
         setState(() {
+          vendorList.clear();
+          filteredVendorList.clear();
           vendorList = vendorListResponse!.vendors!;
           filteredVendorList = vendorList;
           currentSelectedItem = vendorList[0];
         });
-
-        //_showPicker(context: context);
-
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
         return Center(
@@ -463,12 +451,9 @@ class _VendorsListScreenState extends State<VendorsListScreen> {
         CustomSnackBar.showSnackbar(context: context, message: '${Languages.of(context)?.labelNoInternetConnection}');
       });
     } else {
-      await Future.delayed(Duration(milliseconds: 2));
-      await Provider.of<MainViewModel>(context, listen: false)
-          .fetchStoreSettingData(
-              "/api/v1/vendors/${selectedLocalityData.id}/vendor_store_setting");
-      ApiResponse apiResponse =
-          Provider.of<MainViewModel>(context, listen: false).response;
+      await _mainViewModel.fetchStoreSettingData(
+          "/api/v1/vendors/${selectedLocalityData.id}/vendor_store_setting");
+      ApiResponse apiResponse = _mainViewModel.response;
       getVendorStoreSettingData(context, apiResponse);
     }
   }

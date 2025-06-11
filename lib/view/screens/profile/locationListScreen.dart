@@ -1,21 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../component/CustomSnackbar.dart';
 import '/language/Languages.dart';
 import '/model/response/locationListResponse.dart';
-import '/utils/Helper.dart';
 import '/utils/Util.dart';
 import '../../../model/response/vendorListResponse.dart';
 import '../../../model/viewModel/mainViewModel.dart';
-import '../../../theme/CustomAppColor.dart';
 import '../../../utils/apiHandling/api_response.dart';
-import '../../component/BezierContainer.dart';
+import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
-import '../../component/toastMessage.dart';
 
 class LocationListScreen extends StatefulWidget {
   final String? data; // Define the 'data' parameter here
@@ -28,13 +23,11 @@ class LocationListScreen extends StatefulWidget {
 
 class _LocationListScreenState extends State<LocationListScreen> {
   int franchiseId = 1;
-
-  //int franchiseId = 38;
-
   late double mediaWidth;
   late double screenHeight;
   bool isLoading = false;
   bool isDarkMode = false;
+  late MainViewModel _mainViewModel;
   final ConnectivityService _connectivityService = ConnectivityService();
   static const maxDuration = Duration(seconds: 2);
   List<LocationData> locationList = [];
@@ -80,6 +73,12 @@ class _LocationListScreenState extends State<LocationListScreen> {
   void initState() {
     super.initState();
     getStoresList();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _mainViewModel = Provider.of<MainViewModel>(context, listen: false);
   }
 
   @override
@@ -208,11 +207,11 @@ class _LocationListScreenState extends State<LocationListScreen> {
                     ),
                   ),
 
-                  // Status Badge
+                /*  // Status Badge
                   _buildStatusBadge(
                     item.status?.contains("online") == true ? "Open" : "Closed",
                     item.status?.contains("online") == true ? Colors.green : Colors.red,
-                  ),
+                  ),*/
                 ],
               ),
             )
@@ -254,10 +253,9 @@ class _LocationListScreenState extends State<LocationListScreen> {
       });
     } else {
       await Future.delayed(Duration(milliseconds: 2));
-      await Provider.of<MainViewModel>(context, listen: false)
+      await _mainViewModel
           .fetchVendors("/api/v1/vendors/${franchiseId}/get_stores");
-      ApiResponse apiResponse =
-          Provider.of<MainViewModel>(context, listen: false).response;
+      ApiResponse apiResponse = _mainViewModel.response;
       getStoreList(context, apiResponse);
     }
   }
@@ -276,7 +274,6 @@ class _LocationListScreenState extends State<LocationListScreen> {
         setState(() {
           vendorList = vendorListResponse!.vendors!;
         });
-        //CustomAlert.showToast(context: context, message: "$token");
         return Container();
       case Status.ERROR:
         return Center(

@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../component/status_badge_widget.dart';
 import '/model/db/dataBaseDao.dart';
 import '/model/response/dashboardDataResponse.dart';
 import '/model/response/productDataDB.dart';
@@ -67,10 +68,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int customerId = 0;
   late int vendorId;
   VendorData? vendorData = VendorData();
-
+  late MainViewModel _mainViewModel;
   String selectedCategory = "";
   CategoryData? selectedCategoryDetail = CategoryData();
-  AnimationController? animationController;
+
   bool isProductAvailable = true;
   bool isLoading = false;
   bool isProductsLoading = false;
@@ -84,14 +85,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   bool _isVisible = false;
   var _connectivityService = ConnectivityService();
   final TextEditingController queryController = TextEditingController();
-  late AnimationController _controller;
 
   Color primaryColor = CustomAppColor.Primary;
   Color? secondaryColor = Colors.red[100];
   Color? lightColor = Colors.red[50];
 
-  AnimationController? _animationController;
-  Animation<Offset>? _animation;
+  late AnimationController? animationController;
+  late AnimationController _controller;
+  late AnimationController? _animationController;
+  late Animation<Offset>? _animation;
 
   final List<String> hintTexts = [
     'Search "Pizza"',
@@ -131,14 +133,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 100),
     );
 
     _animation = Tween<Offset>(
       begin: Offset(0, -1),
       end: Offset(0, 0),
     ).animate(
-      CurvedAnimation(parent: _animationController!, curve: Curves.easeInOut),
+      CurvedAnimation(parent: _animationController!, curve: Curves.easeInBack),
     );
 
     productsDataDao = DBService.instance.productDao;
@@ -156,7 +158,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     getCartData();
     _fetchCategoryData();
     getDashboardDataDB();
-    _fetchDashboardData();
     _fetchStoreStatus();
   }
 
@@ -174,6 +175,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void dispose() {
     _animationController!.dispose();
     _controller.dispose();
+    animationController?.dispose();
     timer?.cancel();
     super.dispose();
   }
@@ -181,7 +183,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final observer = Navigator.of(context)
+    _mainViewModel = Provider.of<MainViewModel>(context, listen: false);
+    final observer = Navigator
+        .of(context)
         .widget
         .observers
         .whereType<MyNavigatorObserver>()
@@ -195,6 +199,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       isBannerLoading = true;
       isFavoriteProductsLoading = true;
     });
+    CustomSnackBar.showSnackbar(context: context, message: "_onReturnToScreen");
     getCartData();
     _fetchCategoryData();
     getDashboardDataDB();
@@ -205,9 +210,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    mediaWidth = MediaQuery.of(context).size.width;
-    screenHeight = MediaQuery.of(context).size.height;
+    isDarkMode = Theme
+        .of(context)
+        .brightness == Brightness.dark;
+    mediaWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
+    screenHeight = MediaQuery
+        .of(context)
+        .size
+        .height;
     return PopScope(
       canPop: false,
       onPopInvoked: (bool didPop) {
@@ -220,7 +233,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           appBar: AppBar(
             toolbarHeight: 0,
             systemOverlayStyle:
-                SystemUiOverlayStyle(statusBarIconBrightness: Brightness.light),
+            SystemUiOverlayStyle(statusBarIconBrightness: Brightness.light),
           ),
           body: LayoutBuilder(builder:
               (BuildContext context, BoxConstraints viewportConstraints) {
@@ -247,16 +260,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   children: [
                                     Column(
                                       crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          isStoreOnline ? "Open" : "Closed",
-                                          style: TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.bold,
-                                              color: isStoreOnline
-                                                  ? Colors.green
-                                                  : Colors.red),
+                                        StatusBadgeWidget(
+                                          status:  isStoreOnline ? "Open" : "Closed",
+                                          color: isStoreOnline
+                                              ? Colors.green
+                                              : Colors.red
                                         ),
                                         GestureDetector(
                                           onTap: () {
@@ -283,7 +293,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                                 width: 1,
                                               ),
                                               Text(
-                                                "${capitalizeFirstLetter("${vendorData?.localityName}")}",
+                                                "${capitalizeFirstLetter(
+                                                    "${vendorData
+                                                        ?.localityName}")}",
                                                 overflow: TextOverflow.ellipsis,
                                                 maxLines: 2,
                                                 style: TextStyle(
@@ -293,8 +305,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                               ),
                                               Padding(
                                                 padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 2.0),
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 2.0),
                                                 child: Icon(
                                                   Icons.keyboard_arrow_down,
                                                   color: Colors.black54,
@@ -331,7 +343,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                               BoxShadow(
                                                   color: cartItemCount > 0
                                                       ? CustomAppColor.Primary
-                                                          .withOpacity(0.4)
+                                                      .withOpacity(0.4)
                                                       : Colors.grey.shade300,
                                                   offset: const Offset(0, 1),
                                                   blurRadius: 8.0),
@@ -346,14 +358,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                               Icons.shopping_cart,
                                               size: 24,
                                               color:
-                                                  CustomAppColor.PrimaryAccent,
+                                              CustomAppColor.PrimaryAccent,
                                             ),
                                             style: ButtonStyle(
                                                 shape: WidgetStatePropertyAll(
                                                     CircleBorder()),
                                                 backgroundColor:
-                                                    WidgetStatePropertyAll(
-                                                        Colors.white)),
+                                                WidgetStatePropertyAll(
+                                                    Colors.white)),
                                           ),
                                         ),
                                         if (cartItemCount >
@@ -454,51 +466,51 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             maxHeight: isCategoryLoading
                                 ? screenHeight * 0.15
                                 : categories.isEmpty
-                                    ? 0
-                                    : 80,
+                                ? 0
+                                : 80,
                           ),
                           child: isCategoryLoading
                               ? ListView.builder(
-                                  itemCount: 3,
-                                  scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 4),
-                                  itemBuilder: (context, index) {
-                                    return Shimmer.fromColors(
-                                      baseColor: Colors.grey[300]!,
-                                      // Softer shimmer base
-                                      highlightColor: Colors.white70,
-                                      // Softer shimmer highlight
-                                      child: Container(
-                                        margin: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(
-                                              10), // Softer rounded edges
-                                        ),
-                                        height: 60,
-                                        // Increased size for better balance
-                                        width: 85,
-                                      ),
-                                    );
-                                  },
-                                )
+                            itemCount: 3,
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 4),
+                            itemBuilder: (context, index) {
+                              return Shimmer.fromColors(
+                                baseColor: Colors.grey[300]!,
+                                // Softer shimmer base
+                                highlightColor: Colors.white70,
+                                // Softer shimmer highlight
+                                child: Container(
+                                  margin: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(
+                                        10), // Softer rounded edges
+                                  ),
+                                  height: 60,
+                                  // Increased size for better balance
+                                  width: 85,
+                                ),
+                              );
+                            },
+                          )
                               : categories.isEmpty
-                                  ? const SizedBox()
-                                  : DashboardCategoryComponent(
-                                      categories: categories,
-                                      mediaWidth: mediaWidth,
-                                      screenHeight: screenHeight,
-                                      isDarkMode: isDarkMode,
-                                      primaryColor: primaryColor,
-                                      categoryData: selectedCategoryDetail,
-                                      onCategoryTap: (categoryData) {
-                                        if (!isProductsLoading) {
-                                          getProductDataDB(categoryData);
-                                        }
-                                      },
-                                      vendorData: vendorData,
-                                    ),
+                              ? const SizedBox()
+                              : DashboardCategoryComponent(
+                            categories: categories,
+                            mediaWidth: mediaWidth,
+                            screenHeight: screenHeight,
+                            isDarkMode: isDarkMode,
+                            primaryColor: primaryColor,
+                            categoryData: selectedCategoryDetail,
+                            onCategoryTap: (categoryData) {
+                              if (!isProductsLoading) {
+                                getProductDataDB(categoryData);
+                              }
+                            },
+                            vendorData: vendorData,
+                          ),
                         ),
                         SizedBox(
                           height: 5,
@@ -543,60 +555,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ],
                           ),
                         ),
-                        /*     isProductsLoading
-                            ? SizedBox(
-                                height: 18,
-                              )
-                            : menuItems.length > 0
-                                ? Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 8.0,
-                                        right: 12.0,
-                                        top: 4,
-                                        bottom: 0),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: Text(
-                                              "Products",
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 15),
-                                            )),
-                                        GestureDetector(
-                                          onTap: () {
-                                            VendorData? data = vendorData;
-                                            data?.detailType = "menu";
-                                            Navigator.pushNamed(
-                                                context, "/MenuScreen",
-                                                arguments: data);
-                                          },
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                "See All",
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 11,
-                                                  color: Colors.black54,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  )
-                                : SizedBox(),*/
                         SizedBox(
                           height: 5,
                         ),
@@ -606,95 +564,95 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             constraints: BoxConstraints(maxWidth: mediaWidth),
                             child: menuItems.isEmpty
                                 ? ListView.builder(
-                                    itemCount: 1,
-                                    scrollDirection: Axis.vertical,
-                                    shrinkWrap: true,
-                                    physics: NeverScrollableScrollPhysics(),
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 9, vertical: 2),
-                                    itemBuilder: (context, index) {
-                                      return ShimmerCard();
-                                    })
+                                itemCount: 1,
+                                scrollDirection: Axis.vertical,
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 9, vertical: 2),
+                                itemBuilder: (context, index) {
+                                  return ShimmerCard();
+                                })
                                 : ConstrainedBox(
-                                    constraints: BoxConstraints(maxHeight: 190),
-                                    child: ListView.builder(
-                                      scrollDirection: Axis.horizontal,
-                                      // Enables horizontal scrolling
-                                      itemCount: menuItems.length,
-                                      itemBuilder: (context, index) {
-                                        final int count = menuItems.length > 4
-                                            ? 10
-                                            : menuItems.length;
-                                        final Animation<double> animation =
-                                            Tween<double>(begin: 0.0, end: 1.0)
-                                                .animate(CurvedAnimation(
-                                                    parent:
-                                                        animationController!,
-                                                    curve: Interval(
-                                                        (1 / count) * index,
-                                                        1.0,
-                                                        curve: Curves
-                                                            .fastOutSlowIn)));
-                                        animationController?.forward();
+                              constraints: BoxConstraints(maxHeight: 190),
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                // Enables horizontal scrolling
+                                itemCount: menuItems.length,
+                                itemBuilder: (context, index) {
+                                  final int count = menuItems.length > 4
+                                      ? 10
+                                      : menuItems.length;
+                                  final Animation<double> animation =
+                                  Tween<double>(begin: 0.0, end: 1.0)
+                                      .animate(CurvedAnimation(
+                                      parent:
+                                      animationController!,
+                                      curve: Interval(
+                                          (1 / count) * index,
+                                          1.0,
+                                          curve: Curves
+                                              .fastOutSlowIn)));
+                                  animationController?.forward();
 
-                                        return AnimatedBuilder(
-                                            animation: animationController!,
-                                            builder: (BuildContext context,
-                                                Widget? child) {
-                                              return GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.pushNamed(
-                                                      context,
-                                                      "/ProductDetailScreen",
-                                              arguments: menuItems[index],
-                                            );
-                                          },
-                                                  child: FadeTransition(
-                                                    opacity: animation,
-                                                    child: Transform(
-                                                      transform: Matrix4
-                                                          .translationValues(
-                                                              100 *
-                                                                  (1.0 -
-                                                                      animation!
-                                                                          .value),
-                                                              0.0,
-                                                              0.0),
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal: 5),
-                                                        // Spacing between items
-                                                        child: _buildItemCard(
-                                                            menuItems[index]),
-                                                      ),
-                                                    ),
-                                                  ));
-                                            });
-                                      },
-                                    ),
-                                  )),
+                                  return AnimatedBuilder(
+                                      animation: animationController!,
+                                      builder: (BuildContext context,
+                                          Widget? child) {
+                                        return GestureDetector(
+                                            onTap: () {
+                                              Navigator.pushNamed(
+                                                context,
+                                                "/ProductDetailScreen",
+                                                arguments: menuItems[index],
+                                              );
+                                            },
+                                            child: FadeTransition(
+                                              opacity: animation,
+                                              child: Transform(
+                                                transform: Matrix4
+                                                    .translationValues(
+                                                    100 *
+                                                        (1.0 -
+                                                            animation!
+                                                                .value),
+                                                    0.0,
+                                                    0.0),
+                                                child: Padding(
+                                                  padding:
+                                                  const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 5),
+                                                  // Spacing between items
+                                                  child: _buildItemCard(
+                                                      menuItems[index]),
+                                                ),
+                                              ),
+                                            ));
+                                      });
+                                },
+                              ),
+                            )),
                         featuredProduct.length > 0
                             ? Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 12.0, right: 12.0),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(
-                                          "Suggested For you",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 15),
-                                        )),
-                                  ],
-                                ),
-                              )
+                          padding: const EdgeInsets.only(
+                              left: 12.0, right: 12.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment:
+                            MainAxisAlignment.spaceBetween,
+                            children: [
+                              Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    "Suggested For you",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15),
+                                  )),
+                            ],
+                          ),
+                        )
                             : SizedBox(),
                         SizedBox(
                           height: 10,
@@ -705,89 +663,89 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             constraints: BoxConstraints(maxWidth: mediaWidth),
                             child: isFeaturedProductsLoading
                                 ? ListView.builder(
-                                    itemCount: 3,
-                                    scrollDirection: Axis.vertical,
-                                    shrinkWrap: true,
-                                    physics: NeverScrollableScrollPhysics(),
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 9, vertical: 2),
-                                    itemBuilder: (context, index) {
-                                      return ShimmerCard();
-                                    })
+                                itemCount: 3,
+                                scrollDirection: Axis.vertical,
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 9, vertical: 2),
+                                itemBuilder: (context, index) {
+                                  return ShimmerCard();
+                                })
                                 : SizedBox(
-                                    height: 190, // Adjust height as needed
-                                    child: ListView.builder(
-                                      scrollDirection: Axis.horizontal,
-                                      // Enables horizontal scrolling
-                                      itemCount: featuredProduct.length,
-                                      itemBuilder: (context, index) {
-                                        final int count =
-                                            featuredProduct.length > 4
-                                                ? 10
-                                                : featuredProduct.length;
-                                        final Animation<double> animation =
-                                            Tween<double>(begin: 0.0, end: 1.0)
-                                                .animate(
-                                          CurvedAnimation(
-                                            parent: animationController!,
-                                            curve: Interval(
-                                                (1 / count) * index, 1.0,
-                                                curve: Curves.fastOutSlowIn),
-                                          ),
-                                        );
-                                        animationController?.forward();
-                                        return AnimatedBuilder(
-                                            animation: animationController!,
-                                            builder: (BuildContext context,
-                                                Widget? child) {
-                                              return GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.pushNamed(
-                                                      context,
-                                                      "/ProductDetailScreen",
-                                                      arguments:
-                                                          menuItems[index],
-                                                    );
-                                                  },
-                                                  child: FadeTransition(
-                                                    opacity: animation!,
-                                                    child: Transform(
-                                                        transform: Matrix4
-                                                            .translationValues(
-                                                                0.0,
-                                                                50 *
-                                                                    (1.0 -
-                                                                        animation!
-                                                                            .value),
-                                                                0.0),
-                                                        child: GestureDetector(
-                                                          onTap: () {
-                                                            Navigator.pushNamed(
-                                                              context,
-                                                              "/ProductDetailScreen",
-                                                              arguments:
-                                                                  featuredProduct[
-                                                                      index],
-                                                            );
-                                                          },
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .symmetric(
-                                                                    horizontal:
-                                                                        5),
-                                                            // Spacing between items
-                                                            child: _buildFeaturedCard(
-                                                                featuredProduct[
-                                                                    index],
-                                                                index + 1),
-                                                          ),
-                                                        )),
-                                                  ));
-                                            });
-                                      },
+                              height: 190, // Adjust height as needed
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                // Enables horizontal scrolling
+                                itemCount: featuredProduct.length,
+                                itemBuilder: (context, index) {
+                                  final int count =
+                                  featuredProduct.length > 4
+                                      ? 10
+                                      : featuredProduct.length;
+                                  final Animation<double> animation =
+                                  Tween<double>(begin: 0.0, end: 1.0)
+                                      .animate(
+                                    CurvedAnimation(
+                                      parent: animationController!,
+                                      curve: Interval(
+                                          (1 / count) * index, 1.0,
+                                          curve: Curves.fastOutSlowIn),
                                     ),
-                                  )),
+                                  );
+                                  animationController?.forward();
+                                  return AnimatedBuilder(
+                                      animation: animationController!,
+                                      builder: (BuildContext context,
+                                          Widget? child) {
+                                        return GestureDetector(
+                                            onTap: () {
+                                              Navigator.pushNamed(
+                                                context,
+                                                "/ProductDetailScreen",
+                                                arguments:
+                                                menuItems[index],
+                                              );
+                                            },
+                                            child: FadeTransition(
+                                              opacity: animation!,
+                                              child: Transform(
+                                                  transform: Matrix4
+                                                      .translationValues(
+                                                      0.0,
+                                                      50 *
+                                                          (1.0 -
+                                                              animation!
+                                                                  .value),
+                                                      0.0),
+                                                  child: GestureDetector(
+                                                    onTap: () {
+                                                      Navigator.pushNamed(
+                                                        context,
+                                                        "/ProductDetailScreen",
+                                                        arguments:
+                                                        featuredProduct[
+                                                        index],
+                                                      );
+                                                    },
+                                                    child: Padding(
+                                                      padding:
+                                                      const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal:
+                                                          5),
+                                                      // Spacing between items
+                                                      child: _buildFeaturedCard(
+                                                          featuredProduct[
+                                                          index],
+                                                          index + 1),
+                                                    ),
+                                                  )),
+                                            ));
+                                      });
+                                },
+                              ),
+                            )),
                         SizedBox(
                           height: cartItemCount > 0 ? 110 : 100,
                         )
@@ -802,6 +760,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+
   Widget _buildItemCard(ProductData item) {
     return ProductComponent(
         item: item,
@@ -811,7 +770,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         isDarkMode: isDarkMode,
         onAddTap: () {
           if ((item.productSizesList == "[]" ||
-                  item.productSizesList == null) &&
+              item.productSizesList == null) &&
               (item.addOn == "[]" || item.addOn == null) &&
               item.isBuy1Get1 == false) {
             setState(() {
@@ -827,7 +786,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         },
         onMinusTap: () {
           if ((item.productSizesList == "[]" ||
-                  item.productSizesList == null) &&
+              item.productSizesList == null) &&
               (item.addOn == "[]" || item.addOn == null) &&
               item.isBuy1Get1 == false) {
             setState(() {
@@ -843,7 +802,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         },
         onPlusTap: () {
           if ((item.productSizesList == "[]" ||
-                  item.productSizesList == null) &&
+              item.productSizesList == null) &&
               (item.addOn == "[]" || item.addOn == null) &&
               item.isBuy1Get1 == false) {
             setState(() {
@@ -874,17 +833,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         isLoading = false;
         CustomSnackBar.showSnackbar(
             context: context,
-            message: '${Languages.of(context)?.labelNoInternetConnection}');
+            message: '${Languages
+                .of(context)
+                ?.labelNoInternetConnection}');
       });
     } else {
       await Future.delayed(Duration(milliseconds: 2));
       if (mounted) {
-        await Provider.of<MainViewModel>(context, listen: false)
-            .fetchCategoriesList(
-                "api/v1/app/products/get_products", vendorData?.id);
+        await _mainViewModel.fetchCategoriesList(
+            "api/v1/app/products/get_products", vendorData?.id);
         if (mounted) {
-          ApiResponse apiResponse =
-              Provider.of<MainViewModel>(context, listen: false).response;
+          ApiResponse apiResponse = _mainViewModel.response;
           getCategoryList(context, apiResponse);
         }
       }
@@ -902,17 +861,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         isLoading = false;
         CustomSnackBar.showSnackbar(
             context: context,
-            message: '${Languages.of(context)?.labelNoInternetConnection}');
+            message: '${Languages
+                .of(context)
+                ?.labelNoInternetConnection}');
       });
     } else {
       await Future.delayed(Duration(milliseconds: 2));
       if (mounted) {
-        await Provider.of<MainViewModel>(context, listen: false)
-            .fetchDashboardData(
-                "/api/v1/app/customers/dashboard_data", vendorData?.id);
+        await _mainViewModel.fetchDashboardData(
+            "/api/v1/app/customers/dashboard_data", vendorData?.id);
         if (mounted) {
-          ApiResponse apiResponse =
-              Provider.of<MainViewModel>(context, listen: false).response;
+          ApiResponse apiResponse = _mainViewModel.response;
           getDashboardData(context, apiResponse);
         }
       }
@@ -931,7 +890,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         isLoading = false;
         CustomSnackBar.showSnackbar(
             context: context,
-            message: '${Languages.of(context)?.labelNoInternetConnection}');
+            message: '${Languages
+                .of(context)
+                ?.labelNoInternetConnection}');
       });
     } else {
       MarkFavoriteRequest request = MarkFavoriteRequest(
@@ -939,10 +900,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           productId: productId ?? 0,
           vendorId: vendorId);
       await Future.delayed(Duration(milliseconds: 2));
-      await Provider.of<MainViewModel>(context, listen: false)
-          .markFavoriteData("/api/v1/app/products/mark_favourites", request);
-      ApiResponse apiResponse =
-          Provider.of<MainViewModel>(context, listen: false).response;
+      await _mainViewModel.markFavoriteData(
+          "/api/v1/app/products/mark_favourites", request);
+      ApiResponse apiResponse = _mainViewModel.response;
       getMarkFavoriteResponse(context, apiResponse);
     }
   }
@@ -959,7 +919,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         isLoading = false;
         CustomSnackBar.showSnackbar(
             context: context,
-            message: '${Languages.of(context)?.labelNoInternetConnection}');
+            message: '${Languages
+                .of(context)
+                ?.labelNoInternetConnection}');
       });
     } else {
       MarkFavoriteRequest request = MarkFavoriteRequest(
@@ -967,11 +929,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           productId: int.parse("${productId}"),
           vendorId: vendorId);
       await Future.delayed(Duration(milliseconds: 2));
-      await Provider.of<MainViewModel>(context, listen: false)
-          .removeFavoriteData(
-              "/api/v1/app/products/remove_favourites", request);
-      ApiResponse apiResponse =
-          Provider.of<MainViewModel>(context, listen: false).response;
+      await _mainViewModel.removeFavoriteData(
+          "/api/v1/app/products/remove_favourites", request);
+      ApiResponse apiResponse = _mainViewModel.response;
       getRemoveFavoriteResponse(context, apiResponse);
     }
   }
@@ -988,16 +948,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         isLoading = false;
         CustomSnackBar.showSnackbar(
             context: context,
-            message: '${Languages.of(context)?.labelNoInternetConnection}');
+            message: '${Languages
+                .of(context)
+                ?.labelNoInternetConnection}');
       });
     } else {
       MarkFavoriteRequest request = MarkFavoriteRequest(vendorId: vendorId);
       await Future.delayed(Duration(milliseconds: 2));
-      await Provider.of<MainViewModel>(context, listen: false)
-          .fetchFavoritesProductList(
-              "/api/v1/app/products/get_favourites", request);
-      ApiResponse apiResponse =
-          Provider.of<MainViewModel>(context, listen: false).response;
+      await _mainViewModel.fetchFavoritesProductList(
+          "/api/v1/app/products/get_favourites", request);
+      ApiResponse apiResponse = _mainViewModel.response;
       getFavoriteProductList(context, apiResponse);
     }
   }
@@ -1014,14 +974,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         isLoading = false;
         CustomSnackBar.showSnackbar(
             context: context,
-            message: '${Languages.of(context)?.labelNoInternetConnection}');
+            message: '${Languages
+                .of(context)
+                ?.labelNoInternetConnection}');
       });
     } else {
-      await Provider.of<MainViewModel>(context, listen: false).fetchStoreStatus(
+      await _mainViewModel.fetchStoreStatus(
           "api/v1/app/orders/get_store_status?vendor_id=$vendorId");
       if (mounted) {
-        ApiResponse apiResponse =
-            Provider.of<MainViewModel>(context, listen: false).response;
+        ApiResponse apiResponse = _mainViewModel.response;
         getStoreStatusResponse(context, apiResponse);
       }
     }
@@ -1029,7 +990,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget getStoreStatusResponse(BuildContext context, ApiResponse apiResponse) {
     StoreStatusResponse? storeStatusResponse =
-        apiResponse.data as StoreStatusResponse?;
+    apiResponse.data as StoreStatusResponse?;
     setState(() {
       isLoading = false;
     });
@@ -1046,11 +1007,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         return Container(); // Return an empty container as you'll navigate away
       case Status.ERROR:
         if (nonCapitalizeString("${apiResponse.message}") ==
-                nonCapitalizeString(
-                    "${Languages.of(context)?.labelInvalidAccessToken}") ||
+            nonCapitalizeString(
+                "${Languages
+                    .of(context)
+                    ?.labelInvalidAccessToken}") ||
             nonCapitalizeString("${apiResponse.message}") ==
                 nonCapitalizeString(
-                    "${Languages.of(context)?.labelInvalidAccessToken}")) {
+                    "${Languages
+                        .of(context)
+                        ?.labelInvalidAccessToken}")) {
           SessionExpiredDialog.showDialogBox(context: context);
         }
         return Center(
@@ -1064,10 +1029,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  Widget getMarkFavoriteResponse(
-      BuildContext context, ApiResponse apiResponse) {
+  Widget getMarkFavoriteResponse(BuildContext context,
+      ApiResponse apiResponse) {
     MarkFavoriteResponse? featuredListResponse =
-        apiResponse.data as MarkFavoriteResponse?;
+    apiResponse.data as MarkFavoriteResponse?;
     setState(() {
       isLoading = false;
       isMarkFavLoading = false;
@@ -1090,10 +1055,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  Widget getRemoveFavoriteResponse(
-      BuildContext context, ApiResponse apiResponse) {
+  Widget getRemoveFavoriteResponse(BuildContext context,
+      ApiResponse apiResponse) {
     MarkFavoriteResponse? featuredListResponse =
-        apiResponse.data as MarkFavoriteResponse?;
+    apiResponse.data as MarkFavoriteResponse?;
     setState(() {
       isLoading = false;
       isMarkFavLoading = false;
@@ -1118,7 +1083,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget getFavoriteProductList(BuildContext context, ApiResponse apiResponse) {
     FavoriteListResponse? favoriteListResponse =
-        apiResponse.data as FavoriteListResponse?;
+    apiResponse.data as FavoriteListResponse?;
     setState(() {
       isLoading = false;
     });
@@ -1146,7 +1111,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget getCategoryList(BuildContext context, ApiResponse apiResponse) {
     CategoryListResponse? categoryListResponse =
-        apiResponse.data as CategoryListResponse?;
+    apiResponse.data as CategoryListResponse?;
     setState(() {
       isLoading = false;
     });
@@ -1162,14 +1127,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       case Status.ERROR:
         if (nonCapitalizeString("${apiResponse.message}") ==
             nonCapitalizeString(
-                "${Languages.of(context)?.labelInvalidAccessToken}")) {
+                "${Languages
+                    .of(context)
+                    ?.labelInvalidAccessToken}")) {
           SessionExpiredDialog.showDialogBox(context: context);
         } else {
           CustomAlert.showToast(context: context, message: apiResponse.message);
         }
         return Center(
-            //child: Text('Please try again later!!!'),
-            );
+          //child: Text('Please try again later!!!'),
+        );
       case Status.INITIAL:
       default:
         return Center(
@@ -1180,7 +1147,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget getDashboardData(BuildContext context, ApiResponse apiResponse) {
     DashboardDataResponse? dashboardDataResponse =
-        apiResponse.data as DashboardDataResponse?;
+    apiResponse.data as DashboardDataResponse?;
     setState(() {
       isLoading = false;
       isFavoriteProductsLoading = false;
@@ -1200,20 +1167,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 dashboardDataResponse?.activeOrderCounts); // Notify parent
           }
           favoriteProducts =
-              dashboardDataResponse?.getFavoritesList() as List<ProductData>;
+          dashboardDataResponse?.getFavoritesList() as List<ProductData>;
           updateQuantity(favoriteProducts);
 
           featuredProduct =
-              dashboardDataResponse?.getFeaturedList() as List<ProductData>;
+          dashboardDataResponse?.getFeaturedList() as List<ProductData>;
           updateQuantity(featuredProduct);
 
           bannerList =
-              dashboardDataResponse?.getBannerList() as List<BannerData>;
+          dashboardDataResponse?.getBannerList() as List<BannerData>;
 
           categories = dashboardDataResponse?.getCategoryList() ?? [];
           selectedCategoryDetail?.categoryName == null
               ? selectedCategoryDetail =
-                  categories.isNotEmpty ? categories.first : null
+          categories.isNotEmpty ? categories.first : null
               : SizedBox();
         });
 
@@ -1222,7 +1189,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       case Status.ERROR:
         if (nonCapitalizeString("${apiResponse.message}") ==
             nonCapitalizeString(
-                "${Languages.of(context)?.labelInvalidAccessToken}")) {
+                "${Languages
+                    .of(context)
+                    ?.labelInvalidAccessToken}")) {
           //SessionExpiredDialog.showDialogBox(context: context);
         }
         return SizedBox();
@@ -1307,7 +1276,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         favorite: item.favorite,
         productSizesList: '');
     print(
-        "vendorId ${item.vendorId}  :: productCategoryId  ${item.productCategoryId}  :: id   ${item.id}");
+        "vendorId ${item.vendorId}  :: productCategoryId  ${item
+            .productCategoryId}  :: id   ${item.id}");
     print("quantity ${item.quantity}");
 
     getSpecificCartProduct("${vendorId}", "${item.productCategoryId}",
@@ -1315,8 +1285,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     getCartItemCountDB();
   }
 
-  Future<ProductDataDB?> getSpecificCartProduct(
-      String vendorId,
+  Future<ProductDataDB?> getSpecificCartProduct(String vendorId,
       String categoryId,
       String productId,
       CartDataDao cartDataDao,
@@ -1329,7 +1298,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (product == null) {
       print("Product is null $product");
       List<ProductDataDB?> productsList =
-          await cartDataDao.findAllCartProducts();
+      await cartDataDao.findAllCartProducts();
       print("productsList length: ${productsList.length}");
 
       print("vendorName : ${data.vendorName} ");
@@ -1347,7 +1316,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 CustomAlert.showToast(
                     context: context,
                     message:
-                        "Removed items from cart and added latest item because you can only order from one restaurant at once.");
+                    "Removed items from cart and added latest item because you can only order from one restaurant at once.");
               } else {
                 cartDataDao.insertCartProduct(item);
               }
@@ -1403,28 +1372,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     getCartItemCountDB();
   }
 
-  /* Future<void> initializeDatabase() async {
-    database = await DatabaseHelper().database;
-
-    cartDataDao = database.cartDao;
-    favoritesDataDao = database.favoritesDao;
-    categoryDataDao = database.categoryDao;
-    productsDataDao = database.productDao;
-    dashboardDao = database.dashboardDao;
-
-    setState(() {
-      isFeaturedProductsLoading = true;
-      isBannerLoading = true;
-      isFavoriteProductsLoading = true;
-    });
-    getCartData();
-    _fetchCategoryData();
-    getDashboardDataDB();
-  }*/
-
   Future<void> getCartData() async {
     List<ProductDataDB?> productsList =
-        await DBService.instance.cartDao.findAllCartProducts();
+    await DBService.instance.cartDao.findAllCartProducts();
 
     setState(() {
       List<ProductData> list = [];
@@ -1471,7 +1421,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Future<void> getDashboardDataDB() async {
     try {
       DashboardDataResponse? dashboardData =
-          await DBService.instance.dashboardDao.findData();
+      await DBService.instance.dashboardDao.findData();
       if (dashboardData != null) {
         setState(() {
           favoriteProducts = dashboardData.getFavoritesList();
@@ -1548,7 +1498,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Future<void> updateCategoriesDetails(List<CategoryData>? categoryList) async {
     if (categoryList?.isNotEmpty == true) {
       List<CategoryDataDB?> localCategoryList =
-          await categoryDataDao.findAllCategories();
+      await categoryDataDao.findAllCategories();
       if (mounted) {
         for (var categoryData in categoryList ?? []) {
           bool categoryExists = localCategoryList
@@ -1587,7 +1537,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       CategoryData? selectedCategoryDetail) async {
     if (productList?.isNotEmpty == true) {
       List<ProductData?> localProductList =
-          await productsDataDao.findAllProducts();
+      await productsDataDao.findAllProducts();
       if (mounted) {
         for (var productsData in productList ?? []) {
           bool productExists = localProductList
@@ -1695,115 +1645,114 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       context: context,
       barrierDismissible: true,
       barrierLabel: '',
-      barrierColor: Colors.black.withOpacity(0.5),
-      transitionDuration: const Duration(milliseconds: 300),
-      transitionBuilder: (context, animation1, animation2, widget) {
+      barrierColor: Colors.black.withOpacity(0.4),
+      transitionDuration: const Duration(milliseconds: 350),
+      pageBuilder: (context, animation1, animation2) => Container(),
+      // Required but unused
+      transitionBuilder: (context, animation1, animation2, child) {
+        // Combined Slide + Fade animation
+        final curvedAnimation = CurvedAnimation(
+          parent: animation1,
+          curve: Curves.easeOutBack,
+        );
+
         return SlideTransition(
-          position: _animation!,
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: Material(
-              elevation: 10,
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-              child: Container(
-                height: 200, // Top sheet height
-                width: MediaQuery.of(context).size.width,
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      height: 30,
-                    ),
-                    Row(
-                      children: [
-                        GestureDetector(
+          position: Tween<Offset>(
+            begin: Offset(0, -1),
+            end: Offset.zero,
+          ).animate(curvedAnimation),
+          child: FadeTransition(
+            opacity: curvedAnimation,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Material(
+                elevation: 12,
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(25)),
+                child: Container(
+                  height: 200,
+                  width: MediaQuery
+                      .of(context)
+                      .size
+                      .width,
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 4,
+                        margin: EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      SizedBox(height: 30),
+                      Row(
+                        children: [
+                          GestureDetector(
                             onTap: () {
                               Navigator.of(context).pop();
                               queryController.text = "";
                             },
-                            child: Icon(Icons.arrow_back_rounded)),
-                        SizedBox(
-                          width: 15,
-                        ),
-                        Text(
-                          'Search for Items ',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Container(
-                      height: 40,
-                      child: TextField(
-                        style: TextStyle(
-                          fontSize: 16.0,
-                        ),
-                        obscureText: false,
-                        obscuringCharacter: "*",
-                        autofocus: true,
-                        controller: queryController,
-                        onChanged: (value) async {
-                          if (queryController.text.length >= 4) {
-                            print("queryController${queryController.text}");
-                            showSearch(
-                              context: context,
-                              delegate: VendorSearchDelegate(
-                                  initialQuery: queryController.text,
-                                  isDarkMode: isDarkMode),
-                            );
-                          }
-                        },
-                        onSubmitted: (value) {},
-                        keyboardType: TextInputType.visiblePassword,
-                        textInputAction: TextInputAction.done,
-                        decoration: InputDecoration(
-                          enabledBorder: OutlineInputBorder(
+                            child: Icon(Icons.arrow_back_rounded),
+                          ),
+                          SizedBox(width: 15),
+                          Text(
+                            'Search for Items',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 20),
+                      Container(
+                        height: 40,
+                        child: TextField(
+                          style: TextStyle(fontSize: 16.0),
+                          autofocus: true,
+                          controller: queryController,
+                          onChanged: (value) {
+                            if (value.length >= 4) {
+                              showSearch(
+                                context: context,
+                                delegate: VendorSearchDelegate(
+                                  initialQuery: value,
+                                  isDarkMode: isDarkMode,
+                                ),
+                              );
+                              queryController.text = "";
+                            }
+                          },
+                          decoration: InputDecoration(
+                            hintText: "Search..",
+                            suffixIcon: Icon(Icons.search, color: Colors.grey),
+                            enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
-                                  color: CustomAppColor.Primary, width: 0.8)),
-                          focusedBorder: OutlineInputBorder(
+                                color: CustomAppColor.Primary,
+                                width: 0.8,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
-                                  color: CustomAppColor.Primary, width: 0.7)),
-                          hintText: "Search..",
-                          suffixIcon: Icon(
-                            Icons.search,
-                            color: Colors.grey,
+                                color: CustomAppColor.Primary,
+                                width: 0.7,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 20),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         );
       },
-      pageBuilder: (context, animation1, animation2) => Container(),
     );
-    _animationController!.forward();
   }
-}
-
-// Custom Clipper for Concave Shape
-class ConcaveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    Path path = Path();
-    path.lineTo(0, size.height - 10);
-    path.quadraticBezierTo(
-        size.width / 2, size.height + 10, size.width, size.height - 10);
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

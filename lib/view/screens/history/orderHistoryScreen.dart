@@ -3,19 +3,12 @@ import 'package:ChaiBar/view/screens/history/pastOrdersScreen.dart';
 import 'package:ChaiBar/view/screens/history/upcomingOrdersScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import '../../../language/Languages.dart';
-import '../../../model/request/getHistoryRequest.dart';
+
 import '../../../model/response/createOrderResponse.dart';
-import '../../../model/response/getHistoryResponse.dart';
-import '../../../model/viewModel/mainViewModel.dart';
 import '../../../theme/CustomAppColor.dart';
 import '../../../utils/Helper.dart';
 import '../../../utils/Util.dart';
-import '../../../utils/apiHandling/api_response.dart';
-import '../../component/CustomSnackbar.dart';
 import '../../component/connectivity_service.dart';
-import '../../component/session_expired_dialog.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   @override
@@ -55,7 +48,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     //_fetchDataFuture = _fetchData(_currentPage, false);
   }
 
- /* void _LoadMore() async {
+  /* void _LoadMore() async {
     if (!_isLoadingMore &&
         _scrollController.position.pixels ==
             _scrollController.position.maxScrollExtent) {
@@ -234,60 +227,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       groupedData[date]!.add(order);
     }
     return groupedData;
-  }
-
-  Future<void> _fetchData(int pageKey, bool isScroll) async {
-    try {
-      setState(() {
-        //isLoading = true;
-      });
-      bool isConnected = await _connectivityService.isConnected();
-      if (!isConnected) {
-        setState(() {
-          isLoading = false;
-          isInternetConnected = false;
-          CustomSnackBar.showSnackbar(
-              context: context,
-              message: '${Languages.of(context)?.labelNoInternetConnection}');
-        });
-      } else {
-        GetHistoryRequest request =
-            GetHistoryRequest(pageNumber: pageKey, pageSize: 20, status: 0);
-        await Provider.of<MainViewModel>(context, listen: false)
-            .getHistoryData("/api/v1/app/orders/cust_order_history", request);
-        ApiResponse apiResponse =
-            Provider.of<MainViewModel>(context, listen: false).response;
-        await getHistoryData(context, apiResponse, pageKey, isScroll);
-      }
-    } catch (error) {
-      print("No Past Orders: $error");
-    }
-  }
-
-  Future<void> getHistoryData(BuildContext context, ApiResponse apiResponse,
-      int pageKey, bool isScroll) async
-  {
-    GetHistoryResponse? getHistoryResponse =
-        apiResponse.data as GetHistoryResponse?;
-    setState(() {
-      isLoading = false;
-    });
-    switch (apiResponse.status) {
-      case Status.LOADING:
-        return;
-      case Status.COMPLETED:
-        return;
-      case Status.ERROR:
-        if (nonCapitalizeString("${apiResponse.message}") ==
-            nonCapitalizeString(
-                "${Languages.of(context)?.labelInvalidAccessToken}")) {
-          SessionExpiredDialog.showDialogBox(context: context);
-        }
-        return;
-      case Status.INITIAL:
-      default:
-        return;
-    }
   }
 }
 

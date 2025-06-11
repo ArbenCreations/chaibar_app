@@ -51,7 +51,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
   Color? lightColor = Colors.red[50];
   int _selectedIndex = 0;
   PageController _pageController = PageController();
-
+  late MainViewModel _mainViewModel;
   @override
   void initState() {
     super.initState();
@@ -63,6 +63,12 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
     runApi();
     _scrollController.addListener(_activeLoadMore);
     _fetchDataFuture = _fetchData(_currentPage, false, selectedOrderType);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _mainViewModel = Provider.of<MainViewModel>(context, listen: false);
   }
 
   runApi() {
@@ -260,10 +266,8 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
       } else {
         GetHistoryRequest request = GetHistoryRequest(
             pageNumber: pageKey, pageSize: 10, status: selectionType);
-        await Provider.of<MainViewModel>(context, listen: false)
-            .getHistoryData("/api/v1/app/orders/cust_order_history", request);
-        ApiResponse apiResponse =
-            Provider.of<MainViewModel>(context, listen: false).response;
+        await _mainViewModel.getHistoryData("/api/v1/app/orders/cust_order_history", request);
+        ApiResponse apiResponse = _mainViewModel.response;
         await getHistoryData(
           context,
           apiResponse,

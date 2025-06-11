@@ -140,7 +140,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
     });
     Helper.getApiKey().then((data) {
       setState(() {
-        apiKey = "12c12489-fc5f-253d-af89-270d4b68b87e"; //"${data ?? ""}";
+        apiKey = "${data ?? ""}";
       });
     });
     Helper.getProfileDetails().then((profileDetails) {
@@ -1292,27 +1292,27 @@ class _MyCartScreenState extends State<MyCartScreen> {
                         ],
                       )
                     : Container(
-                        height: screenHeight * 0.7,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Center(
-                              child: ClipRRect(
-                                child: Image(
-                                  width: mediaWidth * 0.7,
-                                  image: AssetImage("assets/empty_cart.png"),
+                            height: screenHeight * 0.7,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Center(
+                                  child: ClipRRect(
+                                    child: Image(
+                                      width: mediaWidth * 0.7,
+                                      image: AssetImage("assets/empty_cart.png"),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                Text(
+                                  "Cart is Empty",
+                                  style: TextStyle(
+                                      fontSize: 22, fontWeight: FontWeight.bold),
+                                )
+                              ],
                             ),
-                            Text(
-                              "Cart is Empty",
-                              style: TextStyle(
-                                  fontSize: 22, fontWeight: FontWeight.bold),
-                            )
-                          ],
-                        ),
-                      ),
+                          ),
               ),
               isLoading
                   ? Stack(
@@ -1370,17 +1370,12 @@ class _MyCartScreenState extends State<MyCartScreen> {
   }
 
   double getTaxAmount(double totalPrice) {
-    print("totalPrice $totalPrice");
-    print("afterDiscountAmount $afterDiscountAmount");
     setState(() {
-      //totalPrice > 0 ? afterDiscountAmount = 0 : SizedBox();
       afterDiscountAmount =
           afterDiscountAmount == 0 ? totalPrice : afterDiscountAmount;
       gstTaxAmount = roundToTwoDecimal((afterDiscountAmount * gst) / 100);
       pstTaxAmount = roundToTwoDecimal((afterDiscountAmount * pst) / 100);
       hstTaxAmount = roundToTwoDecimal((afterDiscountAmount * hst) / 100);
-      print(
-          "gstTaxAmount ${roundToTwoDecimal((afterDiscountAmount * gst) / 100)}");
       taxAmount = roundToTwoDecimal(gstTaxAmount + pstTaxAmount + hstTaxAmount);
     });
     return taxAmount;
@@ -1596,10 +1591,6 @@ class _MyCartScreenState extends State<MyCartScreen> {
 
     setState(() {
       totalPrice = totalAmount;
-      print("Total price $totalAmount");
-      print("Total price $discountAmount");
-      print("RedeemAmount $redeemAmount");
-      // afterDiscountAmount = totalPrice - discountAmount;
     });
 
     getDiscountAmt();
@@ -1827,14 +1818,11 @@ class _MyCartScreenState extends State<MyCartScreen> {
             rewardPoints -= pointsToRedeem;
             grandTotal = grandTotal - redeemAmount;
             afterDiscountAmount = totalPrice - discountAmount - (redeemAmount);
-            //totalPrice > 0 ? afterDiscountAmount = 0 : SizedBox();
             afterDiscountAmount =
                 afterDiscountAmount == 0 ? totalPrice : afterDiscountAmount;
             gstTaxAmount = roundToTwoDecimal((afterDiscountAmount * gst) / 100);
             pstTaxAmount = roundToTwoDecimal((afterDiscountAmount * pst) / 100);
             hstTaxAmount = roundToTwoDecimal((afterDiscountAmount * hst) / 100);
-            print(
-                "gstTaxAmount ${roundToTwoDecimal((afterDiscountAmount * gst) / 100)}");
             taxAmount =
                 roundToTwoDecimal(gstTaxAmount + pstTaxAmount + hstTaxAmount);
             getGrandTotal(totalPrice, taxAmount, discountAmount);
@@ -1901,8 +1889,6 @@ class _MyCartScreenState extends State<MyCartScreen> {
         setState(() {
           if (storeStatusResponse?.storeStatus == "offline") {
             isStoreOnline = false;
-            CustomSnackBar.showSnackbar(
-                context: context, message: "Store is Closed!");
           } else if (storeStatusResponse?.storeStatus == "online") {
             isStoreOnline = true;
             if (isOrder) {
@@ -2108,7 +2094,6 @@ class _MyCartScreenState extends State<MyCartScreen> {
         discountAmount = discountValue;
         afterDiscountAmount = totalPrice - discountAmount - redeemAmount;
       });
-      print("afterDiscountAmount ${afterDiscountAmount.toStringAsFixed(2)}");
       await Future.delayed(Duration(milliseconds: 2));
       getGrandTotal(totalPrice, taxAmount, discountAmount);
     } else {
