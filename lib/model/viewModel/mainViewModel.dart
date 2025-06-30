@@ -4,6 +4,7 @@ import 'package:ChaiBar/model/request/deleteProfileRequest.dart';
 import 'package:ChaiBar/model/response/StoreSettingResponse.dart';
 import 'package:flutter/cupertino.dart';
 
+import '../response/orderDetailResponse.dart';
 import '/model/main_repository.dart';
 import '/model/request/TransactionRequest.dart';
 import '/model/request/featuredListRequest.dart';
@@ -993,7 +994,7 @@ class MainViewModel with ChangeNotifier {
     _apiResponse = ApiResponse.loading('Loading');
     notifyListeners();
     try {
-      OrderDetails storeStatusResponse =
+      OrderDetailResponse storeStatusResponse =
       await MainRepository().fetchOrderStatus(value,request);
       if (storeStatusResponse.status == 200 ||
           storeStatusResponse.status == 201) {

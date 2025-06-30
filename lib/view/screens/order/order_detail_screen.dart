@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../model/db/DatabaseHelper.dart';
+import '../../../model/response/orderDetailResponse.dart';
 import '/model/db/ChaiBarDB.dart';
 import '../../../language/Languages.dart';
 import '../../../model/request/getOrderDetailRequest.dart';
@@ -140,7 +141,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                           height: 1,
                                         ),
                                         Text(
-                                          " ${convertDateFormat("${order?.createdAt}")} @ ${convertTime("${order?.createdAt}")}",
+                                          " ${convertDateTimeFormat("${order?.createdAt}")} @ ${convertTime("${order?.createdAt}")}",
                                           style: TextStyle(
                                               fontSize: 12, color: Colors.white),
                                         ),
@@ -165,10 +166,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                     ),
                                   ],
                                 ),
-                                /* IconButton(
+                                 IconButton(
                                   onPressed: () => _fetchOrderStatus(),
                                   icon: Icon(Icons.refresh, color: Colors.white,),
-                                )*/
+                                )
                               ],
                             ),
                           ),
@@ -589,8 +590,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Widget getOrderStatusResponse(
       BuildContext context, ApiResponse apiResponse)
   {
-    OrderDetails? orderStatusResponse =
-    apiResponse.data as OrderDetails?;
+    OrderDetailResponse? orderStatusResponse =
+    apiResponse.data as OrderDetailResponse?;
     setState(() {
       isLoading = false;
     });
@@ -600,7 +601,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       case Status.COMPLETED:
         CustomSnackBar.showSnackbar(context: context, message: "Order Details Fetched Successfully");
         setState(() {
-          order = orderStatusResponse;
+          order = orderStatusResponse?.data?.order;
         });
         return Container();
       case Status.ERROR:

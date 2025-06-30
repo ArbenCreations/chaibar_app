@@ -10,6 +10,7 @@ import 'package:ChaiBar/model/response/appleTokenDetailsResponse.dart';
 import 'package:ChaiBar/model/response/getRewardPointsResponse.dart';
 import 'package:ChaiBar/model/response/getViewRewardPointsResponse.dart';
 import 'package:ChaiBar/model/response/itemReviewResponse.dart';
+import 'package:ChaiBar/model/response/orderDetailResponse.dart';
 
 import '/model/request/CardDetailRequest.dart';
 import '/model/request/CreateOrderRequest.dart';
@@ -283,11 +284,11 @@ class MainRepository {
     return mediaList;
   }
 
-  Future<OrderDetails> fetchOrderStatus(String value, GetOrderDetailRequest request) async {
+  Future<OrderDetailResponse> fetchOrderStatus(String value, GetOrderDetailRequest request) async {
     dynamic response = await _baseService.postResponse(value,request);
     final jsonData = response;
     print(jsonData);
-    OrderDetails mediaList = OrderDetails.fromJson(jsonData);
+    OrderDetailResponse mediaList = OrderDetailResponse.fromJson(jsonData);
     return mediaList;
   }
 

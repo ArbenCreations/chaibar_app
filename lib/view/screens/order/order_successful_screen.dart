@@ -48,7 +48,6 @@ class _OrderSuccessfulScreenState extends State<OrderSuccessfulScreen>
       setState(() {
         print("domainUrl${onValue?.domainUrl}");
         _url = Uri.parse(safeUrl(onValue?.domainUrl));
-        //setThemeColor();
       });
     });
     Helper.getProfileDetails().then((profile) {
@@ -145,15 +144,15 @@ class _OrderSuccessfulScreenState extends State<OrderSuccessfulScreen>
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
 
                     //if (widget.orderData?.order?.totalPrice != null)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Text(
-                        "\$${widget.orderData?.order?.totalPrice ?? 506.36}",
+                        "\$${widget.orderData?.order?.totalAmount ?? "0.0"}",
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                         ),

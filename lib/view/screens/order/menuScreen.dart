@@ -1167,7 +1167,7 @@ class _MenuScreenState extends State<MenuScreen>
     data.theme = widget.data?.theme;
     data.vendorName = widget.data?.businessName;
     final product = await cartDataDao.getSpecificCartProduct(
-        vendorId, categoryId, productId);
+        vendorId, categoryId, productId, data.addOnIdsList.toString());
 
     if (product == null) {
       print("Product is null $product");

@@ -69,17 +69,6 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
     });
   }
 
-  void _handleBackspace() {
-    setState(() {
-      for (int i = _inputValues.length - 1; i >= 0; i--) {
-        if (_inputValues[i].isNotEmpty) {
-          _inputValues[i] = '';
-          break;
-        }
-      }
-    });
-  }
-
   @override
   void dispose() {
     for (var controller in _otpControllers) {
@@ -89,19 +78,6 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
       focusNode.dispose();
     }
     super.dispose();
-  }
-
-  void _isValidOtp(String input) {
-    print(input);
-    if (input.isNotEmpty && input.length >= 10) {
-      setState(() {
-        isValid = true;
-      });
-    } else {
-      setState(() {
-        isValid = false;
-      });
-    }
   }
 
   Future<Widget> getOtpResponseDataWidget(
@@ -219,10 +195,6 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          /*_buildLabelText(context,
-                              Languages.of(context)!.labelWelcome, 16, false),
-
-                          SizedBox(height: 4),*/
                           SizedBox(height: 20),
                           Padding(
                             padding:
@@ -380,6 +352,7 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
             ],
           );
   }
+
   Widget _buildOtpInput(
       BuildContext context, double mediaWidth, bool isDarkMode)
   {
@@ -414,19 +387,26 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
                   ),
                 ),
               ),
-              onChanged: (value) {
-                if (value.length == 1) {
-                  if (index < 5) {
-                    FocusScope.of(context).nextFocus();
-                  } else {
-                    FocusScope.of(context).unfocus(); // Hide keyboard
+                onChanged: (value) {
+                  if (value.length > 1) {
+                    // Full OTP pasted
+                    for (int i = 0; i < value.length && i < 6; i++) {
+                      _otpControllers[i].text = value[i];
+                      _inputValues[i] = value[i];
+                    }
+                    FocusScope.of(context)
+                        .unfocus(); // Hide keyboard after pasting
+                  } else if (value.length == 1) {
+                    _inputValues[index] = value;
+                    if (index < 5) {
+                      FocusScope.of(context).nextFocus();
+                    } else {
+                      FocusScope.of(context).unfocus(); // Last field
+                    }
+                  } else if (value.isEmpty && index > 0) {
+                    FocusScope.of(context).previousFocus();
                   }
-                } else if (value.isEmpty && index > 0) {
-                  FocusScope.of(context).previousFocus();
-                }
-                _inputValues[index] = value;
-              },
-            ),
+                }),
           ),
         ),
       ),

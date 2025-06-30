@@ -6,7 +6,7 @@ import 'package:floor/floor.dart';
 import '../db/listConverter.dart';
 
 @TypeConverters([ListConverter, ProductSizeListConverter])
-@Entity(tableName: 'ProductDataDB', primaryKeys: ['productId'])
+@Entity(tableName: 'ProductDataDB', primaryKeys: ['productId', 'addOnIdsList'])
 class ProductDataDB {
   int? productId;
   String? title ;

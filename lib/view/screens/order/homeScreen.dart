@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../component/status_badge_widget.dart';
 import '/model/db/dataBaseDao.dart';
 import '/model/response/dashboardDataResponse.dart';
 import '/model/response/productDataDB.dart';
@@ -38,6 +37,7 @@ import '../../component/my_navigator_observer.dart';
 import '../../component/promotion_offers_widget.dart';
 import '../../component/session_expired_dialog.dart';
 import '../../component/shimmer_card.dart';
+import '../../component/status_badge_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(int?)? onOrderCountFetched;
@@ -1293,7 +1293,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     data.theme = vendorData?.theme;
     data.vendorName = vendorData?.businessName;
     final product = await cartDataDao.getSpecificCartProduct(
-        vendorId, categoryId, productId);
+        vendorId, categoryId, productId, data.addOnIdsList.toString());
 
     if (product == null) {
       print("Product is null $product");
@@ -1498,7 +1498,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Future<void> updateCategoriesDetails(List<CategoryData>? categoryList) async {
     if (categoryList?.isNotEmpty == true) {
       List<CategoryDataDB?> localCategoryList =
-      await categoryDataDao.findAllCategories();
+          await categoryDataDao.findAllCategories();
       if (mounted) {
         for (var categoryData in categoryList ?? []) {
           bool categoryExists = localCategoryList
@@ -1521,7 +1521,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           }
           updateProductsDetails(categoryData.products, selectedCategoryDetail);
         }
-        //selectedCategoryDetail = categoryList?.first;
       }
       for (var localData in localCategoryList) {
         bool? productInNewList = categoryList
@@ -1561,7 +1560,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         }
       }
     }
-    //print("updateProductsDetails :: ${selectedCategoryDetail?.id}");
     if (selectedCategoryDetail != null) {
       getProductDataDB(selectedCategoryDetail);
     }

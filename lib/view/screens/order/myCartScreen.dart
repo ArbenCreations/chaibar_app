@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:coupon_uikit/coupon_uikit.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -104,8 +105,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
     setState(() {
       isStoreOnline= true;
       pickupDate = "${DateFormat('yyyy-MM-dd').format(DateTime.now())}";
-      pickupTime =
-          "${DateFormat('hh:mm a').format(DateTime.now().add(Duration(minutes: 20)))}";
+      pickupTime = "${DateFormat('hh:mm a').format(DateTime.now().add(Duration(minutes: 5)))}";
     });
     Helper.getVendorDetails().then((data) {
       setState(() {
@@ -1417,9 +1417,9 @@ class _MyCartScreenState extends State<MyCartScreen> {
                 productCategoryId: item.productCategoryId,
                 price: item.price,
                 deposit: item.deposit,
-                // addOnType: [],
+                addOnType: item.addOnType,
                 categoryName: item.categoryName,
-                // addOnIds: [],
+                addOnIdsList: item.addOnIdsList,
                 addOn: item.addOn,
                 imageUrl: item.imageUrl,
                 description: item.description,
@@ -1464,7 +1464,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
     ProductDataDB data = ProductDataDB(
         description: item.description,
         imageUrl: item.imageUrl,
-        //addOnIds: [],
+        addOnIdsList: item.addOnIdsList,
         categoryName: item.categoryName,
         addOnType: item.addOnType,
         deposit: item.deposit,
@@ -1498,7 +1498,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
       CartDataDao cartDataDao,
       ProductDataDB data) async {
     final product = await cartDataDao.getSpecificCartProduct(
-        vendorId, categoryId, productId);
+        vendorId, categoryId, productId, data.addOnIdsList.toString());
 
     if (product == null) {
       print("Product is null $product");
@@ -1531,13 +1531,14 @@ class _MyCartScreenState extends State<MyCartScreen> {
     return product;
   }
 
+
   void deleteProductInDb(ProductData? item) {
     ProductDataDB data = ProductDataDB(
         description: item?.description,
         imageUrl: item?.imageUrl,
-        /*addOnIds: item?.addOnIds*/
+        addOnIdsList: item?.addOnIdsList,
         categoryName: item?.categoryName,
-        /*addOnType: item?.addOnType,*/
+        addOnType: item?.addOnType,
         deposit: item?.deposit,
         addOn: item?.addOn,
         price: item?.price,
@@ -1606,6 +1607,7 @@ class _MyCartScreenState extends State<MyCartScreen> {
     });
 
     bool isConnected = await _connectivityService.isConnected();
+    pickupTime = "${DateFormat('hh:mm a').format(DateTime.now().add(Duration(minutes: 5)))}";
     if (!isConnected) {
       setState(() {
         isLoading = false;

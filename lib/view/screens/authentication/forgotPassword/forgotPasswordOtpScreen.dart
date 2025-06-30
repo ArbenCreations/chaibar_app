@@ -38,28 +38,6 @@ class _OtpForgotPassScreenState extends State<OtpForgotPassScreen> {
       List.generate(6, (_) => TextEditingController());
   List<String> _inputValues = List.generate(6, (_) => '');
 
-  void _handleKeyTap(String value) {
-    setState(() {
-      for (int i = 0; i < _inputValues.length; i++) {
-        if (_inputValues[i].isEmpty) {
-          _inputValues[i] = value;
-          break;
-        }
-      }
-    });
-  }
-
-  void _handleBackspace() {
-    setState(() {
-      for (int i = _inputValues.length - 1; i >= 0; i--) {
-        if (_inputValues[i].isNotEmpty) {
-          _inputValues[i] = '';
-          break;
-        }
-      }
-    });
-  }
-
   @override
   void initState() {
     super.initState();
@@ -68,7 +46,6 @@ class _OtpForgotPassScreenState extends State<OtpForgotPassScreen> {
     newPasswordVisible = true;
     confirmPasswordVisible = true;
     _focusNodes[0].requestFocus();
-    //_fetchData();
     for (var i = 0; i < _focusNodes.length; i++) {
       _focusNodes[i].addListener(() {
         if (_focusNodes[i].hasFocus && _otpControllers[i].text.isEmpty) {
@@ -154,7 +131,7 @@ class _OtpForgotPassScreenState extends State<OtpForgotPassScreen> {
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: MaterialButton(
-                    onPressed: () => _submitOtp(),
+                    onPressed: () => _submitOtp("${widget.data}"),
                     color: CustomAppColor.Primary,
                     minWidth: mediaWidth * 0.6,
                     padding: EdgeInsets.symmetric(vertical: 10),
@@ -240,13 +217,11 @@ class _OtpForgotPassScreenState extends State<OtpForgotPassScreen> {
     }
   }
 
-  void _submitOtp() {
+  void _submitOtp(String email) {
     String otp = _inputValues.join();
 
-    print("${widget.data}");
-
     VerifyOtChangePassRequest data = VerifyOtChangePassRequest(
-      email: "${widget.data}",
+      email: "${email ?? ""}",
       mobileOtp: otp,
     );
 

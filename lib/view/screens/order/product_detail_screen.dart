@@ -1,32 +1,25 @@
 import 'dart:convert';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../../model/db/db_service.dart';
 import '/model/db/dataBaseDao.dart';
 import '/model/response/productDataDB.dart';
 import '/model/response/productListResponse.dart';
 import '/utils/Helper.dart';
 import '/utils/Util.dart';
 import '../../../language/Languages.dart';
+import '../../../model/db/db_service.dart';
 import '../../../model/request/itemReviewRequest.dart';
-import '../../../model/request/markFavoriteRequest.dart';
-import '../../../model/response/bannerListResponse.dart';
-import '../../../model/response/categoryDataDB.dart';
-import '../../../model/response/categoryListResponse.dart';
 import '../../../model/response/itemReviewResponse.dart';
-import '../../../model/response/markFavoriteResponse.dart';
-import '../../../model/response/vendorListResponse.dart';
 import '../../../model/viewModel/mainViewModel.dart';
 import '../../../theme/CustomAppColor.dart';
 import '../../../utils/apiHandling/api_response.dart';
 import '../../component/CustomAlert.dart';
 import '../../component/CustomSnackbar.dart';
-import '../../component/connectivity_service.dart';
 import '../../component/custom_circular_progress.dart';
 import '../../component/session_expired_dialog.dart';
 import '../../component/view_cart_container.dart';
@@ -46,26 +39,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   late double screenHeight;
   late bool isDarkMode;
   bool isProductAvailable = true;
-  bool isB1G1 = false;
-  var imageUrl;
-  String? selectedValue;
-  String? theme = "";
-  late List<CategoryData?> categories = [];
-  late List<ProductData?> featuredProduct = [];
   late List<ProductData> menuItems = [];
   late CartDataDao cartDataDao;
-  late CategoryDataDao categoryDataDao;
   late ProductsDataDao productsDataDao;
   int cartItemCount = 0;
   late int vendorId;
-  late int customerId;
-  VendorData? vendorData = VendorData();
   List<ProductData> cartDBList = [];
-  List<BannerData> bannerList = [];
-
-  String selectedCategory = "";
-  CategoryData? selectedCategoryDetail = CategoryData();
-  List<ProductData> cart = []; // Cart holds selected MenuItems
+  List<ProductData> cart = [];
   List<ProductSize> productSizeList = [];
   List<AddOnCategory> addOnList = [];
   List<AddOnCategory> cartAddOnList = [];
@@ -74,18 +54,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   bool isLoading = false;
   bool? isVoteUp = false;
   bool? isVoteDown = false;
-  bool isMarkFavLoading = false;
-  bool isProductsLoading = false;
-  bool isCategoryLoading = false;
-  bool isInternetConnected = true;
   bool _isVisible = false;
-  final ConnectivityService _connectivityService = ConnectivityService();
-  static const maxDuration = Duration(seconds: 2);
   late AnimationController _controller;
   late MainViewModel _mainViewModel;
   Color primaryColor = CustomAppColor.Primary;
-  Color? secondaryColor = Colors.red[100];
-  Color? lightColor = Colors.red[50];
   List<bool> checkedStates = [];
 
   @override
@@ -96,17 +68,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     }
     Helper.getVendorDetails().then((onValue) {
       setState(() {
-        vendorData = onValue;
         vendorId = int.parse("${onValue?.id}");
       });
     });
-    Helper.getProfileDetails().then((onValue) {
-      setState(() {
-        customerId = int.parse("${onValue?.id}");
-      });
-    });
 
-    imageUrl = "";
     _controller = AnimationController(
       duration: Duration(milliseconds: 300),
       vsync: this,
@@ -116,6 +81,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       productSizeList = selectedProduct?.getProductSizeList() ?? [];
       checkedStates = List<bool>.filled(productSizeList.length, false);
       addOnList = selectedProduct?.getAddOnList() ?? [];
+      addOnList.isNotEmpty
+          ? selectedProduct?.addOnIdsList =
+              jsonEncode(["${addOnList[0].addOns?[0].id}"])
+          : SizedBox();
+      addOnList.isNotEmpty
+          ? selectedProduct?.addOnType = addOnList[0].addOnCategoryType
+          : SizedBox();
       if (selectedProduct!.userVote != null && selectedProduct!.userVote! == "upvote") {
         isVoteUp = true;
       } else if (selectedProduct!.userVote != null &&
@@ -123,6 +95,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         isVoteDown = true;
       }
     });
+    addOnList.isNotEmpty
+        ? cartDataDao
+            .getMatchingCartItem(
+                selectedProduct!.id.toString(),
+                selectedProduct!.addOnType.toString(),
+                jsonEncode(["${addOnList[0].addOns?[0].id}"]))
+            .then((value) {
+            setState(() {
+              selectedProduct?.quantity = value?.quantity ?? 0;
+            });
+          })
+        : SizedBox();
   }
 
   @override
@@ -171,71 +155,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 children: [
                   Stack(
                     children: [
-                      selectedProduct?.imageUrl == "" ||
-                              selectedProduct?.imageUrl == null
-                          ? Container(
-                              decoration: BoxDecoration(color: primaryColor),
-                              child: Image.asset(
-                                "assets/app_logo.png",
-                                height: screenHeight * 0.4,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          : Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                              ),
-                              child: ClipRRect(
-                                child: CachedNetworkImage(
-                                  imageUrl: selectedProduct?.imageUrl ?? "",
-                                  height: screenHeight * 0.4,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) =>
-                                      Shimmer.fromColors(
-                                    baseColor: Colors.white38,
-                                    highlightColor: Colors.grey,
-                                    child: Container(
-                                      height: screenHeight * 0.55,
-                                      width: double.infinity,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) =>
-                                      Container(
-                                    child: Image.asset(
-                                      "assets/app_logo.png",
-                                      height: screenHeight * 0.55,
-                                      width: double.infinity,
-                                      fit: BoxFit.fitWidth,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                      //Image Detail Section
+                      imageDetailSection(),
+
                       SafeArea(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            GestureDetector(
-                              onTap: () {
-                                //Navigator.pop(context);
+                            FloatingActionButton(
+                              mini: true,
+                              shape: CircleBorder(),
+                              elevation: 0,
+                              backgroundColor: Colors.white,
+                              onPressed: () {
                                 Navigator.pushNamed(
                                     context, "/BottomNavigation",
                                     arguments: 1);
                               },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(50),
-                                    color: Colors.white),
-                                padding: EdgeInsets.all(9),
-                                margin: EdgeInsets.all(9),
-                                child: Icon(
-                                  Icons.arrow_back_ios_new,
-                                  size: 20,
-                                  color: CustomAppColor.PrimaryAccent,
-                                ),
+                              child: Icon(
+                                Icons.arrow_back_ios_new,
+                                size: 20,
+                                color: CustomAppColor.PrimaryAccent,
                               ),
                             ),
                             selectedProduct?.featured == true
@@ -260,6 +200,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                           ],
                         ),
                       ),
+
                       selectedProduct?.upvote_percentage == "null"
                           ? Positioned(
                               bottom: 6,
@@ -330,687 +271,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  SizedBox(
-                                    height: 8,
-                                  ),
-                                  selectedProduct?.isBuy1Get1 == true
-                                      ? Text(
-                                          "BUY 1 GET 1",
-                                          style: TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.red),
-                                        )
-                                      : SizedBox(
-                                          height: 2,
-                                        ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          IntrinsicWidth(
-                                            //width: 200,
-                                            child: Text(
-                                              capitalizeFirstLetter(
-                                                  "${selectedProduct?.title}"),
-                                              maxLines: 2,
-                                              style: TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade100,
-                                          borderRadius:
-                                              BorderRadius.circular(30),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            GestureDetector(
-                                              child: Card(
-                                                shape: RoundedRectangleBorder(
-                                                    side: BorderSide(
-                                                      color: selectedProduct
-                                                                  ?.quantity ==
-                                                              0
-                                                          ? Colors.grey
-                                                          : CustomAppColor
-                                                              .PrimaryAccent,
-                                                      width: 0.8,
-                                                    ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            100)),
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(4.0),
-                                                  child: Icon(
-                                                    Icons.remove,
-                                                    size: 20,
-                                                    color: selectedProduct
-                                                                ?.quantity ==
-                                                            0
-                                                            ? Colors.grey
-                                                            : CustomAppColor
-                                                                .PrimaryAccent,
-                                                  ),
-                                                ),
-                                              ),
-                                              onTap: () {
-                                                setState(() {
-                                                  if (int.parse(
-                                                          "${selectedProduct?.quantity}") >
-                                                      0) {
-                                                    if (selectedProduct
-                                                                ?.isBuy1Get1 !=
-                                                            null &&
-                                                        selectedProduct
-                                                                ?.isBuy1Get1 ==
-                                                            true) {
-                                                      selectedProduct
-                                                          ?.quantity = int.parse(
-                                                              "${selectedProduct?.quantity}") -
-                                                          2;
-                                                      _updateCart(
-                                                          selectedProduct
-                                                              as ProductData);
-                                                      deleteProductInDb(widget
-                                                          .data as ProductData);
-                                                    } else {
-                                                      selectedProduct
-                                                          ?.quantity--;
-                                                      _updateCart(
-                                                          selectedProduct
-                                                              as ProductData);
-                                                      deleteProductInDb(widget
-                                                          .data as ProductData);
-                                                    }
-                                                  }
-                                                });
-                                              },
-                                            ),
-                                            SizedBox(
-                                              width: 5,
-                                            ),
-                                            Text(
-                                              "${selectedProduct?.quantity}",
-                                              style: TextStyle(
-                                                  fontSize: 18,
-                                                  color: Colors.black54),
-                                            ),
-                                            SizedBox(
-                                              width: 4,
-                                            ),
-                                            GestureDetector(
-                                              child: Card(
-                                                shape: RoundedRectangleBorder(
-                                                    side: BorderSide(
-                                                      color: CustomAppColor
-                                                          .PrimaryAccent,
-                                                      width: 0.8,
-                                                    ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            100)),
-                                                color: CustomAppColor
-                                                    .PrimaryAccent,
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(4.0),
-                                                  child: Icon(
-                                                    Icons.add,
-                                                    size: 20,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              ),
-                                              onTap: () {
-                                                setState(() {
-                                                  if (selectedProduct
-                                                              ?.isBuy1Get1 ==
-                                                          null ||
-                                                      selectedProduct
-                                                              ?.isBuy1Get1 ==
-                                                          false) {
-                                                    if (int.parse(
-                                                            "${selectedProduct?.quantity}") <
-                                                        int.parse(
-                                                            "${selectedProduct?.qtyLimit}")) {
-                                                      selectedProduct
-                                                          ?.quantity++;
-                                                      if (selectedProduct?.addOn
-                                                              ?.isNotEmpty ==
-                                                          true) {
-                                                        List<AddOnCategory>
-                                                            addOnCategories =
-                                                            [];
-                                                        addOnList
-                                                            .forEach((item) {
-                                                          AddOnCategory
-                                                              addOnDetails =
-                                                              AddOnCategory(
-                                                                  addOnCategory:
-                                                                      item
-                                                                          .addOnCategory,
-                                                                  addOnCategoryType:
-                                                                      item.addOnCategoryType);
-                                                          List<AddOnDetails>
-                                                              selectedAddOns =
-                                                              [];
-                                                          if (item.addOnCategoryType ==
-                                                              "multiple") {
-                                                            item.addOns
-                                                                ?.forEach(
-                                                                    (addOn) {
-                                                              print(
-                                                                  "addOn :: ${jsonEncode(addOn)}");
-                                                              if (addOn
-                                                                  .isSelected) {
-                                                                selectedAddOns
-                                                                    .add(addOn);
-                                                              }
-                                                            });
-                                                          } else {
-                                                            item.addOns
-                                                                ?.forEach(
-                                                                    (addOn) {
-                                                              if (item.selectedAddOnIdInSingleType ==
-                                                                  addOn.id) {
-                                                                selectedAddOns
-                                                                    .add(addOn);
-                                                              }
-                                                            });
-                                                          }
+                                  //Product Detail Section
+                                  productDetailSection(),
 
-                                                          print(
-                                                              "selectedAddOns :: ${jsonEncode(selectedAddOns)}");
-                                                          addOnDetails.addOns =
-                                                              selectedAddOns;
-                                                          addOnCategories.add(
-                                                              addOnDetails);
-                                                          print(
-                                                              "addOnCategories :: ${jsonEncode(addOnCategories)}");
-                                                        });
-                                                        selectedProduct?.addOn =
-                                                            jsonEncode(
-                                                                addOnCategories);
-                                                      }
-                                                      _updateCart(
-                                                          selectedProduct
-                                                              as ProductData);
-                                                      addProductInDb(
-                                                          selectedProduct
-                                                              as ProductData);
-                                                    }
-                                                  } else {
-                                                    if (int.parse(
-                                                            "${selectedProduct?.quantity}") <
-                                                        2 *
-                                                            int.parse(
-                                                                "${selectedProduct?.qtyLimit}")) {
-                                                      selectedProduct
-                                                          ?.quantity = int.parse(
-                                                              "${selectedProduct?.quantity}") +
-                                                          2;
-                                                      if (selectedProduct?.addOn
-                                                              ?.isNotEmpty ==
-                                                          true) {
-                                                        List<AddOnCategory>
-                                                            addOnCategories =
-                                                            [];
-                                                        addOnList
-                                                            .forEach((item) {
-                                                          AddOnCategory
-                                                              addOnDetails =
-                                                              AddOnCategory(
-                                                                  addOnCategory:
-                                                                      item
-                                                                          .addOnCategory,
-                                                                  addOnCategoryType:
-                                                                      item.addOnCategoryType);
-                                                          List<AddOnDetails>
-                                                              selectedAddOns =
-                                                              [];
-                                                          if (item.addOnCategoryType ==
-                                                              "multiple") {
-                                                            item.addOns
-                                                                ?.forEach(
-                                                                    (addOn) {
-                                                              print(
-                                                                  "addOn :: ${jsonEncode(addOn)}");
-                                                              if (addOn
-                                                                  .isSelected) {
-                                                                selectedAddOns
-                                                                    .add(addOn);
-                                                              }
-                                                            });
-                                                          } else {
-                                                            item.addOns
-                                                                ?.forEach(
-                                                                    (addOn) {
-                                                              if (item.selectedAddOnIdInSingleType ==
-                                                                  addOn.id) {
-                                                                selectedAddOns
-                                                                    .add(addOn);
-                                                              }
-                                                            });
-                                                          }
-
-                                                          print(
-                                                              "selectedAddOns :: ${jsonEncode(selectedAddOns)}");
-                                                          addOnDetails.addOns =
-                                                              selectedAddOns;
-                                                          addOnCategories.add(
-                                                              addOnDetails);
-                                                          print(
-                                                              "addOnCategories :: ${jsonEncode(addOnCategories)}");
-                                                        });
-                                                        selectedProduct?.addOn =
-                                                            jsonEncode(
-                                                                addOnCategories);
-                                                      }
-                                                      _updateCart(
-                                                          selectedProduct
-                                                              as ProductData);
-                                                      addProductInDb(
-                                                          selectedProduct
-                                                              as ProductData);
-                                                    }
-                                                  }
-                                                });
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 5),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        "\$${selectedProduct?.price}",
-                                        style: TextStyle(
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                CustomAppColor.PrimaryAccent),
-                                      ),
-                                      selectedProduct?.featured == false
-                                          ? Row(
-                                              children: [
-                                                GestureDetector(
-                                                    onTap: () {
-                                                      _onItemReviewPressed(true,
-                                                          widget?.data?.id);
-                                                    },
-                                                    child: Row(
-                                                      children: [
-                                                        //Text("${widget?.data?.upvote_percentage}"),
-                                                        Icon(
-                                                          isVoteUp == true
-                                                              ? Icons.thumb_up
-                                                              : Icons
-                                                                  .thumb_up_alt_outlined,
-                                                          size: 20,
-                                                        ),
-                                                      ],
-                                                    )),
-                                                SizedBox(width: 5),
-                                                GestureDetector(
-                                                    onTap: () {
-                                                      _onItemReviewPressed(
-                                                          false,
-                                                          widget?.data?.id);
-                                                    },
-                                                    child: Row(
-                                                      children: [
-                                                        //Text("${widget?.data?.downvote_percentage}"),
-                                                        Icon(
-                                                          isVoteDown == true
-                                                              ? Icons.thumb_down
-                                                              : Icons
-                                                                  .thumb_down_alt_outlined,
-                                                          size: 20,
-                                                        ),
-                                                      ],
-                                                    ))
-                                              ],
-                                            )
-                                          : SizedBox(),
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    height: 8,
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 3.0),
-                                    child: IntrinsicHeight(
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  capitalizeFirstLetter(
-                                                      "${selectedProduct?.shortDescription}"),
-                                                  style: TextStyle(
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: isDarkMode
-                                                          ? Colors.white
-                                                              .withOpacity(0.8)
-                                                          : Colors.grey[800]),
-                                                  overflow:
-                                                      TextOverflow.visible,
-                                                ),
-                                                SizedBox(
-                                                  height: 3,
-                                                ),
-                                                Text(
-                                                  capitalizeFirstLetter(
-                                                      "${selectedProduct?.description}"),
-                                                  style: TextStyle(
-                                                      fontSize: 13,
-                                                      color: isDarkMode
-                                                          ? Colors.white
-                                                              .withOpacity(0.7)
-                                                          : Colors.grey[500]),
-                                                  overflow:
-                                                      TextOverflow.visible,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
                                   SizedBox(
                                     height: 20,
                                   ),
-                                  addOnList.isNotEmpty
-                                      ? Row(
-                                          children: [
-                                            Text(
-                                              "Add Extra Additional",
-                                              style: TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: CustomAppColor
-                                                      .PrimaryAccent),
-                                            ),
-                                            SizedBox(
-                                              width: 3,
-                                            ),
-                                          ],
-                                        )
-                                      : SizedBox(),
-                                  Wrap(
-                                    spacing: 6,
-                                    runSpacing: 5,
-                                    children: addOnList.map((result) {
-                                      return Container(
-                                        margin: EdgeInsets.all(5),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 2.0),
-                                              child: Row(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.end,
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: [
-                                                  Text(
-                                                    capitalizeFirstLetter(
-                                                        "${result.addOnCategory}"),
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 16),
-                                                  ),
-                                                  SizedBox(width: 5),
-                                                  Text(
-                                                    result.addOnCategoryType ==
-                                                            "multiple"
-                                                        ? "Select 1 or more add ons"
-                                                        : "Select any 1 add on",
-                                                    style: TextStyle(
-                                                        fontSize: 10,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        decoration:
-                                                            TextDecoration
-                                                                .underline,
-                                                        decorationColor:
-                                                            Colors.grey[400],
-                                                        color:
-                                                            Colors.grey[600]),
-                                                  )
-                                                ],
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              height: 2,
-                                            ),
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                  color: isDarkMode
-                                                      ? Colors.white
-                                                      : Colors.white,
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                  border: Border.all(
-                                                      width: 0.2,
-                                                      color: Colors.black54)),
-                                              child:
-                                                  result.addOnCategoryType ==
-                                                          "multiple"
-                                                      ? Container(
-                                                          padding: EdgeInsets
-                                                              .symmetric(
-                                                                  vertical: 10),
-                                                          child: Wrap(
-                                                            spacing: 5,
-                                                            // Horizontal space between items
-                                                            children: List.generate(
-                                                                result.addOns
-                                                                        ?.length ??
-                                                                    0, (index) {
-                                                              return Padding(
-                                                                padding: const EdgeInsets
-                                                                    .symmetric(
-                                                                    horizontal:
-                                                                        8.0),
-                                                                child: Row(
-                                                                    mainAxisSize:
-                                                                        MainAxisSize
-                                                                            .max,
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .spaceBetween,
-                                                                    children: [
-                                                                      Row(
-                                                                        children: [
-                                                                          capitalizeFirstLetter("${result.addOnCategory}").contains("Tea") || capitalizeFirstLetter("${result.addOnCategory}").contains("Select Size")
-                                                                              ? Image(
-                                                                                  image: AssetImage("assets/glassIcon.png"),
-                                                                                  width: 25,
-                                                                                )
-                                                                              : SizedBox(),
-                                                                          Text(
-                                                                              capitalizeFirstLetter('${result.addOns?[index].name}'),
-                                                                              style: TextStyle(
-                                                                                fontSize: 15,
-                                                                              )),
-                                                                          SizedBox(
-                                                                            width:
-                                                                                4,
-                                                                          ),
-                                                                          Text(
-                                                                            capitalizeFirstLetter('(+\$${result.addOns?[index].price})'),
-                                                                            style:
-                                                                                TextStyle(
-                                                                              fontSize: 12,
-                                                                              color: Colors.grey[700],
-                                                                            ),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      Checkbox(
-                                                                        checkColor:
-                                                                            Colors.white,
-                                                                        shape: RoundedRectangleBorder(
-                                                                            borderRadius:
-                                                                                BorderRadius.circular(5)),
-                                                                        side:
-                                                                            BorderSide(
-                                                                          color: isDarkMode
-                                                                              ? Colors.white
-                                                                              : Colors.black,
-                                                                        ),
-                                                                        visualDensity: VisualDensity(
-                                                                            vertical:
-                                                                                -4,
-                                                                            horizontal:
-                                                                                -4),
-                                                                        value: result
-                                                                            .addOns?[index]
-                                                                            .isSelected,
-                                                                        onChanged:
-                                                                            (bool?
-                                                                                value) {
-                                                                          setState(
-                                                                              () {
-                                                                            result.addOns?[index].isSelected =
-                                                                                value ?? false;
-                                                                            selectedProduct?.addOn =
-                                                                                jsonEncode(addOnList);
-                                                                          });
-                                                                        },
-                                                                      ),
-                                                                    ]),
-                                                              );
-                                                            }).toList(),
-                                                          ))
-                                                      : Container(
-                                                          padding: EdgeInsets
-                                                              .symmetric(
-                                                                  vertical: 5),
-                                                          child: Wrap(
-                                                            spacing: 5,
-                                                            // Horizontal space between items
-                                                            children: List.generate(
-                                                                result.addOns
-                                                                        ?.length ??
-                                                                    0, (index) {
-                                                              return RadioListTile<
-                                                                  int>(
-                                                                dense: true,
-                                                                controlAffinity:
-                                                                    ListTileControlAffinity
-                                                                        .trailing,
-                                                                autofocus: true,
 
-                                                                visualDensity:
-                                                                    VisualDensity(
-                                                                        vertical:
-                                                                            -4,
-                                                                        horizontal:
-                                                                            -4),
-                                                                contentPadding:
-                                                                    EdgeInsets.symmetric(
-                                                                        horizontal:
-                                                                            12),
-                                                                title: Row(
-                                                                  crossAxisAlignment:
-                                                                      CrossAxisAlignment
-                                                                          .center,
-                                                                  children: [
-                                                                    capitalizeFirstLetter("${result.addOnCategory}") ==
-                                                                            "Tea"
-                                                                        ? Image(
-                                                                            image:
-                                                                                AssetImage("assets/glassIcon.png"),
-                                                                            width:
-                                                                                25,
-                                                                          )
-                                                                        : SizedBox(),
-                                                                    Text(
-                                                                      capitalizeFirstLetter(
-                                                                          "${result.addOns?[index].name}"),
-                                                                      style: TextStyle(
-                                                                          fontSize:
-                                                                              13),
-                                                                    ),
-                                                                    SizedBox(
-                                                                      width: 4,
-                                                                    ),
-                                                                    Text(
-                                                                      capitalizeFirstLetter(
-                                                                          '(+\$${result.addOns?[index].price})'),
-                                                                      style:
-                                                                          TextStyle(
-                                                                        fontSize:
-                                                                            12,
-                                                                        color: Colors
-                                                                            .grey[700],
-                                                                      ),
-                                                                    )
-                                                                  ],
-                                                                ),
-                                                                value: int.parse(
-                                                                    "${result.addOns?[index].id}"),
-                                                                //optionIndex,
-                                                                groupValue: result
-                                                                    .selectedAddOnIdInSingleType,
-                                                                // category.selectedOption,
-                                                                onChanged: (int?
-                                                                    newValue) {
-                                                                  setState(() {
-                                                                    result.selectedAddOnIdInSingleType =
-                                                                        newValue;
-                                                                    selectedProduct
-                                                                            ?.addOn =
-                                                                        jsonEncode(
-                                                                            addOnList);
-                                                                  });
-                                                                },
-                                                              );
-                                                            }).toList(),
-                                                          )),
-                                            )
-                                          ],
-                                        ),
-                                      );
-                                    }).toList(),
-                                  )
-                                  //SizedBox(height: 20,),
+                                  //Add On Section
+                                  addOnSection(),
                                 ],
                               ),
                             ),
@@ -1022,178 +291,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                 vertical: 10,
                               ),
                             ),
-                         /*   Align(
-                              alignment: Alignment.topLeft,
-                              child: Container(
-                                margin: EdgeInsets.only(left: 20),
-                                child: Text(
-                                  "Suggested for you",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 15,
-                                      color: isDarkMode
-                                          ? Colors.white.withOpacity(0.8)
-                                          : Colors.grey[600]),
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              height: 8,
-                            ),
-                            isProductAvailable
-                                ? isProductsLoading
-                                    ? Wrap(
-                                        spacing: 10,
-                                        runSpacing: 5,
-                                        crossAxisAlignment:
-                                            WrapCrossAlignment.start,
-                                        children: menuItems.map((item) {
-                                          return Card(
-                                              margin: EdgeInsets.only(
-                                                  top: 4.0,
-                                                  right: 8,
-                                                  bottom: 2,
-                                                  left: 2),
-                                              child: Container(
-                                                  width: (MediaQuery.of(context)
-                                                              .size
-                                                              .width /
-                                                          2) -
-                                                      30,
-                                                  height: screenHeight * 0.18,
-                                                  //padding: EdgeInsets.only(right: 4),
-                                                  child: Shimmer.fromColors(
-                                                    baseColor:
-                                                        Colors.grey[300]!,
-                                                    highlightColor:
-                                                        Colors.grey[100]!,
-                                                    child: Container(
-                                                      //margin: EdgeInsets.symmetric(horizontal: 16),
-                                                      height:
-                                                          screenHeight * 0.15,
-                                                      child: Card(
-                                                        color: Colors.white
-                                                            .withOpacity(0.8),
-                                                        shape: RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        12.5)),
-                                                        margin: EdgeInsets.zero,
-                                                      ),
-                                                    ),
-                                                  )));
-                                        }).toList())
-                                    : Center(
-                                        child: Wrap(
-                                            spacing: 12,
-                                            runSpacing: 5,
-                                            children: menuItems.map((item) {
-                                              //final item = menuItems[index];
-                                              return item.id != selectedProduct?.id
-                                                  ? ProductComponent(
-                                                      isDarkMode: isDarkMode,
-                                                      item: item,
-                                                      mediaWidth: mediaWidth,
-                                                      showFavIcon: true,
-                                                      screenHeight:
-                                                          screenHeight,
-                                                      onAddTap: () {
-                                                        if ((item.productSizesList ==
-                                                                    "[]" ||
-                                                                item.productSizesList ==
-                                                                    null) &&
-                                                            (item.addOn ==
-                                                                        "[]" ||
-                                                                    item.addOn ==
-                                                                        null) &&
-                                                                item.isBuy1Get1 ==
-                                                                    false) {
-                                                          setState(() {
-                                                            if (item.quantity <=
-                                                                int.parse(
-                                                                    "${item.qtyLimit}")) {
-                                                              item.quantity++;
-                                                              addProductInDb(
-                                                                  item);
-                                                            }
-                                                          });
-                                                        } else {
-                                                          Navigator.pushNamed(
-                                                              context,
-                                                              "/ProductDetailScreen",
-                                                              arguments: item);
-                                                        }
-                                                      },
-                                                      onMinusTap: () {
-                                                        if ((item.productSizesList ==
-                                                                    "[]" ||
-                                                                item.productSizesList ==
-                                                                    null) &&
-                                                            (item.addOn ==
-                                                                        "[]" ||
-                                                                    item.addOn ==
-                                                                        null) &&
-                                                                item.isBuy1Get1 ==
-                                                                    false) {
-                                                          setState(() {
-                                                            if (item.quantity >
-                                                                0) {
-                                                              item.quantity--;
-                                                              deleteCartProductInDb(
-                                                                  item);
-                                                            }
-                                                          });
-                                                        } else {
-                                                          Navigator.pushNamed(
-                                                              context,
-                                                              "/ProductDetailScreen",
-                                                              arguments: item);
-                                                        }
-                                                      },
-                                                      onPlusTap: () {
-                                                        if ((item.productSizesList ==
-                                                                    "[]" ||
-                                                                item.productSizesList ==
-                                                                    null) &&
-                                                            (item.addOn ==
-                                                                        "[]" ||
-                                                                    item.addOn ==
-                                                                        null) &&
-                                                                item.isBuy1Get1 ==
-                                                                    false) {
-                                                          setState(() {
-                                                            if (item.quantity <=
-                                                                int.parse(
-                                                                    "${item.qtyLimit}")) {
-                                                              item.quantity++;
-                                                              addProductInDb(
-                                                                  item);
-                                                            }
-                                                          });
-                                                        } else {
-                                                          Navigator.pushNamed(
-                                                              context,
-                                                              "/ProductDetailScreen",
-                                                              arguments: item);
-                                                        }
-                                                      },
-                                                      onFavoriteTap: () {
-                                                        addOrRemoveFavorites(
-                                                            item);
-                                                      },
-                                                      primaryColor:
-                                                          primaryColor)
-                                                  : SizedBox();
-                                            }).toList()),
-                                      )
-                                : Center(
-                                    child: Text(
-                                      "No data available.",
-                                      style: TextStyle(
-                                          fontSize: 12, color: Colors.grey),
-                                    ),
-                                  ),*/
                             SizedBox(
                               height: 50,
                             ),
@@ -1220,211 +317,463 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     );
   }
 
+  Widget multipleAddOns(AddOnCategory result) {
+    return Container(
+        padding: EdgeInsets.symmetric(vertical: 10),
+        child: Wrap(
+          spacing: 5,
+          // Horizontal space between items
+          children: List.generate(result.addOns?.length ?? 0, (index) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        capitalizeFirstLetter("${result.addOnCategory}")
+                                    .contains("Tea") ||
+                                capitalizeFirstLetter("${result.addOnCategory}")
+                                    .contains("Select Size")
+                            ? Image(
+                                image: AssetImage("assets/glassIcon.png"),
+                                width: 25,
+                              )
+                            : SizedBox(),
+                        Text(
+                            capitalizeFirstLetter(
+                                '${result.addOns?[index].name}'),
+                            style: TextStyle(
+                              fontSize: 15,
+                            )),
+                        SizedBox(
+                          width: 4,
+                        ),
+                        Text(
+                          capitalizeFirstLetter(
+                              '(+\$${result.addOns?[index].price})'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                    Checkbox(
+                      checkColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5)),
+                      side: BorderSide(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                      visualDensity:
+                          VisualDensity(vertical: -4, horizontal: -4),
+                      value: result.addOns?[index].isSelected,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          result.addOns?[index].isSelected = value ?? false;
+                          selectedProduct?.addOn = jsonEncode(addOnList);
+                          getProductDataObject(selectedProduct!, vendorId);
+                        });
+                      },
+                    ),
+                  ]),
+            );
+          }).toList(),
+        ));
+  }
+
+  Widget singleAddOns(AddOnCategory result) {
+    return Container(
+        padding: EdgeInsets.symmetric(vertical: 5),
+        child: Wrap(
+          spacing: 5,
+          children: List.generate(result.addOns?.length ?? 0, (index) {
+            return RadioListTile<int>(
+              dense: true,
+              controlAffinity: ListTileControlAffinity.trailing,
+              autofocus: true,
+              visualDensity: VisualDensity(vertical: -4, horizontal: -4),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12),
+              title: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  capitalizeFirstLetter("${result.addOnCategory}") == "Tea"
+                      ? Image(
+                          image: AssetImage("assets/glassIcon.png"),
+                          width: 25,
+                        )
+                      : SizedBox(),
+                  Text(
+                    capitalizeFirstLetter("${result.addOns?[index].name}"),
+                    style: TextStyle(fontSize: 13),
+                  ),
+                  SizedBox(
+                    width: 4,
+                  ),
+                  Text(
+                    capitalizeFirstLetter(
+                        '(+\$${result.addOns?[index].price})'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[700],
+                    ),
+                  )
+                ],
+              ),
+              value: int.parse("${result.addOns?[index].id}"),
+              groupValue: result.selectedAddOnIdInSingleType,
+              onChanged: (int? newValue) {
+                setState(() {
+                  result.selectedAddOnIdInSingleType = newValue;
+                  selectedProduct?.addOn = jsonEncode(addOnList);
+
+                  selectedProduct?.addOnIdsList = jsonEncode(["$newValue"]);
+
+                  cartDataDao
+                      .getMatchingCartItem(
+                          selectedProduct!.id.toString(),
+                          selectedProduct!.addOnType.toString(),
+                          jsonEncode(["$newValue"]))
+                      .then((value) {
+                    setState(() {
+                      selectedProduct?.quantity = value?.quantity ?? 0;
+                    });
+                  });
+                });
+              },
+            );
+          }).toList(),
+        ));
+  }
+
+  Widget addOnSection() {
+    return Column(
+      children: [
+        addOnList.isNotEmpty
+            ? Row(
+                children: [
+                  Text(
+                    "Add Extra Additional",
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: CustomAppColor.PrimaryAccent),
+                  ),
+                  SizedBox(
+                    width: 3,
+                  ),
+                ],
+              )
+            : SizedBox(),
+        Wrap(
+          spacing: 6,
+          runSpacing: 5,
+          children: addOnList.map((result) {
+            return Container(
+              margin: EdgeInsets.all(5),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          capitalizeFirstLetter("${result.addOnCategory}"),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        SizedBox(width: 5),
+                        Text(
+                          result.addOnCategoryType == "multiple"
+                              ? "Select 1 or more add ons"
+                              : "Select any 1 add on",
+                          style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                              decorationColor: Colors.grey[400],
+                              color: Colors.grey[600]),
+                        )
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    height: 2,
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                        color: isDarkMode ? Colors.white : Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(width: 0.2, color: Colors.black54)),
+                    child: result.addOnCategoryType == "multiple"
+                        ? multipleAddOns(result)
+                        : singleAddOns(result),
+                  )
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget productDetailSection() {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                IntrinsicWidth(
+                  child: Text(
+                    capitalizeFirstLetter("${selectedProduct?.title}"),
+                    maxLines: 2,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                          side: BorderSide(
+                            color: selectedProduct?.quantity == 0
+                                ? Colors.grey
+                                : CustomAppColor.PrimaryAccent,
+                            width: 0.8,
+                          ),
+                          borderRadius: BorderRadius.circular(100)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Icon(
+                          Icons.remove,
+                          size: 20,
+                          color: selectedProduct?.quantity == 0
+                              ? Colors.grey
+                              : CustomAppColor.PrimaryAccent,
+                        ),
+                      ),
+                    ),
+                    onTap: () {
+                      _handleRemoveToCart();
+                    },
+                  ),
+                  SizedBox(
+                    width: 5,
+                  ),
+                  Text(
+                    "${selectedProduct?.quantity}",
+                    style: TextStyle(fontSize: 18, color: Colors.black54),
+                  ),
+                  SizedBox(
+                    width: 4,
+                  ),
+                  GestureDetector(
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                          side: BorderSide(
+                            color: CustomAppColor.PrimaryAccent,
+                            width: 0.8,
+                          ),
+                          borderRadius: BorderRadius.circular(100)),
+                      color: CustomAppColor.PrimaryAccent,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Icon(
+                          Icons.add,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    onTap: () {
+                      _handleAddToCart();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 5),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              "\$${selectedProduct?.price}",
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: CustomAppColor.PrimaryAccent),
+            ),
+            selectedProduct?.featured == false
+                ? Row(
+                    children: [
+                      GestureDetector(
+                          onTap: () {
+                            _onItemReviewPressed(true, widget.data?.id);
+                          },
+                          child: Row(
+                            children: [
+                              Icon(
+                                isVoteUp == true
+                                    ? Icons.thumb_up
+                                    : Icons.thumb_up_alt_outlined,
+                                size: 20,
+                              ),
+                            ],
+                          )),
+                      SizedBox(width: 5),
+                      GestureDetector(
+                          onTap: () {
+                            _onItemReviewPressed(false, widget.data?.id);
+                          },
+                          child: Row(
+                            children: [
+                              Icon(
+                                isVoteDown == true
+                                    ? Icons.thumb_down
+                                    : Icons.thumb_down_alt_outlined,
+                                size: 20,
+                              ),
+                            ],
+                          ))
+                    ],
+                  )
+                : SizedBox(),
+          ],
+        ),
+        SizedBox(
+          height: 8,
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3.0),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        capitalizeFirstLetter(
+                            "${selectedProduct?.shortDescription}"),
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode
+                                ? Colors.white.withOpacity(0.8)
+                                : Colors.grey[800]),
+                        overflow: TextOverflow.visible,
+                      ),
+                      SizedBox(
+                        height: 3,
+                      ),
+                      Text(
+                        capitalizeFirstLetter(
+                            "${selectedProduct?.description}"),
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: isDarkMode
+                                ? Colors.white.withOpacity(0.7)
+                                : Colors.grey[500]),
+                        overflow: TextOverflow.visible,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget imageDetailSection() {
+    return selectedProduct?.imageUrl == "" || selectedProduct?.imageUrl == null
+        ? Container(
+            decoration: BoxDecoration(color: primaryColor),
+            child: Image.asset(
+              "assets/app_logo.png",
+              height: screenHeight * 0.4,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          )
+        : Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+            ),
+            child: ClipRRect(
+              child: CachedNetworkImage(
+                imageUrl: selectedProduct?.imageUrl ?? "",
+                height: screenHeight * 0.4,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Shimmer.fromColors(
+                  baseColor: Colors.white38,
+                  highlightColor: Colors.grey,
+                  child: Container(
+                    height: screenHeight * 0.55,
+                    width: double.infinity,
+                    color: Colors.white,
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  child: Image.asset(
+                    "assets/app_logo.png",
+                    height: screenHeight * 0.55,
+                    width: double.infinity,
+                    fit: BoxFit.fitWidth,
+                  ),
+                ),
+              ),
+            ),
+          );
+  }
+
   void _updateCart(ProductData item) {
     if (item.quantity > 0) {
       if (!cart.contains(item) &&
           item.quantity <= int.parse("${item.qtyLimit}")) {
-        cart.add(item);
+        setState(() {
+          cart.add(item);
+        });
       }
     } else {
-      cart.remove(item); // Remove item if quantity is zero
-    }
-  }
-
-  void _fetchCategoryData() async {
-    setState(() {
-      isLoading = true;
-      // isCategoryLoading = true;
-    });
-
-    bool isConnected = await _connectivityService.isConnected();
-    if (!isConnected) {
       setState(() {
-        isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
+        cart.remove(item);
       });
-    } else {
-      await Future.delayed(Duration(milliseconds: 2));
-      await _mainViewModel
-          .fetchCategoriesList("/api/v1/app/products/get_products", vendorId);
-      ApiResponse apiResponse =
-          _mainViewModel.response;
-      getCategoryList(context, apiResponse);
     }
-  }
-
-  void _setFavorite(int? productId) async {
-    setState(() {
-      isLoading = true;
-      isMarkFavLoading = true;
-    });
-
-    bool isConnected = await _connectivityService.isConnected();
-    if (!isConnected) {
-      setState(() {
-        isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
-      });
-    } else {
-      MarkFavoriteRequest request = MarkFavoriteRequest(
-          customerId: customerId,
-          productId: productId ?? 0,
-          vendorId: vendorId);
-      await Future.delayed(Duration(milliseconds: 2));
-      await _mainViewModel
-          .markFavoriteData("/api/v1/app/products/mark_favourites", request);
-      ApiResponse apiResponse =
-          _mainViewModel.response;
-      getMarkFavoriteResponse(context, apiResponse);
-    }
-  }
-
-  void _removeFavorite(int? productId) async {
-    setState(() {
-      isLoading = true;
-      isMarkFavLoading = true;
-    });
-
-    bool isConnected = await _connectivityService.isConnected();
-    if (!isConnected) {
-      setState(() {
-        isLoading = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${Languages.of(context)?.labelNoInternetConnection}'),
-            duration: maxDuration,
-          ),
-        );
-      });
-    } else {
-      MarkFavoriteRequest request = MarkFavoriteRequest(
-          customerId: customerId,
-          productId: int.parse("${productId}"),
-          vendorId: vendorId);
-      await Future.delayed(Duration(milliseconds: 2));
-      await _mainViewModel
-          .removeFavoriteData(
-              "/api/v1/app/products/remove_favourites", request);
-      ApiResponse apiResponse =
-          _mainViewModel.response;
-      getRemoveFavoriteResponse(context, apiResponse);
-    }
-  }
-
-  Widget getCategoryList(BuildContext context, ApiResponse apiResponse) {
-    CategoryListResponse? vendorListResponse =
-        apiResponse.data as CategoryListResponse?;
-    setState(() {
-      isLoading = false;
-    });
-    switch (apiResponse.status) {
-      case Status.LOADING:
-        return Center(child: CircularProgressIndicator());
-      case Status.COMPLETED:
-        setState(() {
-          categories = vendorListResponse!.data!;
-          isCategoryLoading = false;
-          selectedCategory = vendorListResponse.data?[0].categoryName ?? "";
-          selectedCategoryDetail =
-              vendorListResponse.data?[0] ?? CategoryData();
-        });
-        updateCategoriesDetails(vendorListResponse?.data);
-        getProductDataDB("${selectedProduct?.productCategoryId}");
-
-        return Container(); // Return an empty container as you'll navigate away
-      case Status.ERROR:
-        return Center(
-          child: Text('Please try again later!!!'),
-        );
-      case Status.INITIAL:
-      default:
-        return Center(
-          child: Text(''),
-        );
-    }
-  }
-
-  Widget getMarkFavoriteResponse(
-      BuildContext context, ApiResponse apiResponse) {
-    MarkFavoriteResponse? markFavoriteResponse =
-        apiResponse.data as MarkFavoriteResponse?;
-    setState(() {
-      isLoading = false;
-      isMarkFavLoading = false;
-    });
-    switch (apiResponse.status) {
-      case Status.LOADING:
-        return Center(child: CircularProgressIndicator());
-      case Status.COMPLETED:
-        setState(() {
-          selectedProduct?.favorite = true;
-        });
-        // _fetchFavoritesData();
-        return Container(); // Return an empty container as you'll navigate away
-      case Status.ERROR:
-        return Center(
-          child: Text('Please try again later!!!'),
-        );
-      case Status.INITIAL:
-      default:
-        return Center(
-          child: Text(''),
-        );
-    }
-  }
-
-  Widget getRemoveFavoriteResponse(
-      BuildContext context, ApiResponse apiResponse) {
-    MarkFavoriteResponse? featuredListResponse =
-        apiResponse.data as MarkFavoriteResponse?;
-    setState(() {
-      isLoading = false;
-      isMarkFavLoading = false;
-    });
-    switch (apiResponse.status) {
-      case Status.LOADING:
-        return Center(child: CircularProgressIndicator());
-      case Status.COMPLETED:
-        setState(() {
-          selectedProduct?.favorite = false;
-        });
-        return Container(); // Return an empty container as you'll navigate away
-      case Status.ERROR:
-        return Center(
-          child: Text('Please try again later!!!'),
-        );
-      case Status.INITIAL:
-      default:
-        return Center(
-          child: Text(''),
-        );
-    }
-  }
-
-  int getCartItemCount() {
-    return cart.fold(0, (totalCount, item) => totalCount + item.quantity);
   }
 
   Future<void> getCartItemCountDB() async {
     List<ProductDataDB?> productsList = await cartDataDao.findAllCartProducts();
     if (mounted) {
       int totalCount = 0;
-      if (productsList.isNotEmpty &&
-          productsList.length > 0 &&
-          productsList != null) {
+      if (productsList != null &&
+          productsList.isNotEmpty &&
+          productsList.length > 0) {
         productsList.forEach((item) {
           if (item != null) {
             totalCount = totalCount + int.parse("${item.quantity}");
@@ -1464,34 +813,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   Future<void> addProductInDb(ProductData item) async {
-    ProductDataDB data = ProductDataDB(
-        description: item.description,
-        imageUrl: item.imageUrl,
-        //addOnIds: [],
-        categoryName: item.categoryName,
-        //addOnType: item.addOnType,
-        addOn: item.addOn,
-        deposit: item.deposit,
-        price: item.price,
-        productCategoryId: item.productCategoryId,
-        productId: item.id,
-        qtyLimit: item.qtyLimit,
-        isBuy1Get1: item.isBuy1Get1,
-        salePrice: "",
-        shortDescription: item.shortDescription,
-        status: item.status,
-        title: item.title,
-        vendorId: vendorId,
-        franchiseId: item.franchiseId,
-        quantity: item.quantity,
-        vendorName: selectedProduct?.vendorName,
-        theme: selectedProduct?.theme,
-        addedToCartAt: "${DateFormat('yyyy-MM-dd').format(DateTime.now())}",
-        addOnIdsList: '',
-        productSizesList: item.productSizesList);
-    print(
-        "vendorId ${item.franchiseId}  :: productCategoryId  ${item.productCategoryId}  :: id   ${item.id}");
-    print("quantity ${item.quantity}");
+    ProductDataDB data = getProductDataObject(item, vendorId);
 
     getSpecificCartProduct("${vendorId}", "${item.productCategoryId}",
         "${item.id}", cartDataDao, data);
@@ -1503,82 +825,73 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       String categoryId,
       String productId,
       CartDataDao cartDataDao,
-      ProductDataDB data) async {
+    ProductDataDB data,
+  ) async {
     data.theme = selectedProduct?.theme;
     data.vendorName = selectedProduct?.vendorName;
-    final product = await cartDataDao.getSpecificCartProduct(
-        vendorId, categoryId, productId);
+    List<dynamic> currentAddOns = [];
+    if (data.addOnIdsList != null && data.addOnIdsList!.isNotEmpty) {
+      currentAddOns = jsonDecode(data.addOnIdsList!);
+    }
 
-    if (product == null) {
-      print("Product is null $product");
-      List<ProductDataDB?> productsList =
-          await cartDataDao.findAllCartProducts();
-      print("productsList length: ${productsList.length}");
+    List<ProductDataDB?> productsList = await cartDataDao.findAllCartProducts();
 
-      productsList.add(data);
+    ProductDataDB? matchingProduct = productsList.firstWhere(
+      (item) {
+        if (item == null) return false;
 
-      if (mounted) {
-        if (productsList.isNotEmpty) {
-          // Use forEach instead of map to perform an action
-          productsList.forEach((item) {
-            if (item != null) {
-              print("Inserting item: $item");
-              if (data.vendorId != item.vendorId) {
-                cartDataDao.clearAllCartProduct();
-                cartDataDao.insertCartProduct(item);
-                CustomAlert.showToast(
-                    context: context,
-                    message:
-                        "Removed items from cart and added latest item because you can only order from one restaurant at once.");
-              } else {
-                cartDataDao.insertCartProduct(item);
-              }
-            }
-          });
-        } else {
-          print("Inserting single product: $data");
-          cartDataDao.clearAllCartProduct();
-          await cartDataDao.insertCartProduct(data);
+        List<dynamic> existingAddOns = [];
+        if (item.addOnIdsList != null && item.addOnIdsList!.isNotEmpty) {
+          existingAddOns = jsonDecode(item.addOnIdsList!);
         }
-      }
-      getCartItemCountDB();
 
-      return null;
-    } else {
-      print("Product exists: $product");
-      await cartDataDao.updateCartProduct(data); // Update the existing product
+        return item.vendorId == vendorId &&
+            item.productCategoryId == categoryId &&
+            item.productId == productId &&
+            item.addOnType == data.addOnType &&
+            listEquals(existingAddOns, currentAddOns);
+      },
+      orElse: () => null,
+    );
+
+    if (matchingProduct != null) {
+      setState(() {
+        data.quantity =
+            selectedProduct?.quantity == 0 ? 1 : selectedProduct!.quantity + 1;
+        selectedProduct?.quantity =
+            selectedProduct?.quantity == 0 ? 1 : selectedProduct!.quantity + 1;
+      });
+
+      await cartDataDao.updateCartProduct(data);
+      getCartItemCountDB();
+      return matchingProduct;
+    }
+
+    bool isDifferentVendor = productsList
+        .any((item) => item != null && item.vendorId != data.vendorId);
+    if (mounted) {
+      if (isDifferentVendor) {
+        await cartDataDao.clearAllCartProduct();
+        CustomAlert.showToast(
+          context: context,
+          message:
+              "Removed items from cart and added latest item because you can only order from one restaurant at once.",
+        );
+      }
+      setState(() {
+        data.quantity =
+            selectedProduct?.quantity == 0 ? 1 : selectedProduct!.quantity + 1;
+        selectedProduct?.quantity =
+            selectedProduct?.quantity == 0 ? 1 : selectedProduct!.quantity + 1;
+      });
+      await cartDataDao.insertCartProduct(data);
     }
     getCartItemCountDB();
-
-    return product;
+    return null;
   }
 
   void deleteProductInDb(ProductData item) {
-    ProductDataDB data = ProductDataDB(
-        description: item.description,
-        imageUrl: item.imageUrl,
-        //addOnIds: item.addOnIds,
-        categoryName: item.categoryName,
-        //addOnType: item.addOnType,
-        addOn: item.addOn,
-        deposit: item.deposit,
-        price: item.price,
-        productCategoryId: item.productCategoryId,
-        productId: item.id,
-        qtyLimit: item.qtyLimit,
-        isBuy1Get1: item.isBuy1Get1,
-        salePrice: item.salePrice,
-        shortDescription: item.shortDescription,
-        status: item.status,
-        title: item.title,
-        vendorId: vendorId,
-        franchiseId: item.franchiseId,
-        quantity: item.quantity,
-        theme: item.theme,
-        vendorName: item.vendorName,
-        addedToCartAt: "${DateFormat('yyyy-MM-dd').format(DateTime.now())}",
-        addOnIdsList: '',
-        productSizesList: item.productSizesList);
+    ProductDataDB data = getProductDataObject(item, vendorId);
     if (item.quantity == 0) {
       cartDataDao.deleteCartProduct(data);
     } else {
@@ -1590,48 +903,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   Future<void> initializeDatabase() async {
     productsDataDao = DBService.instance.productDao;
     cartDataDao = DBService.instance.cartDao;
-    categoryDataDao = DBService.instance.categoryDao;
     getProductDataDB("${selectedProduct?.productCategoryId}");
   }
 
   Future<void> getCartData() async {
     List<ProductDataDB?> productsList = await cartDataDao.findAllCartProducts();
-    print("getCartData");
-
     List<ProductData> list = [];
 
     for (var item in productsList) {
       if (item != null) {
-        list.add(ProductData(
-          quantity: int.parse("${item.quantity}"),
-          vendorId: vendorId,
-          franchiseId: item.franchiseId,
-          title: item.title,
-          status: item.status,
-          shortDescription: item.shortDescription,
-          salePrice: item.salePrice,
-          qtyLimit: item.qtyLimit,
-          isBuy1Get1: item.isBuy1Get1,
-          productCategoryId: item.productCategoryId,
-          price: item.price,
-          deposit: item.deposit,
-          categoryName: item.categoryName,
-          addOn: item.addOn,
-          imageUrl: item.imageUrl,
-          description: item.description,
-          createdAt: "",
-          environmentalFee: "",
-          featured: false,
-          gst: null,
-          id: item.productId,
-          theme: item.theme,
-          vendorName: item.vendorName,
-          pst: null,
-          updatedAt: "",
-          vpt: null,
-          addOnIdsList: '',
-          productSizesList: item.productSizesList,
-        ));
+        list.add(getCartDataObject(item, vendorId));
       }
     }
 
@@ -1652,16 +933,35 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
       addOnList.forEach((item) {
         if (item.addOnCategoryType == "single") {
-          if (cartAddOnList.isNotEmpty) {
-            cartAddOnList.forEach((addOn) {
-              item.selectedAddOnIdInSingleType = addOn.addOns?.first.id;
-            });
+          // Assume: selectedProduct.addOnIdsList is stored as a JSON string like "[3,5,7]"
+          if (cartAddOnList.isNotEmpty &&
+              selectedProduct?.addOnIdsList != null) {
+            final Set<int> savedIds =
+                (jsonDecode(selectedProduct!.addOnIdsList!) as List<dynamic>)
+                    .map((e) => int.parse(e.toString()))
+                    .toSet();
+
+            for (final cartAddOn in cartAddOnList) {
+              final int? id = cartAddOn.selectedAddOnIdInSingleType;
+
+              // ✅ Check for match with saved add-on IDs
+              final bool isMatch = id != null && savedIds.contains(id);
+              // cartAddOn.isSelected = isMatch;
+              print("hasAnyMatch $isMatch");
+              // ✅ Only assign item.selectedAddOnIdInSingleType if matched
+              if (isMatch) {
+                item.selectedAddOnIdInSingleType = cartAddOn.addOns?.first.id;
+              }else{
+                item.selectedAddOnIdInSingleType = addOnList[0].addOns?.first.id;
+              }
+            }
           } else {
-            item.selectedAddOnIdInSingleType = item.addOns?.first.id;
+            item.selectedAddOnIdInSingleType = addOnList[0].addOns?.first.id;
           }
         } else {
           if (item.addOns != null && item.addOns!.isNotEmpty) {
             final hasCartAddOns = cartAddOnList.isNotEmpty;
+
             bool hasAnyMatch = false;
 
             for (var addOn in item.addOns!) {
@@ -1686,45 +986,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     updateQuantity();
   }
 
-
-  Future<void> getCategoryDataDB() async {
-    try {
-      List<CategoryDataDB?> localCategoryList = await categoryDataDao
-          .getCategoriesAccToVendor(int.parse("${vendorId}"));
-      if (localCategoryList.isNotEmpty) {
-        setState(() {
-          // Filter out null values and cast to non-nullable type
-          List<CategoryData> list = [];
-          localCategoryList.forEach((item) {
-            if (item != null) {
-              list.add(CategoryData(
-                  vendorId: vendorId,
-                  updatedAt: item.updatedAt,
-                  id: item.id,
-                  createdAt: item.createdAt,
-                  categoryName: item.categoryName,
-                  status: item.status,
-                  categoryImage: item.categoryImage,
-                  menuImgUrl: item.menuImgUrl));
-              categories = list;
-            }
-          });
-          isCategoryLoading = false;
-          getProductDataDB("${selectedProduct?.productCategoryId}");
-        });
-        _fetchCategoryData();
-      } else {
-        setState(() {
-          isLoading = true;
-          isCategoryLoading = true;
-        });
-        _fetchCategoryData();
-      }
-    } catch (e) {
-      _fetchCategoryData();
-    }
-  }
-
   Future<void> getProductDataDB(String categoryId) async {
     List<ProductData?> localProductList =
         await productsDataDao.getProductsAccToCategory(int.parse(categoryId));
@@ -1735,7 +996,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         menuItems.addAll(
             localProductList.where((item) => item != null).cast<ProductData>());
         getCartData();
-        isProductsLoading = false;
       });
     } else {
       setState(() {
@@ -1752,6 +1012,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         if (item.id == dbItem.id &&
             item.productCategoryId == dbItem.productCategoryId &&
             dbItem.vendorId == vendorId &&
+            item.addOnIdsList == dbItem.addOnIdsList &&
             selectedProduct?.title == dbItem.title) {
           setState(() {
             selectedProduct?.quantity = dbItem.quantity;
@@ -1763,101 +1024,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     }
 
     getCartItemCountDB();
-  }
-
-  Future<void> updateCategoriesDetails(List<CategoryData>? categoryList) async {
-    if (categoryList?.isNotEmpty == true) {
-      List<CategoryDataDB?> localCategoryList =
-          await categoryDataDao.findAllCategories();
-      if (mounted) {
-        for (var categoryData in categoryList ?? []) {
-          bool categoryExists = localCategoryList
-              .any((localData) => localData?.id == categoryData.id);
-          if (!categoryExists) {
-            CategoryDataDB data = CategoryDataDB(
-              menuImgUrl: categoryData.menuImgUrl,
-              categoryImage: categoryData.categoryImage,
-              status: categoryData.status,
-              categoryName: categoryData.categoryName,
-              createdAt: categoryData.createdAt,
-              id: categoryData.id,
-              updatedAt: categoryData.updatedAt,
-              vendorId: vendorId,
-              franchiseId: categoryData.vendorId,
-            );
-            categoryDataDao.insertCategory(data);
-            updateProductsDetails(categoryData.products);
-          }
-        }
-      }
-    }
-    setState(() {
-      categories = categoryList as List<CategoryData>;
-      isLoading = false;
-    });
-  }
-
-  Future<void> updateProductsDetails(List<ProductData>? productList) async {
-    if (productList?.isNotEmpty == true) {
-      List<ProductData?> localProductList =
-          await productsDataDao.findAllProducts();
-      if (mounted) {
-        for (var productsData in productList ?? []) {
-          bool productExists = localProductList
-              .any((localData) => localData?.id == productsData.id);
-          if (!productExists) {
-            productsDataDao.insertProduct(productsData);
-          }
-        }
-      }
-    }
-    setState(() {
-      menuItems = productList as List<ProductData>;
-      isLoading = false;
-    });
-  }
-
-  void deleteCartProductInDb(ProductData item) {
-    ProductDataDB data = ProductDataDB(
-        description: item.description,
-        imageUrl: item.imageUrl,
-        //addOnIds: item.addOnIds,
-        categoryName: item.categoryName,
-        //addOnType: item.addOnType,
-        deposit: item.deposit,
-        price: item.price,
-        productCategoryId: item.productCategoryId,
-        productId: item.id,
-        qtyLimit: item.qtyLimit,
-        isBuy1Get1: item.isBuy1Get1,
-        salePrice: item.salePrice,
-        shortDescription: item.shortDescription,
-        status: item.status,
-        title: item.title,
-        vendorId: vendorId,
-        franchiseId: item.franchiseId,
-        quantity: item.quantity,
-        theme: item.theme,
-        vendorName: item.vendorName,
-        addedToCartAt: "${DateFormat('yyyy-MM-dd').format(DateTime.now())}",
-        addOnIdsList: '',
-        productSizesList: '');
-    if (item.quantity == 0) {
-      cartDataDao.deleteCartProduct(data);
-    } else {
-      cartDataDao.updateCartProduct(data);
-    }
-    getCartItemCountDB();
-  }
-
-  Future<void> addOrRemoveFavorites(ProductData item) async {
-    print("item.favorite ${item.favorite}");
-    print("item.id ${item.favorite}");
-    if (item.favorite == false) {
-      _setFavorite(item.id);
-    } else {
-      _removeFavorite(item.id);
-    }
   }
 
   void _onItemReviewPressed(isLike, itemId) async {
@@ -1874,7 +1040,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     getItemReviewResponse(context, apiResponse, isLike);
   }
 
-  Future<Widget> getItemReviewResponse(
+  void getItemReviewResponse(
       BuildContext context, ApiResponse apiResponse, isLike) async
   {
     ItemReviewResponse? response = apiResponse.data as ItemReviewResponse?;
@@ -1884,16 +1050,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     });
     switch (apiResponse.status) {
       case Status.LOADING:
-        return Center(child: CircularProgressIndicator());
+        break;
       case Status.COMPLETED:
         if (isLike) {
-          print("isLikeTrue$isLike");
           setState(() {
             isVoteUp = true;
             isVoteDown = false;
           });
         } else {
-          print("isLikeFalse$isLike");
           setState(() {
             isVoteUp = false;
             isVoteDown = true;
@@ -1901,8 +1065,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         }
         CustomSnackBar.showSnackbar(
             context: context, message: "${response?.message}");
-        //Navigator.pop(context);
-        return Container(); // Return an empty container as you'll navigate away
+        break;
       case Status.ERROR:
         if (nonCapitalizeString("${apiResponse.message}") ==
             nonCapitalizeString(
@@ -1912,14 +1075,68 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           CustomSnackBar.showSnackbar(
               context: context, message: apiResponse.message);
         }
-        return Center(
-          child: Text('Please try again later!!!'),
-        );
+        break;
       case Status.INITIAL:
       default:
-        return Center(
-          child: Text(''),
-        );
+        SizedBox();
     }
+  }
+
+  void _handleAddToCart() {
+    setState(() {
+      if (int.parse("${selectedProduct?.quantity}") <
+          int.parse("${selectedProduct?.qtyLimit}")) {
+        if (selectedProduct?.addOn?.isNotEmpty == true) {
+          List<AddOnCategory> addOnCategories = [];
+          addOnList.forEach((item) {
+            AddOnCategory addOnDetails = AddOnCategory(
+                addOnCategory: item.addOnCategory,
+                addOnCategoryType: item.addOnCategoryType);
+            List<AddOnDetails> selectedAddOns = [];
+            List<String> selectedAddOnIdList = [];
+            if (item.addOnCategoryType == "multiple") {
+              item.addOns?.forEach((addOn) {
+                if (addOn.isSelected) {
+                  selectedAddOns.add(addOn);
+                }
+              });
+              selectedProduct?.addOnType = "multiple";
+            } else {
+              item.addOns?.forEach((addOn) {
+                if (item.selectedAddOnIdInSingleType == addOn.id) {
+                  selectedAddOns.add(addOn);
+                  selectedAddOnIdList.add(addOn.id.toString());
+                }
+              });
+              selectedProduct?.addOnType = "single";
+            }
+            addOnDetails.addOns = selectedAddOns;
+
+            addOnCategories.add(addOnDetails);
+          });
+          selectedProduct?.addOn = jsonEncode(addOnCategories);
+        }
+        _updateCart(selectedProduct as ProductData);
+        addProductInDb(selectedProduct as ProductData);
+      }
+    });
+  }
+
+  void _handleRemoveToCart() {
+    setState(() {
+      if (int.parse("${selectedProduct?.quantity}") > 0) {
+        if (selectedProduct?.isBuy1Get1 != null &&
+            selectedProduct?.isBuy1Get1 == true) {
+          selectedProduct?.quantity =
+              int.parse("${selectedProduct?.quantity}") - 2;
+          _updateCart(selectedProduct as ProductData);
+          deleteProductInDb(widget.data as ProductData);
+        } else {
+          selectedProduct?.quantity--;
+          _updateCart(selectedProduct as ProductData);
+          deleteProductInDb(widget.data as ProductData);
+        }
+      }
+    });
   }
 }

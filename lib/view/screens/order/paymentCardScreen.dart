@@ -7,10 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_credit_card/flutter_credit_card.dart';
 import 'package:provider/provider.dart';
 
-import '../../../model/db/db_service.dart';
 import '/model/request/successCallbackRequest.dart';
 import '../../../language/Languages.dart';
 import '../../../model/db/dataBaseDao.dart';
+import '../../../model/db/db_service.dart';
 import '../../../model/request/CardDetailRequest.dart';
 import '../../../model/request/EncryptedWalletRequest.dart';
 import '../../../model/request/TransactionRequest.dart';
@@ -20,7 +20,6 @@ import '../../../model/response/PaymentDetailsResponse.dart';
 import '../../../model/response/addRewardPointsResponse.dart';
 import '../../../model/response/appleTokenDetailsResponse.dart';
 import '../../../model/response/createOrderResponse.dart';
-import '../../../model/response/getRewardPointsResponse.dart';
 import '../../../model/response/successCallbackResponse.dart';
 import '../../../model/response/tokenDetailsResponse.dart';
 import '../../../model/viewModel/mainViewModel.dart';
@@ -166,15 +165,6 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
     return null;
   }
 
-  void saveCard() {
-    if (_formKey.currentState!.validate()) {
-      // Save card details logic
-      print(
-          'Card Saved: ${cardNumberController.text}, ${cvvCodeController.text}, ${expiryDateController.text}, ${cardHolderNameController.text}');
-      // Call your API to save card details
-    }
-  }
-
   Future<Widget> verifyOtpResponse(
       BuildContext context, ApiResponse apiResponse) async {
     setState(() {
@@ -189,7 +179,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
       case Status.COMPLETED:
         CustomSnackBar.showSnackbar(
             context: context, message: apiResponse.message);
-        return Container(); // Return an empty container as you'll navigate away
+        return Container();
       case Status.ERROR:
         if (nonCapitalizeString("${apiResponse.message}") ==
             nonCapitalizeString(
@@ -303,7 +293,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
                           GestureDetector(
                             onTap: () {
                               _onValidate();
-                            }, //_onValidate,
+                            },
                             child: _buildValidateButton(mediaWidth),
                           ),
                           Platform.isIOS
@@ -312,7 +302,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
                                     setState(() {
                                       isLoading = true;
                                     });
-                                    makePayment(); // your payment logic
+                                    makePayment();
                                   },
                                 )
                               : SizedBox(),
@@ -363,8 +353,8 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
       var parsedData = jsonDecode(applePaymentData["paymentData"]);
       EncryptedWallet encryptedWallet = EncryptedWallet(
         applePayPaymentData: ApplePayPaymentData.fromJson(parsedData),
-        addressLine1: "", // optional
-        addressZip: "", // optional
+        addressLine1: "",
+        addressZip: "",
       );
 
       ApplePayPaymentData applePayPaymentData =
@@ -557,7 +547,6 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
       );
 
       CardRequest cardRequest = CardRequest(card: cardDetails);
-      //await Provider.of<MainViewModel>(context, listen: false).getApiToken("https://token-sandbox.dev.clover.com/v1/tokens", apiKey.toString(), cardRequest);
       await Provider.of<MainViewModel>(context, listen: false).getApiToken(
           "https://token.clover.com/v1/tokens", "$appId", cardRequest);
       ApiResponse apiResponse =
@@ -606,7 +595,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
         if (tokenDetailsResponse?.id?.isNotEmpty == true) {
           _getFinalPaymentApi(tokenDetailsResponse?.id.toString());
         }
-        return Container(); // Return an empty container as you'll navigate away
+        return Container();
       case Status.ERROR:
         print("message : ${apiResponse.message}");
         CustomSnackBar.showSnackbar(
@@ -664,7 +653,6 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
           source: "$source",
           description: "Payment by ${cardHolderName}");
       await Provider.of<MainViewModel>(context, listen: false)
-          //.getFinalPaymentApi("https://scl-sandbox.dev.clover.com/v1/charges", "", transactionRequest);
           .getFinalPaymentApi("https://scl.clover.com/v1/charges", "$apiKey",
               transactionRequest);
       ApiResponse apiResponse =
@@ -686,7 +674,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
         if (paymentDetails?.id.isNotEmpty == true) {
           _hitSuccessCallBack(paymentDetails?.id, "${paymentDetails?.status}");
         }
-        return Container(); // Return an empty container as you'll navigate away
+        return Container();
       case Status.ERROR:
         print("message : ${apiResponse.message}");
         CustomSnackBar.showSnackbar(
@@ -748,7 +736,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
         } else {
           _fetchRedeemPointsData(successCallbackResponse);
         }
-        return Container(); // Return an empty container as you'll navigate away
+        return Container();
       case Status.ERROR:
         print("message : ${apiResponse.message}");
         CustomSnackBar.showSnackbar(
@@ -791,8 +779,6 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
   Widget getRedeemPointsDetails(BuildContext context, ApiResponse apiResponse,
       SuccessCallbackResponse? successCallbackResponse) {
     var message = apiResponse.message.toString();
-    GetRewardPointsResponse? response =
-        apiResponse.data as GetRewardPointsResponse?;
     setState(() {
       isLoading = false;
     });
@@ -803,7 +789,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
         _addRedeemPointsData("${successCallbackResponse?.order?.totalPrice}",
             successCallbackResponse);
 
-        return Container(); // Return an empty container as you'll navigate away
+        return Container();
       case Status.ERROR:
         CustomSnackBar.showSnackbar(context: context, message: '$message');
         return Center(
@@ -869,7 +855,7 @@ class _PaymentCardScreenState extends State<PaymentCardScreen> {
             'pointsEarned': "${response?.pointsEarned}"
           },
         );
-        return Container(); // Return an empty container as you'll navigate away
+        return Container();
       case Status.ERROR:
         CustomSnackBar.showSnackbar(context: context, message: '$message');
         return Center(

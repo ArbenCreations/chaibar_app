@@ -12,11 +12,14 @@ abstract class CartDataDao {
   @Query('SELECT * FROM ProductDataDB ORDER BY addedToCartAt DESC')
   Future<List<ProductDataDB?>> findAllCartProducts();
 
-  @Query('SELECT 1 FROM ProductDataDB WHERE vendorId = :vendorId AND productCategoryId = :categoryId AND productId =:productId')
-  Future<ProductDataDB?> getSpecificCartProduct(String vendorId, String categoryId, String productId);
+  @Query('SELECT 1 FROM ProductDataDB WHERE vendorId = :vendorId AND productCategoryId = :categoryId AND productId =:productId AND addOnIdsList =:addOnIdsList')
+  Future<ProductDataDB?> getSpecificCartProduct(String vendorId, String categoryId, String productId, String addOnIdsList);
 
   @Insert(onConflict: OnConflictStrategy.replace)
   Future<void> insertCartProduct(ProductDataDB data);
+
+  @Query('SELECT * FROM ProductDataDB WHERE productId = :productId AND addOnType = :addOnType AND addOnIdsList = :addOnIdsList')
+  Future<ProductDataDB?> getMatchingCartItem(String productId, String addOnType, String addOnIdsList);
 
   @delete
   Future<void> deleteCartProduct(ProductDataDB data);
