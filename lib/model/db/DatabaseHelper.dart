@@ -14,7 +14,7 @@ class DatabaseHelper {
     if (_database != null) return _database!;
     _database = await $FloorChaiBarDB
         .databaseBuilder('basic_structure_database.db')
-        .addMigrations([migration1to2, migration2to3]).build();
+        .addMigrations([migration1to2, migration2to3, migration3to4]).build();
     return _database!;
   }
 }
@@ -38,3 +38,15 @@ final Migration migration2to3 = Migration(2, 3, (database) async {
     await database.execute('ALTER TABLE DashboardDataResponse ADD COLUMN activeOrderCounts INTEGER');
   }
 });
+
+
+final Migration migration3to4 = Migration(3, 4, (database) async {
+  final result = await database.rawQuery(
+    "PRAGMA table_info(ProductDataDB)",
+  );
+  final columnExists = result.any((col) => col['name'] == 'addOnIdsList');
+  if (!columnExists) {
+    await database.execute('ALTER TABLE ProductDataDB ADD COLUMN addOnIdsList TEXT');
+  }
+});
+
